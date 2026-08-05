@@ -1,0 +1,57 @@
+/*
+ * Koala Gravity Integration â€” Quote Form Styles
+ *
+ * Loaded only on pages that contain the Koala Insulation quote form.
+ */
+.gform-theme--foundation .gform_fields {
+ gap: 10px !important;
+}
+.gform-theme--foundation .gfield .ginput_password.large, .gform-theme--foundation .gfield input.large,.gform-theme--foundation .gfield textarea, .gform-theme--foundation .gfield select.large {
+ padding: 8px 16px !important;
+ font-size: 16px;
+ font-weight: 500;
+ line-height: 24px;
+ border-radius: 40px;
+ border: 1px solid #424A51;
+ color: #424A51;
+ block-size: auto;
+}
+.gform-theme--foundation .gfield textarea {
+ border-radius: 20px;
+}
+.gform-theme--framework .gform-field-label--type-inline {
+ font-size: 12px !important;
+ line-height: 1.4 !important;
+ color: #363636 !important;
+ align-self: center;
+}
+.gform-theme.gform-theme--framework.gform_wrapper .button {
+ padding: 12px 16px !important;
+ font-family: "Filson pro" !important;
+ font-size: 16px !important;
+ font-weight: 700 !important;
+ line-height: 24px !important;
+ transition: all 0.3s ease !important;
+ cursor: pointer !important;
+ background-color: #AFD56C !important;
+ border: 2px solid #AFD56C !important;
+ border-radius: 60px !important;
+ width: 100%;
+ text-align: center;
+ color: #042E53 !important;
+ text-transform: none !important;
+ margin-top: 20px;
+}
+.gform-theme.gform-theme--framework.gform_wrapper .button:hover {
+ background: transparent !important;
+ border-color: #042E53 !important;
+}
+.gform_required_legend {
+ display: none !important;
+}
+.gform-theme.gform-theme--framework.gform_wrapper .gform_validation_errors {
+ margin-bottom: 10px !important;
+}
+.gform-theme--foundation .gfield--width-half {
+ grid-column: span 6 !important;
+}

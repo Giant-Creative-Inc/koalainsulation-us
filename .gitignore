@@ -1,0 +1,28 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local editor backups
+# e.g. functions.php-bk07212026, custom-service.js--bk07022026,
+#       functions.php.bak-20260805-114756
+*-bk[0-9]*
+*--bk[0-9]*
+*.bak
+*.bak-*
+*.bak.*
+*.orig
+*.old
+*.save
+*~
+
+# Logs
+*.log
+
+# Composer dev dependencies (run `composer install` locally; dev-only tooling)
+/vendor/
+**/vendor/
+
+# Claude Code local settings (personal, not shared)
+.claude/settings.local.json

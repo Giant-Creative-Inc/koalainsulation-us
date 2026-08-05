@@ -1,0 +1,18 @@
+#custom-service-ul {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  position: absolute; /* Ensure the dropdown is positioned correctly */
+}
+
+#custom-service.open #custom-service-ul {
+  opacity: 1;
+  visibility: visible;
+  min-width: 290px;
+}
+
+#custom-service-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
