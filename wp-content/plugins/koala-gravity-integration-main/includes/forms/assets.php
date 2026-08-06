@@ -40,6 +40,7 @@ function kgi_register_form_asset_hooks(): void {
 	}
 
 	add_action( 'wp_enqueue_scripts', 'kgi_maybe_enqueue_thank_you_datalayer_push' );
+	add_action( 'wp_enqueue_scripts', 'kgi_enqueue_attribution_capture' );
 }
 
 /**
@@ -51,7 +52,26 @@ function kgi_register_form_asset_hooks(): void {
  *
  * @since 0.1.0
  */
-const KGI_DATALAYER_FIELD_MAP_KEYS = array( 'zip', 'city', 'state', 'UtmSource', 'UtmMedium', 'UtmCampaign' );
+const KGI_DATALAYER_FIELD_MAP_KEYS = array(
+	'zip',
+	'city',
+	'state',
+	'UtmSource',
+	'UtmMedium',
+	'UtmCampaign',
+	'UtmTerm',
+	'UtmContent',
+	'gclid',
+	'gbraid',
+	'wbraid',
+	'fbclid',
+	'msclkid',
+	'landing_page',
+	'referrer',
+	'service',
+	'cta_text',
+	'form_id',
+);
 
 /**
  * Enqueues the quote form stylesheet and validation script.
@@ -92,8 +112,9 @@ function kgi_enqueue_quote_form_assets( array $form = array() ): void { // phpcs
 		true
 	);
 
-	$form_ids      = kgi_get_all_quote_form_ids();
-	$zip_field_ids = array();
+	$form_ids           = kgi_get_all_quote_form_ids();
+	$zip_field_ids      = array();
+	$location_field_ids = array();
 
 	foreach ( $form_ids as $id ) {
 		$zip_field_id = kgi_get_field_map_for_form( $id )['zip'] ?? '';
@@ -101,6 +122,12 @@ function kgi_enqueue_quote_form_assets( array $form = array() ): void { // phpcs
 		if ( '' !== $zip_field_id ) {
 			$zip_field_ids[ $id ] = $zip_field_id;
 		}
+
+		$location_field_ids[ $id ] = array(
+			'locationSlug' => kgi_get_location_field_id_for_form( $id, 'location_slug' ),
+			'locationId'   => kgi_get_location_field_id_for_form( $id, 'location_id' ),
+			'pageUrl'      => kgi_get_location_field_id_for_form( $id, 'page_url' ),
+		);
 	}
 
 	foreach ( kgi_get_fixed_location_forms() as $config ) {
@@ -118,13 +145,54 @@ function kgi_enqueue_quote_form_assets( array $form = array() ): void { // phpcs
 		}
 	}
 
+	$form_ids           = array_values( array_unique( $form_ids ) );
+	$tracking_field_ids = array();
+
+	foreach ( $form_ids as $id ) {
+		$tracking = kgi_get_tracking_field_ids_for_form( (int) $id );
+
+		if ( ! empty( $tracking ) ) {
+			$tracking_field_ids[ $id ] = $tracking;
+		}
+	}
+
 	wp_localize_script(
 		'kgi-form-validation',
 		'kgiData',
 		array(
-			'formIds'     => array_values( array_unique( $form_ids ) ),
-			'zipFieldIds' => $zip_field_ids,
+			'formIds'          => $form_ids,
+			'zipFieldIds'      => $zip_field_ids,
+			'locationFieldIds' => $location_field_ids,
+			'trackingFieldIds' => $tracking_field_ids,
 		)
+	);
+}
+
+/**
+ * Enqueues the attribution capture/fill script on every frontend page.
+ *
+ * Loaded site-wide (not just on form pages) because first-touch attribution —
+ * the click IDs, landing page, and referrer — must be captured on the visitor's
+ * *landing* page, which is frequently not the page the form lives on. The
+ * script writes a first-party `kgi_attrib` cookie on first visit and later
+ * fills whichever hidden tracking fields the current page's form(s) have mapped
+ * (it reads the field IDs from the `kgiData` object localized in
+ * `kgi_enqueue_quote_form_assets()`, and is a no-op for fields/forms that
+ * aren't present).
+ *
+ * Populating these client-side is required by this site's full-page caching:
+ * server-side render injection would bake one visitor's values into the shared
+ * cached HTML. A static enqueued script is itself cache-safe.
+ *
+ * @since 0.7.0
+ */
+function kgi_enqueue_attribution_capture(): void {
+	wp_enqueue_script(
+		'kgi-attribution',
+		plugins_url( 'assets/js/attribution.js', KGI_PLUGIN_FILE ),
+		array(),
+		KGI_VERSION,
+		true
 	);
 }
 

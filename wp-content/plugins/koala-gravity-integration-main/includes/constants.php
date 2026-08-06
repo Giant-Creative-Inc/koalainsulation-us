@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KGI_VERSION', '0.5.0' );
+define( 'KGI_VERSION', '0.7.0' );
 define( 'KGI_PLUGIN_FILE', dirname( __DIR__ ) . '/koala-gravity-integration.php' );
 define( 'KGI_PLUGIN_DIR', plugin_dir_path( KGI_PLUGIN_FILE ) );
 define( 'KGI_PLUGIN_BASENAME', plugin_basename( KGI_PLUGIN_FILE ) );
@@ -236,6 +236,112 @@ function kgi_get_page_url_field_id_for_form( int $form_id ): int {
 	$config = kgi_get_fixed_location_form_config( $form_id );
 
 	return absint( $config['page_url_field_id'] ?? 0 );
+}
+
+/**
+ * Returns the configured default (overflow) franchise location.
+ *
+ * A quote submission whose location can't be resolved from the request URL or
+ * the submitted ZIP is routed here instead of being rejected, so no lead is
+ * lost (see `kgi_handle_quote_form_submission()`). Returns null when no default
+ * has been configured, in which case such a lead is captured and flagged for
+ * manual routing rather than sent onward.
+ *
+ * @since 0.7.0
+ *
+ * @return WP_Post|null The default location post, or null if unset/invalid.
+ */
+function kgi_get_default_location(): ?WP_Post {
+	$location_id = (int) get_option( 'kgi_default_location_id', 0 );
+
+	if ( $location_id <= 0 ) {
+		return null;
+	}
+
+	$post = get_post( $location_id );
+
+	return ( $post instanceof WP_Post && kgi_get_location_post_type() === $post->post_type ) ? $post : null;
+}
+
+/**
+ * Returns the email address that receives unresolved-lead notifications.
+ *
+ * Falls back to the site admin email when no dedicated address is configured.
+ *
+ * @since 0.7.0
+ *
+ * @return string Email address.
+ */
+function kgi_get_notification_email(): string {
+	$email = get_option( 'kgi_notification_email', '' );
+	$email = is_string( $email ) ? trim( $email ) : '';
+
+	return '' !== $email ? $email : (string) get_option( 'admin_email' );
+}
+
+/**
+ * Returns the attribution/tracking payload keys populated client-side.
+ *
+ * These are a subset of `kgi_get_payload_field_labels()` (so they map and flow
+ * to n8n/Google Sheets like any other payload field), but unlike the rest they
+ * are filled by `assets/js/attribution.js` in the browser rather than by the
+ * user typing them — the click IDs, landing page, referrer, etc. needed for
+ * attribution and offline-conversion uploads. Populating them client-side is a
+ * deliberate requirement of this site's full-page caching (see the plugin
+ * README): server-side render injection would bake one visitor's values into
+ * the shared cached HTML.
+ *
+ * @since 0.7.0
+ *
+ * @return string[] Tracking payload keys.
+ */
+function kgi_get_tracking_field_keys(): array {
+	return array(
+		'UtmSource',
+		'UtmMedium',
+		'UtmCampaign',
+		'UtmTerm',
+		'UtmContent',
+		'gclid',
+		'gbraid',
+		'wbraid',
+		'fbclid',
+		'msclkid',
+		'landing_page',
+		'referrer',
+		'form_timestamp',
+		'service',
+		'cta_text',
+		'form_id',
+	);
+}
+
+/**
+ * Returns the mapped Gravity Forms field IDs for a form's tracking fields.
+ *
+ * Filters the form's own payload field map (see `kgi_get_field_map_for_form()`)
+ * down to the tracking keys that are actually mapped to a field, so the value
+ * can be localized to `assets/js/attribution.js` — which needs to know which
+ * hidden input on each form receives each tracking value. Unmapped tracking
+ * keys are omitted.
+ *
+ * @since 0.7.0
+ *
+ * @param int $form_id Gravity Forms form ID.
+ * @return array<string, string> Tracking key => GF field ID.
+ */
+function kgi_get_tracking_field_ids_for_form( int $form_id ): array {
+	$field_map     = kgi_get_field_map_for_form( $form_id );
+	$tracking_keys = kgi_get_tracking_field_keys();
+	$ids           = array();
+
+	foreach ( $tracking_keys as $key ) {
+		if ( isset( $field_map[ $key ] ) && '' !== $field_map[ $key ] ) {
+			$ids[ $key ] = $field_map[ $key ];
+		}
+	}
+
+	return $ids;
 }
 
 /**

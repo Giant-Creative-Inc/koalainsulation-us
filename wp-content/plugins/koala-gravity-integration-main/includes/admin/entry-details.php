@@ -60,6 +60,8 @@ function kgi_show_location_entry_details( array $form, array $entry ): void {
 	$routed_location_id   = gform_get_meta( $entry_id, 'kgi_routed_location_id' );
 	$routed_location_name = gform_get_meta( $entry_id, 'kgi_routed_location_name' );
 	$zip_routing_status   = gform_get_meta( $entry_id, 'kgi_zip_routing_status' );
+	$location_source      = gform_get_meta( $entry_id, 'kgi_location_source' );
+	$needs_review         = (int) gform_get_meta( $entry_id, 'kgi_needs_review' );
 
 	$has_failed  = in_array( $submission_status, array( 'failed', 'schedule_failed' ), true );
 	$is_retrying = 'retrying' === $submission_status;
@@ -100,6 +102,13 @@ function kgi_show_location_entry_details( array $form, array $entry ): void {
 				</div>
 			<?php endif; ?>
 
+			<?php if ( $needs_review ) : ?>
+				<div style="background: #fff8e5; border-left: 4px solid #ffb900; padding: 8px 10px; margin-bottom: 10px;">
+					<strong><?php esc_html_e( 'Needs routing review.', 'koala-gravity-integration' ); ?></strong>
+					<?php esc_html_e( 'This lead could not be matched to a location from its page or ZIP and used a fallback. Confirm it reached the right franchise.', 'koala-gravity-integration' ); ?>
+				</div>
+			<?php endif; ?>
+
 			<p>
 				<strong><?php esc_html_e( 'Status:', 'koala-gravity-integration' ); ?></strong>
 				<?php echo esc_html( $submission_status ? $submission_status : __( 'Not set', 'koala-gravity-integration' ) ); ?>
@@ -119,6 +128,13 @@ function kgi_show_location_entry_details( array $form, array $entry ): void {
 				<strong><?php esc_html_e( 'Location ID:', 'koala-gravity-integration' ); ?></strong>
 				<?php echo esc_html( $location_id ? $location_id : __( 'Not resolved', 'koala-gravity-integration' ) ); ?>
 			</p>
+
+			<?php if ( $location_source ) : ?>
+				<p>
+					<strong><?php esc_html_e( 'Routing Source:', 'koala-gravity-integration' ); ?></strong>
+					<?php echo esc_html( $location_source ); ?>
+				</p>
+			<?php endif; ?>
 
 			<?php if ( $routed_location_id ) : ?>
 				<p>

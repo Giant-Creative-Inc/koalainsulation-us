@@ -294,9 +294,16 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 	);
 
 	try {
-		$location = kgi_get_location_from_entry_meta( $entry_id );
+		$location        = kgi_get_location_from_entry_meta( $entry_id );
+		$location_source = (string) gform_get_meta( $entry_id, 'kgi_location_source' );
+		$needs_review    = (bool) gform_get_meta( $entry_id, 'kgi_needs_review' );
 
-		if ( ! $location ) {
+		// A missing location is only a hard failure when it isn't the known
+		// "unresolved" case. An unresolved lead (no URL/ZIP match and no default
+		// location configured) is still sent to n8n — flagged, with an empty
+		// location payload — so the workflow can alert (e.g. post to Slack)
+		// instead of the lead being dropped.
+		if ( ! $location && 'unresolved' !== $location_source ) {
 			gform_update_meta( $entry_id, 'kgi_submission_status', 'failed' );
 			gform_update_meta( $entry_id, 'kgi_error_message', 'Location could not be resolved from entry meta.' );
 
@@ -308,7 +315,9 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 			return;
 		}
 
-		kgi_maybe_send_to_google_sheet( $entry_id, $entry, $location );
+		if ( $location ) {
+			kgi_maybe_send_to_google_sheet( $entry_id, $entry, $location );
+		}
 
 		$webhook_url = get_option( 'kgi_n8n_webhook_url', '' );
 
@@ -324,35 +333,61 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 			return;
 		}
 
-		$routed_location_id = absint( gform_get_meta( $entry_id, 'kgi_routed_location_id' ) );
-		$routed_location    = $routed_location_id > 0 ? get_post( $routed_location_id ) : null;
+		if ( $location ) {
+			$routed_location_id = absint( gform_get_meta( $entry_id, 'kgi_routed_location_id' ) );
+			$routed_location    = $routed_location_id > 0 ? get_post( $routed_location_id ) : null;
 
-		if ( ! $routed_location instanceof WP_Post || kgi_get_location_post_type() !== $routed_location->post_type ) {
-			$routed_location = kgi_resolve_location_for_entry_zip( $entry, $location, $entry_id );
+			if ( ! $routed_location instanceof WP_Post || kgi_get_location_post_type() !== $routed_location->post_type ) {
+				$routed_location = kgi_resolve_location_for_entry_zip( $entry, $location, $entry_id );
+			}
+
+			gform_update_meta( $entry_id, 'kgi_routed_location_id', $routed_location->ID );
+			gform_update_meta( $entry_id, 'kgi_routed_location_name', get_field( 'location_name', $routed_location->ID ) );
+			gform_update_meta(
+				$entry_id,
+				'kgi_zip_routing_status',
+				$routed_location->ID === $location->ID ? 'original_location' : 'reassigned'
+			);
+
+			if ( $routed_location->ID !== $location->ID ) {
+				kgi_log(
+					'Location reassigned by submitted ZIP/postal code.',
+					array(
+						'entry_id'             => $entry_id,
+						'original_location_id' => $location->ID,
+						'routed_location_id'   => $routed_location->ID,
+					)
+				);
+			}
+
+			$location_payload = kgi_build_location_payload( $routed_location );
+		} else {
+			$location_payload = kgi_build_unresolved_location_payload();
 		}
 
-		gform_update_meta( $entry_id, 'kgi_routed_location_id', $routed_location->ID );
-		gform_update_meta( $entry_id, 'kgi_routed_location_name', get_field( 'location_name', $routed_location->ID ) );
-		gform_update_meta(
-			$entry_id,
-			'kgi_zip_routing_status',
-			$routed_location->ID === $location->ID ? 'original_location' : 'reassigned'
+		// Routing flags so the n8n workflow can branch — e.g. post a Slack
+		// alert when no location was found instead of pushing to a CRM.
+		$routing_flags = array(
+			'location_found'  => (bool) $location,
+			'location_source' => '' !== $location_source ? $location_source : ( $location ? 'url' : 'unresolved' ),
+			'needs_review'    => $needs_review,
 		);
 
-		if ( $routed_location->ID !== $location->ID ) {
-			kgi_log(
-				'Location reassigned by submitted ZIP/postal code.',
-				array(
-					'entry_id'             => $entry_id,
-					'original_location_id' => $location->ID,
-					'routed_location_id'   => $routed_location->ID,
-				)
-			);
+		$entry_payload = kgi_build_entry_payload( $entry, kgi_get_field_map_for_form( (int) $entry['form_id'] ) );
+
+		// Always include every attribution/tracking key, defaulting to an empty
+		// string when this form has no field mapped for it, so n8n receives a
+		// stable payload shape regardless of which fields a given form carries.
+		foreach ( kgi_get_tracking_field_keys() as $tracking_key ) {
+			if ( ! array_key_exists( $tracking_key, $entry_payload ) ) {
+				$entry_payload[ $tracking_key ] = '';
+			}
 		}
 
 		$payload = array_merge(
-			kgi_build_entry_payload( $entry, kgi_get_field_map_for_form( (int) $entry['form_id'] ) ),
-			kgi_build_location_payload( $routed_location )
+			$entry_payload,
+			$location_payload,
+			$routing_flags
 		);
 
 		$sent_at      = time();

@@ -85,14 +85,40 @@ function kgi_register_form_hooks(): void {
 function kgi_handle_quote_form_submission( array $entry, array $form ): void {
 	$entry_id = (int) $entry['id'];
 	$form_id  = (int) $form['id'];
-	$location = kgi_get_location_from_entry( $entry );
+
+	// Resolve the location by the best signal available, never rejecting the
+	// lead: request URL / posted field, then the ZIP's exact owner, then the
+	// configured default (overflow) location.
+	$location        = kgi_get_location_from_entry( $entry );
+	$location_source = 'url';
 
 	if ( ! $location ) {
+		$location = kgi_resolve_location_by_zip_exact( $entry );
+
+		if ( $location ) {
+			$location_source = 'zip';
+		}
+	}
+
+	if ( ! $location ) {
+		$location = kgi_get_default_location();
+
+		if ( $location ) {
+			$location_source = 'default';
+		}
+	}
+
+	if ( ! $location ) {
+		// No location resolved and no default configured. Capture and flag the
+		// lead, notify staff, and still queue it for n8n — the background job
+		// sends it with a `location_found = false` flag so the n8n workflow can
+		// alert (e.g. post to Slack) rather than dropping it.
 		gform_update_meta( $entry_id, 'kgi_location_status', 'missing_location' );
-		gform_update_meta( $entry_id, 'kgi_submission_status', 'blocked_missing_location' );
+		gform_update_meta( $entry_id, 'kgi_location_source', 'unresolved' );
+		gform_update_meta( $entry_id, 'kgi_needs_review', 1 );
 
 		kgi_log(
-			'Location could not be resolved.',
+			'Location unresolved and no default location configured. Lead flagged and queued for n8n.',
 			array(
 				'entry_id'      => $entry_id,
 				'location_id'   => rgar( $entry, (string) kgi_get_location_field_id_for_form( $form_id, 'location_id' ) ),
@@ -100,6 +126,9 @@ function kgi_handle_quote_form_submission( array $entry, array $form ): void {
 				'page_url'      => rgar( $entry, (string) kgi_get_location_field_id_for_form( $form_id, 'page_url' ) ),
 			)
 		);
+
+		kgi_notify_unresolved_lead( $entry_id, $entry, 'unresolved' );
+		kgi_queue_quote_entry_job( $entry_id );
 
 		return;
 	}
@@ -110,7 +139,16 @@ function kgi_handle_quote_form_submission( array $entry, array $form ): void {
 	gform_update_meta( $entry_id, 'kgi_location_status', 'resolved' );
 	gform_update_meta( $entry_id, 'kgi_location_id', $location_id );
 	gform_update_meta( $entry_id, 'kgi_location_name', $location_name );
+	gform_update_meta( $entry_id, 'kgi_location_source', $location_source );
 	gform_update_meta( $entry_id, 'kgi_submission_status', 'location_resolved' );
+
+	// The default location is a last-resort guess, not a confident match, so
+	// flag it for review and notify. A ZIP-owner match is confident routing and
+	// needs neither.
+	if ( 'default' === $location_source ) {
+		gform_update_meta( $entry_id, 'kgi_needs_review', 1 );
+		kgi_notify_unresolved_lead( $entry_id, $entry, 'default' );
+	}
 
 	kgi_log(
 		'Location resolved.',
@@ -118,6 +156,7 @@ function kgi_handle_quote_form_submission( array $entry, array $form ): void {
 			'entry_id'      => $entry_id,
 			'location_id'   => $location_id,
 			'location_name' => $location_name,
+			'source'        => $location_source,
 		)
 	);
 
@@ -148,20 +187,35 @@ function kgi_handle_fixed_location_form_submission( array $entry, array $form ):
 		return;
 	}
 
-	$location = kgi_resolve_fixed_location( (int) ( $config['location_id'] ?? 0 ) );
+	$location        = kgi_resolve_fixed_location( (int) ( $config['location_id'] ?? 0 ) );
+	$location_source = 'fixed';
+
+	if ( ! $location ) {
+		// The configured location is missing (unpublished/deleted). Fall back to
+		// the default location rather than losing the lead.
+		$location = kgi_get_default_location();
+
+		if ( $location ) {
+			$location_source = 'default';
+		}
+	}
 
 	if ( ! $location ) {
 		gform_update_meta( $entry_id, 'kgi_location_status', 'missing_location' );
-		gform_update_meta( $entry_id, 'kgi_submission_status', 'blocked_missing_location' );
+		gform_update_meta( $entry_id, 'kgi_location_source', 'unresolved' );
+		gform_update_meta( $entry_id, 'kgi_needs_review', 1 );
 
 		kgi_log(
-			'Fixed-location form submission blocked. Configured location not found.',
+			'Fixed-location form submission unresolved. Configured location missing and no default set. Lead flagged and queued for n8n.',
 			array(
 				'entry_id'               => $entry_id,
 				'form_id'                => $form_id,
 				'configured_location_id' => $config['location_id'] ?? null,
 			)
 		);
+
+		kgi_notify_unresolved_lead( $entry_id, $entry, 'unresolved' );
+		kgi_queue_quote_entry_job( $entry_id );
 
 		return;
 	}
@@ -172,7 +226,13 @@ function kgi_handle_fixed_location_form_submission( array $entry, array $form ):
 	gform_update_meta( $entry_id, 'kgi_location_status', 'resolved' );
 	gform_update_meta( $entry_id, 'kgi_location_id', $location_id );
 	gform_update_meta( $entry_id, 'kgi_location_name', $location_name );
+	gform_update_meta( $entry_id, 'kgi_location_source', $location_source );
 	gform_update_meta( $entry_id, 'kgi_submission_status', 'location_resolved' );
+
+	if ( 'default' === $location_source ) {
+		gform_update_meta( $entry_id, 'kgi_needs_review', 1 );
+		kgi_notify_unresolved_lead( $entry_id, $entry, 'default' );
+	}
 
 	kgi_log(
 		'Fixed-location form submission resolved.',
@@ -181,6 +241,7 @@ function kgi_handle_fixed_location_form_submission( array $entry, array $form ):
 			'form_id'       => $form_id,
 			'location_id'   => $location_id,
 			'location_name' => $location_name,
+			'source'        => $location_source,
 		)
 	);
 
@@ -188,17 +249,96 @@ function kgi_handle_fixed_location_form_submission( array $entry, array $form ):
 }
 
 /**
- * Validates that a resolvable location exists before accepting a quote submission.
+ * Emails staff when a lead had to use a fallback location (or none).
  *
- * Blocks the form with a field-level error if no location can be determined
- * from the posted location ID or the current request URI.
+ * Fires only for the `default` and `unresolved` routing outcomes — a URL, ZIP,
+ * or fixed-config match is confident and needs no attention. The message
+ * carries the submitter's name, email, and ZIP plus a direct link to the
+ * Gravity Forms entry so the lead can be re-routed by hand if needed. Sent to
+ * the address configured in Settings → Koala Gravity → Lead Routing, falling
+ * back to the site admin email.
+ *
+ * @since 0.7.0
+ *
+ * @param int     $entry_id Gravity Forms entry ID.
+ * @param mixed[] $entry    Gravity Forms entry array.
+ * @param string  $source   Routing outcome: 'default' or 'unresolved'.
+ */
+function kgi_notify_unresolved_lead( int $entry_id, array $entry, string $source ): void {
+	$to = kgi_get_notification_email();
+
+	if ( '' === $to ) {
+		return;
+	}
+
+	$form_id    = (int) ( $entry['form_id'] ?? 0 );
+	$form       = GFAPI::get_form( $form_id );
+	$form_title = ( $form && ! is_wp_error( $form ) ) ? $form['title'] : '#' . $form_id;
+
+	$field_map      = kgi_get_field_map_for_form( $form_id );
+	$first_name     = '' !== ( $field_map['first_name'] ?? '' ) ? rgar( $entry, (string) $field_map['first_name'] ) : '';
+	$last_name      = '' !== ( $field_map['last_name'] ?? '' ) ? rgar( $entry, (string) $field_map['last_name'] ) : '';
+	$submitter_name = trim( $first_name . ' ' . $last_name );
+	$email          = '' !== ( $field_map['email'] ?? '' ) ? rgar( $entry, (string) $field_map['email'] ) : '';
+	$zip            = '' !== ( $field_map['zip'] ?? '' ) ? rgar( $entry, (string) $field_map['zip'] ) : '';
+
+	$entry_link = admin_url( 'admin.php?page=gf_entries&view=entry&id=' . $form_id . '&lid=' . $entry_id );
+
+	if ( 'unresolved' === $source ) {
+		$intro = __( 'A quote submission could not be routed to any location and is not being sent onward. Please route it manually.', 'koala-gravity-integration' );
+	} else {
+		$intro = __( 'A quote submission could not be matched to a location from its page or ZIP, so it was routed to the default location. Please confirm it reached the right franchise.', 'koala-gravity-integration' );
+	}
+
+	$subject = sprintf(
+		/* translators: 1: routing fallback label, 2: Gravity Forms form title */
+		__( '[Koala] Lead needs routing review (%1$s) — %2$s', 'koala-gravity-integration' ),
+		$source,
+		$form_title
+	);
+
+	$lines = array(
+		$intro,
+		'',
+		/* translators: %s: routing fallback label */
+		sprintf( __( 'Routing fallback: %s', 'koala-gravity-integration' ), $source ),
+		/* translators: %s: Gravity Forms form title */
+		sprintf( __( 'Form: %s', 'koala-gravity-integration' ), $form_title ),
+		/* translators: %d: Gravity Forms entry ID */
+		sprintf( __( 'Entry ID: %d', 'koala-gravity-integration' ), $entry_id ),
+		/* translators: %s: submitter name */
+		sprintf( __( 'Name: %s', 'koala-gravity-integration' ), $submitter_name ),
+		/* translators: %s: submitter email */
+		sprintf( __( 'Email: %s', 'koala-gravity-integration' ), $email ),
+		/* translators: %s: submitted ZIP or postal code */
+		sprintf( __( 'ZIP/Postal: %s', 'koala-gravity-integration' ), $zip ),
+		'',
+		/* translators: %s: URL to the Gravity Forms entry */
+		sprintf( __( 'Review the entry: %s', 'koala-gravity-integration' ), $entry_link ),
+	);
+
+	wp_mail( $to, $subject, implode( "\n", $lines ) );
+}
+
+/**
+ * Logs, without blocking, when a quote submission's location can't be resolved
+ * from the request URL or the posted location-ID field.
+ *
+ * This deliberately never fails validation. Rejecting the submission here was a
+ * direct source of lost leads: it discarded the entry before it was ever saved,
+ * and never consulted the submitted ZIP — even though the plugin already owns a
+ * ZIP→location ownership index and a nearest-location fallback. The lead is now
+ * always captured; `kgi_handle_quote_form_submission()` resolves the location
+ * from the ZIP, then the configured default location, and flags/notifies when a
+ * fallback is used. This filter is kept only so the URL/ID miss is visible in
+ * the logs.
  *
  * Hooked to `gform_validation_{form_id}`.
  *
  * @since 0.1.0
  *
  * @param mixed[] $validation_result Gravity Forms validation result array.
- * @return mixed[] Modified validation result.
+ * @return mixed[] Unmodified validation result.
  */
 function kgi_validate_quote_form_location( array $validation_result ): array {
 	$form              = $validation_result['form'];
@@ -212,19 +352,8 @@ function kgi_validate_quote_form_location( array $validation_result ): array {
 		return $validation_result;
 	}
 
-	foreach ( $form['fields'] as &$field ) {
-		if ( $location_id_field === (int) $field->id ) {
-			$field->failed_validation  = true;
-			$field->validation_message = esc_html__( 'We could not determine the service location for this request. Please refresh the page and try again.', 'koala-gravity-integration' );
-			break;
-		}
-	}
-
-	$validation_result['is_valid'] = false;
-	$validation_result['form']     = $form;
-
 	kgi_log(
-		'Quote form blocked. Location validation failed.',
+		'Quote form location unresolved at validation. Submission allowed; ZIP/default routing will apply.',
 		array(
 			'form_id'       => $form_id,
 			'location_id'   => rgpost( 'input_' . $location_id_field ),

@@ -45,10 +45,24 @@ After a successful submission, the visitor is redirected to `{home_url}/{locatio
 
 Two mapping tables, both populated dynamically from whichever form is selected as the Quote Form above:
 
-- **Quote Form Fields** — maps payload keys sent to n8n (`first_name`, `email`, `zip`, UTM fields, consent flags, etc.) to fields on the quote form. Unmapped fields are simply omitted from the outbound payload.
+- **Quote Form Fields** — maps payload keys sent to n8n (`first_name`, `email`, `zip`, UTM fields, consent flags, the attribution/tracking fields below, etc.) to fields on the quote form. Unmapped fields are simply omitted from the outbound payload.
 - **Location Routing Fields** — maps three **hidden fields that must exist on the quote form** to `location_slug`, `location_id`, and `page_url`. These are populated automatically on page load with the resolved location's slug/ID and the current page URL, and are read back after submission to determine which location the lead belongs to. This is internal routing data, not sent to n8n directly.
 
 If you ever rebuild the quote form in Gravity Forms and field IDs shift, re-map both tables here — no code changes needed.
+
+### Attribution & Tracking Fields
+
+The Quote Form Fields table also includes a set of attribution/tracking keys that are **populated client-side**, not typed by the visitor: the ad-platform click IDs (`gclid`, `gbraid`, `wbraid`, `fbclid`, `msclkid`), the five `Utm*` keys, `landing_page`, `referrer`, `form_timestamp`, `service`, `cta_text`, and `form_id`. To use them, add a **hidden field on the quote form** for each one you want and map it here, exactly like any other payload field — the values then flow to n8n and the Google Sheet automatically, and the non-PII ones are also pushed to the thank-you-page `dataLayer` (see `KGI_DATALAYER_FIELD_MAP_KEYS`).
+
+To keep the n8n schema stable, **every** attribution/tracking key is always present in the n8n payload — a form with no field mapped for a given key sends it as an empty string (`""`) rather than omitting it — so n8n nodes can reference `gclid`, `landing_page`, `cta_text`, etc. without erroring on a missing key. (This applies to the n8n payload only; the Google Sheet payload still includes only mapped fields.)
+
+Population is handled by `assets/js/attribution.js`, loaded on **every** page:
+
+- **First-touch capture.** On the visitor's first page view, the script snapshots the UTMs, click IDs, `landing_page` (that first URL), `referrer`, and a timestamp into a first-party `kgi_attrib` cookie (~90 days, `SameSite=Lax`). This is why it loads site-wide — the landing page is usually not the page the form lives on.
+- **Fill.** On a page with a mapped form, each hidden field is filled only if empty. For the UTMs and click IDs the **current page URL wins** (last touch) and the cookie is the fallback (first touch); `landing_page`/`referrer` always come from the cookie; `form_timestamp` is set at fill time; `form_id` is the Gravity Forms form ID.
+- **Service / CTA from page context.** `service` reads `<body data-kgi-service="…">` then `<meta name="kgi-service" content="…">`. `cta_text` reads the `data-kgi-cta` value (or text) of a clicked element carrying that attribute — remembered across the navigation to the form — then falls back to `<body data-kgi-cta="…">`. Set these attributes on the relevant pages/CTAs in the theme; unset means the field is left blank.
+
+**Why client-side:** the site serves forms from full-page caches (Nginx FastCGI, WP Rocket, Cloudflare), so injecting per-visitor values server-side at render would bake one visitor's `gclid`/UTM into the shared cached HTML. Running in the browser after the cached HTML loads gives each visitor their own values. This overlaps with the **HandL UTM Grabber** plugin — once these fields are verified in production, HandL can be retired for these forms (audit any `[handl_*]` shortcodes or other forms/reporting that rely on it first).
 
 ### Additional Quote Forms
 
@@ -62,7 +76,7 @@ Each row in this repeater configures:
 | **Location Routing Fields** | Same three hidden fields as the main Quote Form's Location Routing Fields (`location_slug`, `location_id`, `page_url`) — but scoped to this form's own field IDs, since it's a separate Gravity Form. |
 | **Quote Form Fields** | Same payload keys as the main Quote Form Fields table, mapped via a dropdown scoped to whichever Gravity Form this row targets. |
 
-Unlike Fixed-Location Forms below, an additional quote form gets the full main-form treatment: location validation blocks submission if unresolved, and the confirmation redirect resolves the location per-submission just like the main form.
+An additional quote form gets the full main-form treatment: the confirmation redirect resolves the location per-submission just like the main form, and it uses the same never-reject lead-capture path (see **Lead Routing** below) — a submission is never blocked for an unresolved location.
 
 ### Fixed-Location Forms
 
@@ -80,7 +94,7 @@ Each row in this repeater configures:
 
 Everything downstream of location resolution — the n8n payload build, retry/backoff, the per-location Google Sheet webhook, and the Gravity Forms entry detail sidebar — is shared with the main Quote Form and requires no per-form code. Only these settings differ:
 
-- No location validation blocks submission (there's nothing dynamic to validate — the location is fixed configuration, not user input). If the configured location is somehow missing or deleted, the entry is still accepted and marked `blocked_missing_location` in its entry meta, same as the main form's failure path, rather than showing the visitor an error.
+- No location validation blocks submission (there's nothing dynamic to validate — the location is fixed configuration, not user input). If the configured location is somehow missing or deleted, the entry is still accepted and falls back to the **Default Location** (see **Lead Routing** below), flagged for review and notified, rather than showing the visitor an error.
 - No `location_slug`/`location_id` hidden fields are needed or populated — only the optional page-URL field, if configured.
 - The thank-you redirect still goes to `{home_url}/{location-slug}/{thank-you-slug}` using the Thank You Page settings above.
 
@@ -104,6 +118,36 @@ $location_data = [
 `custom-service.js` reads `locations.id`/`locations.slug` (and `loc.id`/`loc.slug` in the distance-fallback paths, which source from this same array) to populate the `input_1_18`/`input_1_17` routing fields. Without `id`/`slug` in this array, those fields get set to the literal string `"undefined"` instead of real values, which breaks location resolution for any submission routed through the zip locator. This needs `'id' => $post->ID` and `'slug' => $post->post_name` added to `$location_data` in the theme before the zip locator's routing-field population can work correctly.
 
 **Note on the zip/postal code locator widget:** the LSM Bricks Theme's zip code locator (`custom-service.js`, not part of this plugin) populates these same hidden routing fields client-side when a location is matched outside of an actual location page (e.g. via the zip search popup rather than the page URL). That script hardcodes the field IDs (`input_1_6`, `input_1_17`, `input_1_18`, `input_1_19`) rather than reading the field map above, so if the quote form is ever rebuilt and field IDs shift, or the form ID changes, those hardcoded IDs in the theme must be updated to match — re-mapping the tables here alone is not enough. Likewise, if the zip/postal code search flow in the theme is ever reworked (new AJAX actions, changed response shape, new match/fallback paths), the corresponding population of `input_1_6/17/18/19` in `custom-service.js` will need to be updated too, since this plugin has no visibility into that script.
+
+### Lead Routing
+
+A submission is **never rejected** for a missing location — that was a direct source of lost leads (the entry was discarded before it was saved, and the submitted ZIP was never consulted). Instead, at submission the location is resolved by the best signal available and the entry is always captured:
+
+1. **URL / hidden field** — the location resolved from the page URL or the posted `location_id`, as before. Entry meta `kgi_location_source = url`.
+2. **Exact ZIP owner** — if that fails, the submitted ZIP/postal code is looked up in the ownership index (in-memory, no API call) and its owning location is used. `kgi_location_source = zip`.
+3. **Default Location** — if that also fails, the lead is routed to the configured overflow location so it still reaches n8n. `kgi_location_source = default`, the entry is flagged (`kgi_needs_review`), and a notification email is sent.
+4. **Unresolved** — if no location resolves and no default is configured, the entry is still saved, flagged (`kgi_location_source = unresolved`, `kgi_needs_review`), a notification is sent, **and it is still sent to n8n** with an empty location payload and a `location_found = false` flag (see below) so the n8n workflow can alert on it — e.g. post a Slack message — instead of the lead being dropped.
+
+| Field | Description |
+|---|---|
+| **Default Location** | The overflow franchise location for leads whose location can't be resolved from the page or ZIP. Leave as *None* to send such leads to n8n as "no location found" (flagged) rather than to a franchise. |
+| **Notification Email** | Where the "needs routing review" alert is sent when the default/unresolved fallback is used. Defaults to the site admin email if blank. |
+
+Every lead sent to n8n carries three routing flags in its payload so the workflow can branch (e.g. alert vs. CRM push):
+
+| Payload field | Value |
+|---|---|
+| `location_found` | `true` when a real location was resolved (URL, ZIP, fixed config, or default); `false` when none was found. |
+| `location_source` | `url`, `zip`, `fixed`, `default`, or `unresolved` — how the location was determined. |
+| `needs_review` | `true` for `default`/`unresolved` leads (routed to a fallback or none), `false` for a confident match. |
+
+The routing source and a "needs routing review" banner are shown on the Gravity Forms entry detail sidebar. The background job's nearest-location ZIP API refinement (below) still runs on top of whatever is resolved here, so even a defaulted lead can be reassigned to a closer owner before it's sent.
+
+### ZIP/postal-code ownership routing
+
+Immediately before the background job builds the n8n payload, the submitted mapped `zip` value is normalized and checked against the Location CPT's `location_zipcode` and comma-separated `additional_zipcodes` ACF fields. If another published location owns that exact normalized value, that location supplies `location_id`, `location_name`, `housecall_pro_api_key`, `location_serviceminder_api_key`, and `location_serviceminder_id` to n8n. The submitted entry values and `page_url` remain unchanged. An empty, unmapped, or unowned ZIP/postal code falls back to the form's original location without flagging the outbound lead.
+
+The ownership index is cached for one day, pre-warmed on this plugin version's first load, and rebuilt after ACF saves a Location CPT. This keeps normal lead routing to a cached lookup. The work is not performed during Gravity Forms validation, submission handling, or confirmation generation.
 
 **Note on `all-pages.js`:** the theme's `all-pages.js` (also not part of this plugin) has a block in its location-data fetch handler that sets `key`/`keySm`/`url` from `data.hcpKey`/`data.smKey` on location pages:
 
@@ -131,9 +175,9 @@ This must stay commented out. It writes to the same `key`/`keySm`/`url` fields t
 
 ## How It Works
 
-1. **Page load** — `includes/forms/field-population.php` resolves the current location from the URL (via `includes/location-resolver.php`, using the Country setting to know whether to expect a country-prefixed URL, and the Location Post Type setting to know which CPT to query) and writes it into the form's hidden routing fields. `includes/forms/assets.php` localizes that same resolved location, plus a small set of marketing/attribution field IDs, to the frontend script for the dataLayer push described below.
-2. **Validation** — `includes/forms/form-handler.php` blocks submission if no location can be resolved, and validates phone field formatting.
-3. **Submission** — on `gform_after_submission`, the location is re-resolved from the posted entry (`kgi_get_location_from_entry()`), stored as entry meta, and a background job is queued via WP-Cron.
+1. **Page load** — `includes/forms/field-population.php` resolves the current location from the URL (via `includes/location-resolver.php`, using the Country setting to know whether to expect a country-prefixed URL, and the Location Post Type setting to know which CPT to query) and writes it into the form's hidden routing fields. `includes/forms/assets.php` localizes that same resolved location, plus the marketing/attribution field IDs, to the frontend scripts — for the dataLayer push described below and for `assets/js/attribution.js`, which fills the attribution/tracking hidden fields client-side (see **Attribution & Tracking Fields** above).
+2. **Validation** — `includes/forms/form-handler.php` validates phone field formatting. It does **not** block on location: an unresolved location is logged only, so the lead is captured and routed downstream rather than rejected.
+3. **Submission** — on `gform_after_submission`, the location is resolved from the posted entry (`kgi_get_location_from_entry()`) → exact ZIP owner (`kgi_resolve_location_by_zip_exact()`) → the configured default location (see **Lead Routing** above), stored as entry meta with a `kgi_location_source`, and a background job is queued via WP-Cron. A default/unresolved fallback also flags the entry and emails staff.
 4. **Background job** — `includes/jobs/background-jobs.php` builds the n8n payload (form fields + the location's ACF data) and POSTs it to the configured webhook, retrying up to `KGI_MAX_RETRIES` times with backoff on failure. This reads the location back from entry meta (`kgi_get_location_from_entry_meta()`), since by the time WP-Cron runs the submission request has long since ended.
 5. **Confirmation/redirect** — on `gform_confirmation`, the location is **independently re-resolved from the entry's posted field value** (`kgi_get_location_from_entry()`, not from entry meta) and the visitor is redirected to `{home_url}/{location-slug}/{thank-you-slug}`. This intentionally avoids depending on the meta written in step 3 — `gform_after_submission` is not guaranteed to have completed by the time `gform_confirmation` fires within the same request, and reading meta here previously caused the redirect to silently fall back to a generic thank-you URL with no location slug.
 6. **DataLayer push** — `assets/js/form-validation.js` listens for Gravity Forms' `gform_confirmation_loaded` JS event (fires just before the AJAX-submitted form navigates to its redirect confirmation) and pushes `{ event: 'quote_form_submission', locationName, locationId, ...marketing fields }` to `window.dataLayer`. Only non-PII fields are included — see `KGI_DATALAYER_FIELD_MAP_KEYS` in `includes/forms/assets.php`. This only fires for AJAX-enabled form submissions; a non-AJAX submission redirects entirely server-side with no opportunity for this JS to run.
@@ -167,6 +211,7 @@ includes/
 assets/
   css/quote-form.css                 Quote form styling
   js/form-validation.js              Phone number masking + dataLayer push on confirmation
+  js/attribution.js                  First-touch attribution capture + hidden-field population
 ```
 
 ## Coding Standards

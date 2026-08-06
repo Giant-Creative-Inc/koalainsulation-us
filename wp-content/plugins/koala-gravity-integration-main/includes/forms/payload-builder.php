@@ -99,6 +99,29 @@ function kgi_build_google_sheet_payload( array $entry, array $field_map, int $pa
 }
 
 /**
+ * Builds an empty location payload for a lead with no resolvable location.
+ *
+ * Keeps the same keys as `kgi_build_location_payload()` so the n8n webhook
+ * always receives a consistent shape — the values are just empty. Paired with
+ * the `location_found`/`location_source` flags added by the background job, this
+ * lets the n8n workflow detect a "no location found" lead and route it to an
+ * alert (e.g. Slack) instead of a franchise CRM.
+ *
+ * @since 0.7.0
+ *
+ * @return mixed[] Location payload with empty values.
+ */
+function kgi_build_unresolved_location_payload(): array {
+	return array(
+		'location_id'                    => null,
+		'location_name'                  => '',
+		'housecall_pro_api_key'          => '',
+		'location_serviceminder_api_key' => '',
+		'location_serviceminder_id'      => '',
+	);
+}
+
+/**
  * Builds the location data payload for outbound API calls.
  *
  * Fetches all per-location credentials from ACF fields. Called by the
