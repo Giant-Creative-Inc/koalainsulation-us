@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KGI_VERSION', '0.7.0' );
+define( 'KGI_VERSION', '0.7.1' );
 define( 'KGI_PLUGIN_FILE', dirname( __DIR__ ) . '/koala-gravity-integration.php' );
 define( 'KGI_PLUGIN_DIR', plugin_dir_path( KGI_PLUGIN_FILE ) );
 define( 'KGI_PLUGIN_BASENAME', plugin_basename( KGI_PLUGIN_FILE ) );
@@ -312,7 +312,6 @@ function kgi_get_tracking_field_keys(): array {
 		'form_timestamp',
 		'service',
 		'cta_text',
-		'form_id',
 	);
 }
 

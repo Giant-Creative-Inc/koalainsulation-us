@@ -187,6 +187,8 @@ function kgi_show_location_entry_details( array $form, array $entry ): void {
 				<?php endif; ?>
 			<?php endif; ?>
 
+			<?php kgi_render_resend_button( $form_id, $entry_id ); ?>
+
 		</div>
 	</div>
 	<?php

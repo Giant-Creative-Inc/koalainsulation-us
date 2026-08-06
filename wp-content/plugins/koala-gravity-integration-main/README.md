@@ -52,14 +52,16 @@ If you ever rebuild the quote form in Gravity Forms and field IDs shift, re-map 
 
 ### Attribution & Tracking Fields
 
-The Quote Form Fields table also includes a set of attribution/tracking keys that are **populated client-side**, not typed by the visitor: the ad-platform click IDs (`gclid`, `gbraid`, `wbraid`, `fbclid`, `msclkid`), the five `Utm*` keys, `landing_page`, `referrer`, `form_timestamp`, `service`, `cta_text`, and `form_id`. To use them, add a **hidden field on the quote form** for each one you want and map it here, exactly like any other payload field — the values then flow to n8n and the Google Sheet automatically, and the non-PII ones are also pushed to the thank-you-page `dataLayer` (see `KGI_DATALAYER_FIELD_MAP_KEYS`).
+The Quote Form Fields table also includes a set of attribution/tracking keys that are **populated client-side**, not typed by the visitor: the ad-platform click IDs (`gclid`, `gbraid`, `wbraid`, `fbclid`, `msclkid`), the five `Utm*` keys, `landing_page`, `referrer`, `form_timestamp`, `service`, and `cta_text`. To use them, add a **hidden field on the quote form** for each one you want and map it here, exactly like any other payload field — the values then flow to n8n and the Google Sheet automatically, and the non-PII ones are also pushed to the thank-you-page `dataLayer` (see `KGI_DATALAYER_FIELD_MAP_KEYS`).
+
+`form_id` is **not** in this list and is **not mappable**: the form ID is intrinsic to every entry, so it's added to the n8n payload server-side (from the entry itself) and is always correct — no hidden field or mapping required.
 
 To keep the n8n schema stable, **every** attribution/tracking key is always present in the n8n payload — a form with no field mapped for a given key sends it as an empty string (`""`) rather than omitting it — so n8n nodes can reference `gclid`, `landing_page`, `cta_text`, etc. without erroring on a missing key. (This applies to the n8n payload only; the Google Sheet payload still includes only mapped fields.)
 
 Population is handled by `assets/js/attribution.js`, loaded on **every** page:
 
 - **First-touch capture.** On the visitor's first page view, the script snapshots the UTMs, click IDs, `landing_page` (that first URL), `referrer`, and a timestamp into a first-party `kgi_attrib` cookie (~90 days, `SameSite=Lax`). This is why it loads site-wide — the landing page is usually not the page the form lives on.
-- **Fill.** On a page with a mapped form, each hidden field is filled only if empty. For the UTMs and click IDs the **current page URL wins** (last touch) and the cookie is the fallback (first touch); `landing_page`/`referrer` always come from the cookie; `form_timestamp` is set at fill time; `form_id` is the Gravity Forms form ID.
+- **Fill.** On a page with a mapped form, each hidden field is filled only if empty. For the UTMs and click IDs the **current page URL wins** (last touch) and the cookie is the fallback (first touch); `landing_page`/`referrer` always come from the cookie; `form_timestamp` is set at fill time.
 - **Service / CTA from page context.** `service` reads `<body data-kgi-service="…">` then `<meta name="kgi-service" content="…">`. `cta_text` reads the `data-kgi-cta` value (or text) of a clicked element carrying that attribute — remembered across the navigation to the form — then falls back to `<body data-kgi-cta="…">`. Set these attributes on the relevant pages/CTAs in the theme; unset means the field is left blank.
 
 **Why client-side:** the site serves forms from full-page caches (Nginx FastCGI, WP Rocket, Cloudflare), so injecting per-visitor values server-side at render would bake one visitor's `gclid`/UTM into the shared cached HTML. Running in the browser after the cached HTML loads gives each visitor their own values. This overlaps with the **HandL UTM Grabber** plugin — once these fields are verified in production, HandL can be retired for these forms (audit any `[handl_*]` shortcodes or other forms/reporting that rely on it first).
@@ -143,6 +145,15 @@ Every lead sent to n8n carries three routing flags in its payload so the workflo
 
 The routing source and a "needs routing review" banner are shown on the Gravity Forms entry detail sidebar. The background job's nearest-location ZIP API refinement (below) still runs on top of whatever is resolved here, so even a defaulted lead can be reassigned to a closer owner before it's sent.
 
+### Resending a lead to n8n
+
+An already-processed entry can be re-sent — e.g. after correcting a field mapping — from the Gravity Forms admin, without WP-CLI:
+
+- **Single entry:** a **Resend to n8n** button in the *Koala Location Routing* panel on the entry detail screen.
+- **Multiple entries:** a **Resend to n8n** bulk action on the Entries list.
+
+Both reset the entry's status guard and re-run `kgi_process_quote_entry_job()` (`includes/admin/resend.php`), rebuilding the payload with the current mapping and re-POSTing it. Restricted to users who can edit entries. **Note:** a resend re-runs the *whole* workflow, so if n8n forwards to a CRM it can create a duplicate contact/job, and it re-fires the per-location Google Sheet webhook — pause the downstream step first if duplicates would be a problem.
+
 ### ZIP/postal-code ownership routing
 
 Immediately before the background job builds the n8n payload, the submitted mapped `zip` value is normalized and checked against the Location CPT's `location_zipcode` and comma-separated `additional_zipcodes` ACF fields. If another published location owns that exact normalized value, that location supplies `location_id`, `location_name`, `housecall_pro_api_key`, `location_serviceminder_api_key`, and `location_serviceminder_id` to n8n. The submitted entry values and `page_url` remain unchanged. An empty, unmapped, or unowned ZIP/postal code falls back to the form's original location without flagging the outbound lead.
@@ -200,6 +211,7 @@ includes/
   admin/
     settings.php                    Settings page (all options above)
     entry-details.php                Entry detail sidebar panel
+    resend.php                       "Resend to n8n" button + entries-list bulk action
     notices.php                     "Gravity Forms required" admin notice
   forms/
     assets.php                      Frontend CSS/JS enqueue, dataLayer field localization

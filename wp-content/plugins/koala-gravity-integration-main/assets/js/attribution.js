@@ -236,8 +236,6 @@
 				return resolveService();
 			case 'cta_text':
 				return resolveCtaText();
-			case 'form_id':
-				return String( formId );
 			default:
 				return '';
 		}

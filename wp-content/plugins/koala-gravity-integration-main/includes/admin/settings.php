@@ -373,7 +373,6 @@ function kgi_get_payload_field_labels(): array {
 		'form_timestamp'           => __( 'Timestamp', 'koala-gravity-integration' ),
 		'service'                  => __( 'Service', 'koala-gravity-integration' ),
 		'cta_text'                 => __( 'CTA Text', 'koala-gravity-integration' ),
-		'form_id'                  => __( 'Form ID', 'koala-gravity-integration' ),
 	);
 }
 

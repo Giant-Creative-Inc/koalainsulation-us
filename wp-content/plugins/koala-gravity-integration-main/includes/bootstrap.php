@@ -24,6 +24,7 @@ function kgi_bootstrap(): void {
 	require_once KGI_PLUGIN_DIR . 'includes/logger.php';
 	require_once KGI_PLUGIN_DIR . 'includes/location-resolver.php';
 	require_once KGI_PLUGIN_DIR . 'includes/admin/entry-details.php';
+	require_once KGI_PLUGIN_DIR . 'includes/admin/resend.php';
 	require_once KGI_PLUGIN_DIR . 'includes/admin/settings.php';
 	require_once KGI_PLUGIN_DIR . 'includes/forms/assets.php';
 	require_once KGI_PLUGIN_DIR . 'includes/forms/field-population.php';
@@ -35,6 +36,7 @@ function kgi_bootstrap(): void {
 	kgi_register_field_population_hooks();
 	kgi_register_background_job_hooks();
 	kgi_register_admin_entry_hooks();
+	kgi_register_resend_hooks();
 	kgi_register_settings_hooks();
 	kgi_register_form_hooks();
 

@@ -384,6 +384,11 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 			}
 		}
 
+		// The form ID is intrinsic to the entry, so it is set from the entry
+		// itself rather than a mapped hidden field — always correct, nothing to
+		// configure on the form.
+		$entry_payload['form_id'] = (string) $entry['form_id'];
+
 		$payload = array_merge(
 			$entry_payload,
 			$location_payload,

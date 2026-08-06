@@ -70,7 +70,6 @@ const KGI_DATALAYER_FIELD_MAP_KEYS = array(
 	'referrer',
 	'service',
 	'cta_text',
-	'form_id',
 );
 
 /**
