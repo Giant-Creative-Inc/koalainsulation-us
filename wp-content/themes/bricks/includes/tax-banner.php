@@ -84,7 +84,7 @@ function koala_tax_banner_head(): void {
 	$link_literal  = null === $server['link'] ? 'null' : wp_json_encode( $server['link'] );
 	$authoritative = $server['authoritative'] ? 'true' : 'false';
 	?>
-	<style id="koala-tax-banner-css">html.koala-tax-banner-on #tax-banner{display:block!important}</style>
+	<style id="koala-tax-banner-css">html.koala-tax-banner-on #tax-banner{display:block;}</style>
 	<script id="koala-tax-banner-init">
 	(function () {
 		var text = <?php echo $text_literal; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
