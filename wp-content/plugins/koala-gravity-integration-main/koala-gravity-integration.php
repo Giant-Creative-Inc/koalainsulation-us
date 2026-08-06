@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Koala Gravity Integration
  * Description:       Custom Gravity Forms integration for Koala Insulation quote forms.
- * Version:           0.7.1
+ * Version:           0.7.2
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            GIANT Creative
