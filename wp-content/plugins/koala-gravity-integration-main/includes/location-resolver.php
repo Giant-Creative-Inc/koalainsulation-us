@@ -221,7 +221,7 @@ function kgi_refresh_location_zip_index( $post_id ): void {
  *      configured radius, looked up via zipcodeapi.com (US ZIP codes and
  *      Canadian postal codes; requires an API key). See
  *      kgi_find_nearest_location_by_zip().
- *   3. The form's original location as the final fallback.
+ *   3. No location when neither lookup finds an owner.
  *
  * The entry's submitted values are untouched.
  *
@@ -230,9 +230,9 @@ function kgi_refresh_location_zip_index( $post_id ): void {
  * @param mixed[] $entry             Gravity Forms entry array.
  * @param WP_Post $original_location Location originally resolved from the form.
  * @param int     $entry_id          Gravity Forms entry ID for diagnostic logging.
- * @return WP_Post Location to use for the n8n location payload.
+ * @return WP_Post|null Location to use for the n8n location payload, or null.
  */
-function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_location, int $entry_id = 0 ): WP_Post {
+function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_location, int $entry_id = 0 ): ?WP_Post {
 	$form_id      = (int) ( $entry['form_id'] ?? 0 );
 	$field_map    = kgi_get_field_map_for_form( $form_id );
 	$zip_field_id = $field_map['zip'] ?? '';
@@ -245,11 +245,11 @@ function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_loc
 	$owners = kgi_get_location_zip_index()[ $zip_code ] ?? array();
 
 	if ( empty( $owners ) ) {
-		// No location owns this ZIP. Try the nearest owning location before
-		// falling back to the form's original location.
+		// No location owns this ZIP. Try the nearest owning location; if that
+		// also fails, leave the submission unassigned for manual review.
 		$nearest = kgi_find_nearest_location_by_zip( $zip_code, $entry_id );
 
-		return $nearest instanceof WP_Post ? $nearest : $original_location;
+		return $nearest instanceof WP_Post ? $nearest : null;
 	}
 
 	if ( count( $owners ) > 1 ) {
@@ -270,7 +270,7 @@ function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_loc
 	$matched_location = get_post( (int) $owners[0] );
 
 	if ( ! $matched_location instanceof WP_Post || kgi_get_location_post_type() !== $matched_location->post_type ) {
-		return $original_location;
+		return null;
 	}
 
 	return $matched_location;
@@ -376,9 +376,9 @@ function kgi_find_nearest_location_by_zip( string $normalized_zip, int $entry_id
  * still shape-checked for the configured country: a US ZIP+4 is truncated to
  * its leading 5 digits, and anything that isn't a plausible code for that
  * country (or a country zipcodeapi.com doesn't cover, i.e. "other") returns
- * null so the caller keeps the original location. Normalization has already
- * stripped spaces and hyphens and uppercased letters, so a Canadian code
- * arrives as `A1A1A1`.
+ * null so the caller can leave the submission unassigned for review.
+ * Normalization has already stripped spaces and hyphens and uppercased
+ * letters, so a Canadian code arrives as `A1A1A1`.
  *
  * @since 0.6.0
  *

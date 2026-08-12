@@ -16,7 +16,7 @@ Custom Gravity Forms integration for Koala Insulation quote forms. It resolves w
 
 ## Settings
 
-Configure everything under **Settings → Koala Gravity Integration** in wp-admin. Nothing is hardcoded in code — all of the following are stored as WordPress options and editable from this one screen.
+Configure everything under **Settings → Koala Gravity Integration** in wp-admin. The following values are stored as WordPress options and editable from this one screen; when Notification Email is blank, it uses the documented Koala marketing-team default.
 
 ### General
 
@@ -127,13 +127,13 @@ A submission is **never rejected** for a missing location — that was a direct 
 
 1. **URL / hidden field** — the location resolved from the page URL or the posted `location_id`, as before. Entry meta `kgi_location_source = url`.
 2. **Exact ZIP owner** — if that fails, the submitted ZIP/postal code is looked up in the ownership index (in-memory, no API call) and its owning location is used. `kgi_location_source = zip`.
-3. **Default Location** — if that also fails, the lead is routed to the configured overflow location so it still reaches n8n. `kgi_location_source = default`, the entry is flagged (`kgi_needs_review`), and a notification email is sent.
+3. **Default Location** — if that also fails, the lead is routed to the configured overflow location so it still reaches n8n. `kgi_location_source = default`, the entry is flagged (`kgi_needs_review`), and a notification email is sent. During background ZIP routing, a submitted ZIP with no exact owner and no owner within the configured radius is unassigned instead of retaining the page/default location; its source becomes `unresolved` and the review email is sent.
 4. **Unresolved** — if no location resolves and no default is configured, the entry is still saved, flagged (`kgi_location_source = unresolved`, `kgi_needs_review`), a notification is sent, **and it is still sent to n8n** with an empty location payload and a `location_found = false` flag (see below) so the n8n workflow can alert on it — e.g. post a Slack message — instead of the lead being dropped.
 
 | Field | Description |
 |---|---|
 | **Default Location** | The overflow franchise location for leads whose location can't be resolved from the page or ZIP. Leave as *None* to send such leads to n8n as "no location found" (flagged) rather than to a franchise. |
-| **Notification Email** | Where the "needs routing review" alert is sent when the default/unresolved fallback is used. Defaults to the site admin email if blank. |
+| **Notification Email** | Where the Gravity Forms-style "needs routing review" email is sent when the default/unresolved fallback is used. Defaults to `marketingteam@koalainsulation.com` if blank, with `erin@giantcreative.ca` BCC'd. Gravity Forms renders its standard `{all_fields}` and `{entry_url}` merge tags, then WordPress `wp_mail()` sends the HTML so SMTP plugins can process and log it. |
 
 Every lead sent to n8n carries three routing flags in its payload so the workflow can branch (e.g. alert vs. CRM push):
 

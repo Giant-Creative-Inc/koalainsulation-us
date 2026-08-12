@@ -249,14 +249,15 @@ function kgi_handle_fixed_location_form_submission( array $entry, array $form ):
 }
 
 /**
- * Emails staff when a lead had to use a fallback location (or none).
+ * Emails a Gravity Forms-style submission when a lead used a fallback.
  *
  * Fires only for the `default` and `unresolved` routing outcomes — a URL, ZIP,
  * or fixed-config match is confident and needs no attention. The message
- * carries the submitter's name, email, and ZIP plus a direct link to the
- * Gravity Forms entry so the lead can be re-routed by hand if needed. Sent to
- * the address configured in Settings → Koala Gravity → Lead Routing, falling
- * back to the site admin email.
+ * renders Gravity Forms' standard `{all_fields}` and `{entry_url}` merge tags,
+ * then sends the resulting HTML through WordPress `wp_mail()` so SMTP plugins
+ * can process and log it. It is sent to the address configured in Settings →
+ * Koala Gravity → Lead Routing, falling back to
+ * marketingteam@koalainsulation.com.
  *
  * @since 0.7.0
  *
@@ -271,53 +272,45 @@ function kgi_notify_unresolved_lead( int $entry_id, array $entry, string $source
 		return;
 	}
 
-	$form_id    = (int) ( $entry['form_id'] ?? 0 );
-	$form       = GFAPI::get_form( $form_id );
-	$form_title = ( $form && ! is_wp_error( $form ) ) ? $form['title'] : '#' . $form_id;
+	$form_id = (int) ( $entry['form_id'] ?? 0 );
+	$form    = GFAPI::get_form( $form_id );
 
-	$field_map      = kgi_get_field_map_for_form( $form_id );
-	$first_name     = '' !== ( $field_map['first_name'] ?? '' ) ? rgar( $entry, (string) $field_map['first_name'] ) : '';
-	$last_name      = '' !== ( $field_map['last_name'] ?? '' ) ? rgar( $entry, (string) $field_map['last_name'] ) : '';
-	$submitter_name = trim( $first_name . ' ' . $last_name );
-	$email          = '' !== ( $field_map['email'] ?? '' ) ? rgar( $entry, (string) $field_map['email'] ) : '';
-	$zip            = '' !== ( $field_map['zip'] ?? '' ) ? rgar( $entry, (string) $field_map['zip'] ) : '';
+	if ( ! $form || is_wp_error( $form ) ) {
+		kgi_log(
+			'Could not send the routing-review notification because the Gravity Form was unavailable.',
+			array(
+				'entry_id' => $entry_id,
+				'form_id'  => $form_id,
+			)
+		);
 
-	$entry_link = admin_url( 'admin.php?page=gf_entries&view=entry&id=' . $form_id . '&lid=' . $entry_id );
+		return;
+	}
 
 	if ( 'unresolved' === $source ) {
-		$intro = __( 'A quote submission could not be routed to any location and is not being sent onward. Please route it manually.', 'koala-gravity-integration' );
+		$intro = __( 'A quote submission could not be routed to any location. It was saved and queued for downstream processing, but still needs to be routed manually.', 'koala-gravity-integration' );
 	} else {
 		$intro = __( 'A quote submission could not be matched to a location from its page or ZIP, so it was routed to the default location. Please confirm it reached the right franchise.', 'koala-gravity-integration' );
 	}
 
-	$subject = sprintf(
-		/* translators: 1: routing fallback label, 2: Gravity Forms form title */
-		__( '[Koala] Lead needs routing review (%1$s) — %2$s', 'koala-gravity-integration' ),
-		$source,
-		$form_title
+	$subject_template = sprintf(
+		/* translators: %s: routing fallback label. */
+		__( '[Koala] Lead needs routing review (%s) — {form_title}', 'koala-gravity-integration' ),
+		$source
+	);
+	$message_template = '<p>' . esc_html( $intro ) . '</p>'
+		. '<p><strong>' . esc_html__( 'Routing fallback:', 'koala-gravity-integration' ) . '</strong> ' . esc_html( $source ) . '</p>'
+		. '{all_fields}'
+		. '<p><a href="{entry_url}">' . esc_html__( 'Review this entry in Gravity Forms', 'koala-gravity-integration' ) . '</a></p>';
+
+	$subject = GFCommon::replace_variables( $subject_template, $form, $entry, false, false, false, 'text' );
+	$message = GFCommon::replace_variables( $message_template, $form, $entry, false, false, false, 'html' );
+	$headers = array(
+		'Content-Type: text/html; charset=UTF-8',
+		'Bcc: erin@giantcreative.ca',
 	);
 
-	$lines = array(
-		$intro,
-		'',
-		/* translators: %s: routing fallback label */
-		sprintf( __( 'Routing fallback: %s', 'koala-gravity-integration' ), $source ),
-		/* translators: %s: Gravity Forms form title */
-		sprintf( __( 'Form: %s', 'koala-gravity-integration' ), $form_title ),
-		/* translators: %d: Gravity Forms entry ID */
-		sprintf( __( 'Entry ID: %d', 'koala-gravity-integration' ), $entry_id ),
-		/* translators: %s: submitter name */
-		sprintf( __( 'Name: %s', 'koala-gravity-integration' ), $submitter_name ),
-		/* translators: %s: submitter email */
-		sprintf( __( 'Email: %s', 'koala-gravity-integration' ), $email ),
-		/* translators: %s: submitted ZIP or postal code */
-		sprintf( __( 'ZIP/Postal: %s', 'koala-gravity-integration' ), $zip ),
-		'',
-		/* translators: %s: URL to the Gravity Forms entry */
-		sprintf( __( 'Review the entry: %s', 'koala-gravity-integration' ), $entry_link ),
-	);
-
-	wp_mail( $to, $subject, implode( "\n", $lines ) );
+	wp_mail( $to, $subject, $message, $headers );
 }
 
 /**

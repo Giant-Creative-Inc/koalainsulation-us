@@ -603,7 +603,7 @@ function kgi_sanitize_letters_dashes_slug( $value ): string {
  * Sanitizes the unresolved-lead notification email address.
  *
  * An empty value is preserved (so `kgi_get_notification_email()` falls back to
- * the site admin email); a non-empty value must be a valid email or it is
+ * the Koala marketing team); a non-empty value must be a valid email or it is
  * discarded.
  *
  * @since 0.7.0
@@ -938,10 +938,10 @@ function kgi_render_notification_email_field(): void {
 		id="kgi_notification_email"
 		value="<?php echo esc_attr( $value ); ?>"
 		class="regular-text"
-		placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>"
+		placeholder="<?php echo esc_attr( KGI_DEFAULT_NOTIFICATION_EMAIL ); ?>"
 	/>
 	<p class="description">
-		<?php esc_html_e( 'Where to send an alert when a lead is routed to the default location or can\'t be routed at all. Defaults to the site admin email if left blank.', 'koala-gravity-integration' ); ?>
+		<?php esc_html_e( 'Where to send an alert when a lead is routed to the default location or can\'t be routed at all. Defaults to marketingteam@koalainsulation.com if left blank.', 'koala-gravity-integration' ); ?>
 	</p>
 	<?php
 }

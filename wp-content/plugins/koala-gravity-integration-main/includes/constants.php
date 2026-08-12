@@ -9,10 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KGI_VERSION', '0.7.2' );
+define( 'KGI_VERSION', '0.7.3' );
 define( 'KGI_PLUGIN_FILE', dirname( __DIR__ ) . '/koala-gravity-integration.php' );
 define( 'KGI_PLUGIN_DIR', plugin_dir_path( KGI_PLUGIN_FILE ) );
 define( 'KGI_PLUGIN_BASENAME', plugin_basename( KGI_PLUGIN_FILE ) );
+define( 'KGI_DEFAULT_NOTIFICATION_EMAIL', 'marketingteam@koalainsulation.com' );
 /**
  * Returns the configured quote form ID from WordPress options.
  *
@@ -266,7 +267,8 @@ function kgi_get_default_location(): ?WP_Post {
 /**
  * Returns the email address that receives unresolved-lead notifications.
  *
- * Falls back to the site admin email when no dedicated address is configured.
+ * Falls back to the Koala marketing team when no dedicated address is
+ * configured.
  *
  * @since 0.7.0
  *
@@ -276,7 +278,7 @@ function kgi_get_notification_email(): string {
 	$email = get_option( 'kgi_notification_email', '' );
 	$email = is_string( $email ) ? trim( $email ) : '';
 
-	return '' !== $email ? $email : (string) get_option( 'admin_email' );
+	return '' !== $email ? $email : KGI_DEFAULT_NOTIFICATION_EMAIL;
 }
 
 /**

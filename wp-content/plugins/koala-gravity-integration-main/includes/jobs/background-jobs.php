@@ -297,6 +297,7 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 		$location        = kgi_get_location_from_entry_meta( $entry_id );
 		$location_source = (string) gform_get_meta( $entry_id, 'kgi_location_source' );
 		$needs_review    = (bool) gform_get_meta( $entry_id, 'kgi_needs_review' );
+		$routed_location = null;
 
 		// A missing location is only a hard failure when it isn't the known
 		// "unresolved" case. An unresolved lead (no URL/ZIP match and no default
@@ -313,6 +314,44 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 			);
 
 			return;
+		}
+
+		if ( $location ) {
+			$routed_location_id = absint( gform_get_meta( $entry_id, 'kgi_routed_location_id' ) );
+			$routed_location    = $routed_location_id > 0 ? get_post( $routed_location_id ) : null;
+
+			if ( ! $routed_location instanceof WP_Post || kgi_get_location_post_type() !== $routed_location->post_type ) {
+				$routed_location = kgi_resolve_location_for_entry_zip( $entry, $location, $entry_id );
+			}
+
+			if ( ! $routed_location ) {
+				$original_location_id = $location->ID;
+
+				gform_update_meta( $entry_id, 'kgi_location_status', 'missing_location' );
+				gform_update_meta( $entry_id, 'kgi_location_id', '' );
+				gform_update_meta( $entry_id, 'kgi_location_name', '' );
+				gform_update_meta( $entry_id, 'kgi_location_source', 'unresolved' );
+				gform_update_meta( $entry_id, 'kgi_needs_review', 1 );
+				gform_update_meta( $entry_id, 'kgi_routed_location_id', '' );
+				gform_update_meta( $entry_id, 'kgi_routed_location_name', '' );
+				gform_update_meta( $entry_id, 'kgi_zip_routing_status', 'unresolved' );
+
+				if ( ! $needs_review ) {
+					kgi_notify_unresolved_lead( $entry_id, $entry, 'unresolved' );
+				}
+
+				kgi_log(
+					'Submitted ZIP had no exact owner or owner within the fallback radius. Location unassigned for review.',
+					array(
+						'entry_id'             => $entry_id,
+						'original_location_id' => $original_location_id,
+					)
+				);
+
+				$location        = null;
+				$location_source = 'unresolved';
+				$needs_review    = true;
+			}
 		}
 
 		if ( $location ) {
@@ -334,13 +373,6 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 		}
 
 		if ( $location ) {
-			$routed_location_id = absint( gform_get_meta( $entry_id, 'kgi_routed_location_id' ) );
-			$routed_location    = $routed_location_id > 0 ? get_post( $routed_location_id ) : null;
-
-			if ( ! $routed_location instanceof WP_Post || kgi_get_location_post_type() !== $routed_location->post_type ) {
-				$routed_location = kgi_resolve_location_for_entry_zip( $entry, $location, $entry_id );
-			}
-
 			gform_update_meta( $entry_id, 'kgi_routed_location_id', $routed_location->ID );
 			gform_update_meta( $entry_id, 'kgi_routed_location_name', get_field( 'location_name', $routed_location->ID ) );
 			gform_update_meta(
