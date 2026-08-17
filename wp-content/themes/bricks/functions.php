@@ -2749,11 +2749,11 @@ function output_custom_or_default_gtm_head()
 
             (function doLoad() {
 
-            // --- 1. Load reCAPTCHA Enterprise ---
-            var rc = document.createElement('script');
-            rc.src = "https://www.google.com/recaptcha/enterprise.js?render=6LeM0ysrAAAAAKIwt8W-CTQS6KZNq5Mh0NlEhHKt";
-            rc.async = true;
-            document.head.appendChild(rc);
+            // --- 1. reCAPTCHA Enterprise loading disabled ---
+            // var rc = document.createElement('script');
+            // rc.src = "https://www.google.com/recaptcha/enterprise.js?render=6LeM0ysrAAAAAKIwt8W-CTQS6KZNq5Mh0NlEhHKt";
+            // rc.async = true;
+            // document.head.appendChild(rc);
 
             // --- 2. Load Hotjar ---
             (function(h, o, t, j, a, r) {

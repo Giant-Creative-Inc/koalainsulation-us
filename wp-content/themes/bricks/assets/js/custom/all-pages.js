@@ -799,6 +799,11 @@ schemaObserver.observe(document.documentElement, {
                 linkElement.onclick = () => {
                   window.location.href = `${data.url}/recent-projects`;
                 };
+              } else if (resource.terms.includes("Careers")) {
+                linkElement.textContent = `Careers`;
+                linkElement.onclick = () => {
+                  window.open(`${data.url}/careers`, "_blank");
+                };
               } else if (resource.terms.includes("Areas served")) {
                 // Do nothing for "Areas served"
                 return;
