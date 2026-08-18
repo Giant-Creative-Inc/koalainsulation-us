@@ -2769,31 +2769,19 @@ window.addEventListener("load", function () {
   if (!is_location_page && mapElement) {
     var locations = [];
 
-    var dnyPlaces = koalaData.zip_locations;
+    var dnyPlaces = koalaData.locations || [];
 
     dnyPlaces.forEach(location => {
-      var place = [];
-      var title = location.title;
-      var pAddress = location.location_address;
-      var pLat = location.lat;
-      var pLong = location.long;
-      var pPhone = location.phone;
-      var pZip = location.title;
-      var pService = location.location_service;
-      // var anchorElement = elem.querySelector(".place-link");
-      var hrefLink = location.url;
-
-      place.push(
-        title,
-        pLat,
-        pLong,
-        pAddress,
-        pPhone,
-        pZip,
-        hrefLink,
-        pService
-      );
-      locations.push(place);
+      locations.push([
+        location[0],
+        location[1],
+        location[2],
+        location[3],
+        location[4],
+        location[0],
+        location[5],
+        location[6]
+      ]);
     });
     console.log(locations);
     var gmarkers = [];

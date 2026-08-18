@@ -106,10 +106,25 @@ function zip_shape_map_render_shortcode($atts) {
     ?>
 
     <div
-        id="<?php echo esc_attr($map_id); ?>"
-        class="zip-shape-map"
-        style="width:100%;height:<?php echo esc_attr($height); ?>;border-radius:12px;overflow:hidden;"
-    ></div>
+        class="zip-shape-map-shell"
+        style="position:relative;width:100%;height:<?php echo esc_attr($height); ?>;border-radius:12px;overflow:hidden;background:#9ec7ba;"
+    >
+        <div
+            id="<?php echo esc_attr($map_id); ?>"
+            class="zip-shape-map"
+            style="width:100%;height:100%;"
+            aria-label="Service area map"
+        ></div>
+        <button
+            type="button"
+            class="zip-shape-map-placeholder"
+            data-zip-shape-map-load
+            aria-controls="<?php echo esc_attr($map_id); ?>"
+            style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:24px;border:0;background:#9ec7ba;color:#fff;font:inherit;font-weight:600;text-align:center;cursor:pointer;"
+        >
+            Load service area map
+        </button>
+    </div>
 
     <script>
         window.zipShapeMapConfigs = window.zipShapeMapConfigs || [];
@@ -158,266 +173,23 @@ function zip_shape_map_enqueue_assets() {
 
     $loaded = true;
 
+    $loader_path = get_template_directory() . '/assets/js/custom/zip-shape-map.js';
+    $loader_version = file_exists($loader_path) ? filemtime($loader_path) : null;
+
     wp_enqueue_script(
-        'turf-js',
-        'https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js',
+        'zip-shape-map-loader',
+        get_template_directory_uri() . '/assets/js/custom/zip-shape-map.js',
         array(),
-        '7',
+        $loader_version,
         true
     );
 
     wp_add_inline_script(
-        'turf-js',
+        'zip-shape-map-loader',
         'window.zipShapeMapRestUrl = ' . wp_json_encode(rest_url('zip-shape-map/v1/boundaries')) . ';' .
         'window.zipShapeMapApiKey = ' . wp_json_encode(ZIP_SHAPE_MAPS_API_KEY) . ';',
         'before'
     );
-
-    $inline_js = <<<'JS'
-window.initZipShapeMaps = async function () {
-    // Wait for turf if it hasn't finished loading yet (race condition when map is above fold)
-    let t = 0;
-    while (!window.turf && t < 50) {
-        await new Promise(function (r) { setTimeout(r, 100); });
-        t++;
-    }
-
-    const configs = window.zipShapeMapConfigs || [];
-
-    for (const config of configs) {
-        await window.renderOneZipShapeMap(config);
-    }
-};
-
-window.renderOneZipShapeMap = async function (config) {
-    const el = document.getElementById(config.id);
-
-    if (!el) {
-        return;
-    }
-
-    const pin = {
-        lat: Number(config.lat),
-        lng: Number(config.lng)
-    };
-
-    const map = new google.maps.Map(el, {
-        center: pin,
-        zoom: Number(config.zoom) || 10,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        disableDefaultUI: true,
-        gestureHandling: 'none',
-        zoomControl: false,
-        keyboardShortcuts: false,
-        clickableIcons: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        mapTypeControl: false,
-        scaleControl: false,
-        rotateControl: false,
-        styles: [
-          { elementType: "geometry", stylers: [{ color: "#9ec7ba" }] },
-          { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-          { elementType: "labels.text.fill", stylers: [{ color: "#fcfcff" }] },
-          { elementType: "labels.text.stroke", stylers: [{ visibility: "off" }] },
-          {
-            featureType: "administrative",
-            elementType: "geometry",
-            stylers: [{ color: "#9ec7ba" }],
-          },
-          {
-            featureType: "administrative.country",
-            elementType: "labels.text.fill",
-            stylers: [{ visibility: "off" }],
-          },
-          {
-            featureType: "administrative.land_parcel",
-            stylers: [{ visibility: "off" }],
-          },
-          {
-            featureType: "administrative.locality",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#fcfcff" }],
-          },
-          {
-            featureType: "poi",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#fcfcff" }],
-          },
-          {
-            featureType: "poi.park",
-            elementType: "geometry",
-            stylers: [{ color: "#99a9bb" }],
-          },
-          {
-            featureType: "poi.park",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#fcfcff" }],
-          },
-          {
-            featureType: "road",
-            elementType: "geometry.fill",
-            stylers: [{ color: "#7EB4A3" }],
-          },
-          {
-            featureType: "road.arterial",
-            elementType: "geometry",
-            stylers: [{ color: "#7EB4A3" }],
-          },
-          {
-            featureType: "road.highway",
-            elementType: "geometry",
-            stylers: [{ color: "#7EB4A3" }],
-          },
-          {
-            featureType: "road.highway.controlled_access",
-            elementType: "geometry",
-            stylers: [{ color: "#7EB4A3" }],
-          },
-          {
-            featureType: "transit",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#fcfcff" }],
-          },
-          {
-            featureType: "water",
-            elementType: "geometry",
-            stylers: [{ color: "#7EB4A3" }],
-          },
-        ],
-    });
-
-    if (config.showPin) {
-        new google.maps.Marker({
-            map: map,
-            position: pin,
-            icon: "/wp-content/uploads/2024/09/map-pin.svg",
-        });
-    }
-
-    if (config.showBoundary === false) {
-        return;
-    }
-
-    if (!Array.isArray(config.zipcodes) || !config.zipcodes.length) {
-        return;
-    }
-
-    try {
-        const shape = await window.getCachedZipShape(config.zipcodes);
-
-        map.data.addGeoJson(shape);
-
-        map.data.setStyle({ //#1D6662
-            fillColor: '#1D6662',
-            fillOpacity: 0,
-            strokeColor: '#1D6662',
-            strokeWeight: 3,
-            clickable: false
-        });
-
-        const bounds = new google.maps.LatLngBounds();
-
-        map.data.forEach(function (feature) {
-            feature.getGeometry().forEachLatLng(function (latLng) {
-                bounds.extend(latLng);
-            });
-        });
-
-        if (config.showPin) {
-            bounds.extend(pin);
-        }
-
-        map.fitBounds(bounds);
-
-    } catch (error) {
-        console.error('ZIP boundary map error:', error);
-    }
-};
-
-window.getCachedZipShape = async function (zipcodes) {
-    const sortedZips = [...zipcodes].sort();
-    // Cache key includes smoothing — v2 busts old union-only cache
-    const browserCacheKey = 'zipShapeMapV2:' + sortedZips.join(',');
-
-    const cached = localStorage.getItem(browserCacheKey);
-
-    if (cached) {
-        try {
-            return JSON.parse(cached);
-        } catch (error) {
-            localStorage.removeItem(browserCacheKey);
-        }
-    }
-
-    const restUrl = window.zipShapeMapRestUrl + '?zips=' + encodeURIComponent(sortedZips.join(','));
-
-    const response = await fetch(restUrl);
-
-    const geoJson = await response.json();
-
-    let shape = geoJson;
-
-    if (window.turf && geoJson.features && geoJson.features.length) {
-        const merged = turf.union(turf.featureCollection(geoJson.features));
-
-        if (merged) {
-            shape = merged;
-        }
-    }
-
-    if (window.turf && typeof turf.polygonSmooth === 'function') {
-        const smoothed = turf.polygonSmooth(shape, { iterations: 1 });
-
-        if (smoothed) {
-            shape = smoothed;
-        }
-    }
-
-    try {
-        localStorage.setItem(browserCacheKey, JSON.stringify(shape));
-    } catch (error) {
-        console.warn('Could not save ZIP shape to browser cache.', error);
-    }
-
-    return shape;
-};
-
-// Lazy-load Google Maps API only when a map container is near the viewport
-(function () {
-    var mapsLoaded = false;
-
-    function loadMapsApi() {
-        if (mapsLoaded) return;
-        mapsLoaded = true;
-        var s = document.createElement('script');
-        s.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.zipShapeMapApiKey + '&callback=initZipShapeMaps&v=weekly';
-        document.head.appendChild(s);
-    }
-
-    var maps = document.querySelectorAll('.zip-shape-map');
-
-    if (!maps.length) return;
-
-    if ('IntersectionObserver' in window) {
-        var observer = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    observer.disconnect();
-                    loadMapsApi();
-                }
-            });
-        }, { rootMargin: '400px' });
-
-        maps.forEach(function (el) { observer.observe(el); });
-    } else {
-        loadMapsApi();
-    }
-})();
-JS;
-
-    wp_add_inline_script('turf-js', $inline_js, 'after');
-    // Google Maps API is now loaded lazily via IntersectionObserver in the inline script above
 }
 
 /**
@@ -430,6 +202,158 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 });
+
+function zip_shape_map_prepare_boundary_geojson($features) {
+    $prepared = array();
+
+    foreach ((array) $features as $feature) {
+        if (empty($feature['geometry']['type']) || empty($feature['geometry']['coordinates'])) {
+            continue;
+        }
+
+        $prepared[] = array(
+            'type'       => 'Feature',
+            'properties' => new stdClass(),
+            'geometry'   => array(
+                'type'        => $feature['geometry']['type'],
+                'coordinates' => $feature['geometry']['coordinates'],
+            ),
+        );
+    }
+
+    return array(
+        'type'     => 'FeatureCollection',
+        'features' => $prepared,
+    );
+}
+
+function zip_shape_map_dissolve_boundary_geojson($features) {
+    $geometries = array();
+
+    foreach ((array) $features as $feature) {
+        $geometry = $feature['geometry'] ?? array();
+        $type = $geometry['type'] ?? '';
+        $coordinates = $geometry['coordinates'] ?? array();
+
+        if ($type === 'Polygon' && !empty($coordinates)) {
+            $geometries[] = array('rings' => $coordinates);
+        } elseif ($type === 'MultiPolygon') {
+            foreach ($coordinates as $polygon) {
+                if (!empty($polygon)) {
+                    $geometries[] = array('rings' => $polygon);
+                }
+            }
+        }
+    }
+
+    if (count($geometries) < 2) {
+        return zip_shape_map_prepare_boundary_geojson($features);
+    }
+
+    $response = wp_remote_post(
+        'https://sampleserver6.arcgisonline.com/arcgis/rest/services/Utilities/Geometry/GeometryServer/union',
+        array(
+            'timeout' => 30,
+            'body'    => array(
+                'f'          => 'json',
+                'sr'         => '4326',
+                'geometries' => wp_json_encode(array(
+                    'geometryType' => 'esriGeometryPolygon',
+                    'geometries'   => $geometries,
+                )),
+            ),
+        )
+    );
+
+    if (is_wp_error($response)) {
+        return zip_shape_map_prepare_boundary_geojson($features);
+    }
+
+    $union = json_decode(wp_remote_retrieve_body($response), true);
+    $rings = $union['geometry']['rings'] ?? array();
+
+    if (empty($rings)) {
+        return zip_shape_map_prepare_boundary_geojson($features);
+    }
+
+    $polygons = array();
+
+    foreach ($rings as $ring) {
+        if (zip_shape_map_ring_area($ring) < 0) {
+            $polygons[] = array($ring);
+        }
+    }
+
+    foreach ($rings as $ring) {
+        if (zip_shape_map_ring_area($ring) < 0) {
+            continue;
+        }
+
+        $assigned = false;
+
+        foreach ($polygons as &$polygon) {
+            if (zip_shape_map_point_in_ring($ring[0], $polygon[0])) {
+                $polygon[] = $ring;
+                $assigned = true;
+                break;
+            }
+        }
+        unset($polygon);
+
+        if (!$assigned) {
+            $polygons[] = array(array_reverse($ring));
+        }
+    }
+
+    if (empty($polygons)) {
+        return zip_shape_map_prepare_boundary_geojson($features);
+    }
+
+    return array(
+        'type'     => 'FeatureCollection',
+        'features' => array(array(
+            'type'       => 'Feature',
+            'properties' => new stdClass(),
+            'geometry'   => array(
+                'type'        => 'MultiPolygon',
+                'coordinates' => $polygons,
+            ),
+        )),
+    );
+}
+
+function zip_shape_map_ring_area($ring) {
+    $area = 0.0;
+    $count = count($ring);
+
+    for ($index = 0; $index < $count; $index++) {
+        $next = ($index + 1) % $count;
+        $area += ($ring[$index][0] * $ring[$next][1]) - ($ring[$next][0] * $ring[$index][1]);
+    }
+
+    return $area / 2;
+}
+
+function zip_shape_map_point_in_ring($point, $ring) {
+    $inside = false;
+    $count = count($ring);
+
+    for ($i = 0, $j = $count - 1; $i < $count; $j = $i++) {
+        $xi = $ring[$i][0];
+        $yi = $ring[$i][1];
+        $xj = $ring[$j][0];
+        $yj = $ring[$j][1];
+
+        $intersects = (($yi > $point[1]) !== ($yj > $point[1]))
+            && ($point[0] < (($xj - $xi) * ($point[1] - $yi) / (($yj - $yi) ?: PHP_FLOAT_EPSILON)) + $xi);
+
+        if ($intersects) {
+            $inside = !$inside;
+        }
+    }
+
+    return $inside;
+}
 
 function zip_shape_map_get_boundaries(WP_REST_Request $request) {
     $zipcodes_raw = $request->get_param('zips');
@@ -445,7 +369,7 @@ function zip_shape_map_get_boundaries(WP_REST_Request $request) {
 
     sort($zipcodes);
 
-    $cache_key = 'zip_shape_' . md5(implode(',', $zipcodes));
+    $cache_key = 'zip_shape_v4_' . md5(implode(',', $zipcodes));
     $cached = get_transient($cache_key);
 
     if ($cached !== false) {
@@ -487,7 +411,17 @@ function zip_shape_map_get_boundaries(WP_REST_Request $request) {
         );
     }
 
-    set_transient($cache_key, $geojson, 30 * DAY_IN_SECONDS);
+    $prepared_geojson = zip_shape_map_dissolve_boundary_geojson($geojson['features']);
 
-    return rest_ensure_response($geojson);
+    if (empty($prepared_geojson['features'])) {
+        return new WP_Error(
+            'empty_boundaries',
+            'No usable ZIP boundaries found.',
+            array('status' => 404)
+        );
+    }
+
+    set_transient($cache_key, $prepared_geojson, 30 * DAY_IN_SECONDS);
+
+    return rest_ensure_response($prepared_geojson);
 }

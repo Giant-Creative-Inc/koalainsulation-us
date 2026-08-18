@@ -313,7 +313,7 @@ function get_custom_field_value_from_a_post($postId, $meta_key)
 
 function get_all_locations_data()
 {
-    $cache_key = 'koala_all_locations_data';
+    $cache_key = 'koala_location_map_data_v2';
     $cached = get_transient($cache_key);
     if ($cached !== false) {
         return $cached;
@@ -330,11 +330,6 @@ function get_all_locations_data()
 
 
     foreach ($location_posts as $location) {
-        $zip = get_field('location_zipcode', $location->ID);
-        $additional_zips_raw = get_field('additional_zipcodes', $location->ID);
-        $additional_zips = array_map('trim', explode(',', $additional_zips_raw));
-        $hcp_key = get_field('housecall_pro_api_key', $location->ID);
-        $sm_key = get_field('location_serviceminder_api_key', $location->ID);
         $url = get_permalink($location->ID);
         $title = get_field('location_name', $location->ID);
         $location_address = get_field('location_address', $location->ID);
@@ -347,18 +342,16 @@ function get_all_locations_data()
             : $field;
 
 
+        // Positional rows keep the one client-side map payload compact:
+        // [title, latitude, longitude, address, phone, URL, service area].
         $locations_data[] = [
-            'zipcode' => $zip,
-            'additional_zips' => $additional_zips,
-            'hcp_key' => $hcp_key,
-            'sm_key' => $sm_key,
-            'url' => $url ? $url : '',
-            'title' => $title,
-            'location_address' => $location_address,
-            'lat' => $lat,
-            'long' => $long,
-            'phone' => $phone,
-            'location_service' => $location_service ? $location_service : '',
+            $title,
+            $lat,
+            $long,
+            $location_address,
+            $phone,
+            $url ? $url : '',
+            $location_service ? $location_service : '',
         ];
     }
 
@@ -367,6 +360,7 @@ function get_all_locations_data()
 }
 add_action('save_post_location', function () {
     delete_transient('koala_all_locations_data');
+    delete_transient('koala_location_map_data_v2');
 });
 
 function enqueue_custom_scripts()
@@ -402,7 +396,9 @@ function enqueue_custom_scripts()
 
     // Register the script first
     // Only load Google Maps on pages that actually use it — keeps it off blog, FAQ, etc.
-    $needs_maps = $front_page || $location_page || $single_location_page || $single_service_page || $single_location_service;
+    // Single location pages use the service-area shortcode, which lazy-loads
+    // Google Maps when its fixed-size placeholder approaches the viewport.
+    $needs_maps = $front_page || $location_page || $single_service_page || $single_location_service;
     if ($needs_maps) {
         wp_register_script(
             'google-maps',
@@ -465,21 +461,23 @@ function enqueue_custom_scripts()
 
     $needs_service_scripts = $front_page || $location_page || $single_location_page || $single_service_page || $single_location_service;
 
-    $locations_data = get_all_locations_data();
-
     wp_localize_script('custom-service-js', 'ajaxData', [
         'ajax_url' => admin_url('admin-ajax.php'),
         'match_location_nonce' => wp_create_nonce('match_location'),
         'zip_code_in_radius_nonce' => wp_create_nonce('zip_code_in_radius_nonce'),
-        'zip_locations' => $locations_data,
     ]);
 
-    wp_localize_script('all-pages-js', 'koalaData', [
+    $koala_data = [
         'ajax_url' => admin_url('admin-ajax.php'),
         'is_location' => $location_page,
-        'zip_locations' => $locations_data,
         'map_pin' => home_url() . '/wp-content/uploads/2024/09/map-pin.svg',
-    ]);
+    ];
+
+    if ($needs_maps) {
+        $koala_data['locations'] = get_all_locations_data();
+    }
+
+    wp_localize_script('all-pages-js', 'koalaData', $koala_data);
     wp_enqueue_style('custom-service-css', get_template_directory_uri() . '/assets/css/custom-service.css');
 }
 add_action('wp_enqueue_scripts', 'enqueue_custom_scripts');
