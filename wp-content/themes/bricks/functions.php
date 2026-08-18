@@ -2783,10 +2783,10 @@ function output_custom_or_default_gtm_head()
             window.addEventListener(ev, loadThirdPartyScripts, { once: true, passive: true });
         });
 
-        // Load immediately in GTM Preview / Tag Assistant mode. Tag Assistant
-        // opens the site with a `gtm_debug` query param — without this, the
-        // interaction-gated load means debug mode shows no tags until you click.
-        if (/[?&]gtm_debug=/.test(window.location.search)) {
+        // Load immediately on thank-you URLs and in GTM Preview / Tag Assistant
+        // mode so conversion tags do not depend on a subsequent interaction.
+        var isThankYouUrl = window.location.href.toLowerCase().indexOf('thank-you') !== -1;
+        if (isThankYouUrl || /[?&]gtm_debug=/.test(window.location.search)) {
             loadThirdPartyScripts();
         }
 
