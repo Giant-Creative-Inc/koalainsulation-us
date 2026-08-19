@@ -371,6 +371,10 @@ function enqueue_custom_scripts()
     $homeowner_incentives_page = is_page('homeowner-incentives');
     $service_page = is_page('services');
     $single_service_page = is_singular('location-service');
+    // National (non-location) service singles, e.g. /services/commercial-insulation-services.
+    // These render the photo slider (Bricks template "Services single page"), so they
+    // need Swiper too — is_singular('location-service') above does NOT match them.
+    $single_service_national = is_singular('service');
     $location_page = is_page('locations');
     $single_location_page = is_singular('location');
     $single_location_service = is_singular('location-service');
@@ -389,7 +393,7 @@ function enqueue_custom_scripts()
     // slider), single location-service / why-koala / why-reinsulate (photo &
     // before/after sliders). sliders.js was extracted from all-pages.js so the
     // ~300 lines of Swiper init no longer ship on every page.
-    $needs_swiper = $front_page || $single_location_page || $why_koala_page || $why_reinsulate || $single_service_page;
+    $needs_swiper = $front_page || $single_location_page || $why_koala_page || $why_reinsulate || $single_service_page || $single_service_national;
     if ($needs_swiper) {
         wp_enqueue_script(
             'swiper-bundle',
