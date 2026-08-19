@@ -384,12 +384,42 @@ function enqueue_custom_scripts()
         filemtime(get_stylesheet_directory() . '/assets/css/custom.css') // Auto-updates version for cache busting
     );
 
-    if ($front_page || $single_location_page || $why_koala_page || $why_reinsulate || $single_service_page) {
+    // Swiper library + slider initialisers are only needed where custom slider
+    // markup renders: front page (services slider), single locations (partner
+    // slider), single location-service / why-koala / why-reinsulate (photo &
+    // before/after sliders). sliders.js was extracted from all-pages.js so the
+    // ~300 lines of Swiper init no longer ship on every page.
+    $needs_swiper = $front_page || $single_location_page || $why_koala_page || $why_reinsulate || $single_service_page;
+    if ($needs_swiper) {
         wp_enqueue_script(
             'swiper-bundle',
             'https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js',
             array(),
             null,
+            true
+        );
+        $sliders_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/sliders.js');
+        wp_enqueue_script(
+            'koala-sliders',
+            get_template_directory_uri() . '/assets/js/custom/sliders.js',
+            array('jquery', 'swiper-bundle'),
+            $sliders_ver,
+            true
+        );
+    }
+
+    // Review-count integration (reviews.js) only needs to run where the
+    // #review-count target renders. Empirically that is single locations and
+    // landing pages; the script self-terminates when the target is absent, but
+    // gating keeps it off every other page. Extracted from all-pages.js.
+    $needs_reviews = $single_location_page || is_singular('landing-pages');
+    if ($needs_reviews) {
+        $reviews_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/reviews.js');
+        wp_enqueue_script(
+            'koala-reviews',
+            get_template_directory_uri() . '/assets/js/custom/reviews.js',
+            array(),
+            $reviews_ver,
             true
         );
     }
@@ -454,6 +484,13 @@ function enqueue_custom_scripts()
 
     $all_pages_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/all-pages.js');
     wp_enqueue_script('all-pages-js', get_template_directory_uri() . '/assets/js/custom/all-pages.js', array('jquery'), $all_pages_ver, true);
+
+    // popup.js: global Bricks popup helpers (?form= opener + CallRail re-swap for
+    // the Estimate popup #4865). The popup renders site-wide via the header, and
+    // both blocks self-guard, so this loads globally like all-pages.js. Extracted
+    // from all-pages.js; pure vanilla (no jQuery dependency).
+    $popup_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/popup.js');
+    wp_enqueue_script('koala-popup', get_template_directory_uri() . '/assets/js/custom/popup.js', array(), $popup_ver, true);
 
     // custom-service-js handles the header ZIP lookup and estimate popup.
     $custom_service_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom-service.js');
@@ -3802,6 +3839,9 @@ function koala_defer_scripts($tag, $handle, $src) {
     // List of script handles from your audit to DEFER
     $defer_scripts = [
         'all-pages-js',
+        'koala-sliders',
+        'koala-reviews',
+        'koala-popup',
         'custom-service-js',
         'custom-map-init',
         'location-page',
