@@ -2,19 +2,24 @@ $ = jQuery;
 window.addEventListener("load", function () {
     var locations = [];
 
-    var dnyPlaces = estimateData.zip_locations;
+    // koalaData.locations is the compact positional payload localized in
+    // functions.php (get_all_locations_data):
+    //   [title, latitude, longitude, address, phone, URL, service area]
+    // Previously this read estimateData.zip_locations, but that object is no
+    // longer localized after the location payload was de-duplicated onto
+    // koalaData — leaving `estimateData is not defined` on the homepage.
+    var dnyPlaces = (window.koalaData && koalaData.locations) || [];
 
     dnyPlaces.forEach(location => {
         var place = [];
-        var title = location.title;
-        var pAddress = location.location_address;
-        var pLat = location.lat;
-        var pLong = location.long;
-        var pPhone = location.phone;
-        var pZip = location.title;
-        var pService = location.location_service;
-        // var anchorElement = elem.querySelector(".place-link");
-        var hrefLink = location.url;
+        var title = location[0];
+        var pAddress = location[3];
+        var pLat = location[1];
+        var pLong = location[2];
+        var pPhone = location[4];
+        var pZip = location[0];
+        var pService = location[6];
+        var hrefLink = location[5];
         place.push(
             title,
             pLat,

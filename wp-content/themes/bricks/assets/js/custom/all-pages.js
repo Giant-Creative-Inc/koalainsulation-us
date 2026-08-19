@@ -90,7 +90,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
   var siteUrl = document.location.origin;
-  console.log("siteUrl--", siteUrl);
   var currentUrl = document.location.href;
 
   // const smKey = sessionStorage.getItem("location_sm_key");
@@ -219,7 +218,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Get the current URL pathname
   const pathname = window.location.pathname;
-  console.log(pathname);
 
   // Split the URL into segments and filter out empty segments
   const segments = pathname.split("/").filter(Boolean);
@@ -227,13 +225,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Check if the URL contains a location slug
   if (segments.length > 0) {
     const locationSlug = segments[0]; // Assume the first segment is the location slug
-    console.log(locationSlug);
 
     // Fetch location data from the REST API
     fetch(`/wp-json/custom/v1/location-data/${locationSlug}`)
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Location data not found");
+          const err = new Error("Location data not found");
+          err.status = response.status;
+          throw err;
         }
         return response.json();
       })
@@ -1008,7 +1007,12 @@ schemaObserver.observe(document.documentElement, {
         };
         } // end duplicate guard
 
-        console.error("Error fetching location data:", error);
+        // A 404 here just means the first URL segment is not a location slug (e.g.
+        // /locations, /faq, /blog) - an expected case handled by the national
+        // fallback below; only log genuinely unexpected failures.
+        if (!error || error.status !== 404) {
+          console.error("Error fetching location data:", error);
+        }
         sessionStorage.setItem("location_info", "false");
         usaNav.style.display = "block";
         usaNav.style.visibility = "visible";
