@@ -24,5 +24,15 @@ Thumbs.db
 /vendor/
 **/vendor/
 
+# Beanstalk development and test tooling (production theme files only)
+wp-content/themes/bricks/beanstalk/tests/
+wp-content/themes/bricks/beanstalk/tools/
+wp-content/themes/bricks/beanstalk/composer.json
+wp-content/themes/bricks/beanstalk/composer.lock
+wp-content/themes/bricks/beanstalk/phpunit.xml.dist
+wp-content/themes/bricks/beanstalk/phpcs.xml.dist
+wp-content/themes/bricks/beanstalk/TESTING.md
+wp-content/themes/bricks/beanstalk/.phpunit.result.cache
+
 # Claude Code local settings (personal, not shared)
 .claude/settings.local.json

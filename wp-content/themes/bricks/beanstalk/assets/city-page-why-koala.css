@@ -1,0 +1,366 @@
+.koala-city-page .koala-city-why-koala {
+	background: #fff;
+	color: var(--city-navy);
+}
+
+.koala-city-page .koala-city-why-koala__content {
+	max-width: var(--city-content-width);
+	margin-inline: auto;
+	padding-block: 96px;
+	padding-inline: var(--city-page-gutter);
+}
+
+.koala-city-page .koala-city-why-koala__content > .wp-block-group__inner-container {
+	display: grid;
+	grid-template-columns: 720px minmax(0, 1fr);
+	align-items: start;
+	gap: 58px;
+}
+
+.koala-city-page .koala-city-why-koala__visual > .wp-block-group__inner-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 34px;
+}
+
+.koala-city-page .koala-city-why-koala__media {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 442px;
+	overflow: hidden;
+	border-radius: 12px;
+}
+
+.koala-city-page .koala-city-why-koala__video-trigger:focus-visible {
+	outline: 3px solid var(--city-green);
+	outline-offset: 3px;
+}
+
+.koala-city-page .koala-city-why-koala__video-trigger {
+	position: absolute;
+	z-index: 2;
+	inset: 0;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+}
+
+.koala-city-page .koala-city-why-koala__video {
+	position: absolute;
+	z-index: 3;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.koala-city-page .koala-city-why-koala__video[hidden] {
+	display: none;
+}
+
+.koala-city-page .koala-city-why-koala__media.is-playing::after,
+.koala-city-page .koala-city-why-koala__media.is-playing .koala-city-why-koala__video-trigger {
+	display: none;
+}
+
+.koala-city-page .koala-city-why-koala__media > .wp-block-group__inner-container,
+.koala-city-page .koala-city-why-koala__image,
+.koala-city-page .koala-city-why-koala__image img {
+	width: 100%;
+	height: 100%;
+}
+
+.koala-city-page .koala-city-why-koala__image {
+	margin: 0;
+	transition: opacity 180ms ease;
+}
+
+.koala-city-page .koala-city-why-koala__media.is-playing .koala-city-why-koala__image {
+	opacity: 0;
+}
+
+.koala-city-page .koala-city-why-koala__image img {
+	display: block;
+	object-fit: cover;
+}
+
+.koala-city-page .koala-city-why-koala__media::after {
+	position: absolute;
+	inset: 0;
+	background: rgb(0 0 0 / 20%);
+	content: "";
+	pointer-events: none;
+}
+
+.koala-city-page .koala-city-why-koala__play {
+	position: absolute;
+	z-index: 1;
+	top: 50%;
+	left: 50%;
+	width: 128px;
+	height: 128px;
+	transform: translate(-50%, -50%);
+	background: url("city-page/why-koala-play.svg") center / contain no-repeat;
+	pointer-events: none;
+}
+
+.koala-city-page .koala-city-why-koala__copy > .wp-block-group__inner-container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.koala-city-page .koala-city-why-koala__title-block::after {
+	display: block;
+	width: 164px;
+	height: 54px;
+	background: url("city-page/why-koala-accent.png") center / contain no-repeat;
+	content: "";
+}
+
+.koala-city-page .koala-city-why-koala__introduction,
+.koala-city-page .koala-city-why-koala__heading,
+.koala-city-page .koala-city-why-koala__benefit,
+.koala-city-page .koala-city-why-koala__feature-label,
+.koala-city-page .koala-city-why-koala__cta-label-source {
+	margin: 0;
+}
+
+.koala-city-page .koala-city-why-koala__introduction {
+	font-family: "Alegreya Sans", sans-serif;
+	font-size: 40px;
+	font-weight: 400;
+	line-height: 1.2;
+}
+
+.koala-city-page .koala-city-why-koala__heading {
+	color: var(--city-green);
+	font-family: "Alegreya Sans", sans-serif;
+	font-size: 72px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.koala-city-page .koala-city-why-koala__heading strong {
+	color: var(--city-navy);
+	font-weight: 700 !important;
+}
+
+.koala-city-page .koala-city-why-koala__benefits {
+	padding: 10px 0 26px;
+}
+
+.koala-city-page .koala-city-why-koala__benefits > .wp-block-group__inner-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.koala-city-page .koala-city-why-koala__benefit {
+	position: relative;
+	min-height: 40px;
+	padding: 7px 0 7px 35px;
+	border-bottom: 1px solid #eaf0dc;
+	color: #46515b;
+	font-family: "Montserrat", sans-serif;
+	font-size: 16.5px;
+	font-weight: 500;
+	line-height: 27.225px;
+}
+
+.koala-city-page .koala-city-why-koala__benefit:last-child {
+	border-bottom: 0;
+}
+
+.koala-city-page .koala-city-why-koala__benefit::before {
+	position: absolute;
+	top: 9px;
+	left: 0;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: #95c93d url("city-page/check.svg") center / 12px 10px no-repeat;
+	content: "";
+}
+
+.koala-city-page .koala-city-why-koala__benefit strong {
+	color: #033968;
+	font-weight: 700;
+}
+
+.koala-city-page .koala-city-why-koala__features > .wp-block-group__inner-container {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.koala-city-page .koala-city-why-koala__feature {
+	min-height: 158px;
+	padding: 26px 14px;
+	border-radius: 12px;
+	background: #042f54;
+}
+
+.koala-city-page .koala-city-why-koala__feature > .wp-block-group__inner-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.koala-city-page .koala-city-why-koala__feature::before {
+	display: block;
+	width: 48px;
+	height: 48px;
+  margin: 0 auto 12px;
+	margin-bottom: 12px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	content: "";
+}
+
+.koala-city-page .koala-city-why-koala__feature--comfort::before {
+	background-image: url("city-page/why-koala-comfort.svg");
+}
+
+.koala-city-page .koala-city-why-koala__feature--energy::before {
+	background-image: url("city-page/why-koala-energy.svg");
+}
+
+.koala-city-page .koala-city-why-koala__feature--eco::before {
+	background-image: url("city-page/why-koala-eco.svg");
+}
+
+.koala-city-page .koala-city-why-koala__feature-label {
+	color: #fff;
+	font-family: "Montserrat", sans-serif;
+	font-size: 19px;
+	font-weight: 700;
+	line-height: 23.75px;
+	text-align: center;
+}
+
+.koala-city-page .koala-city-why-koala__cta {
+	display: inline-flex;
+	min-height: 60px;
+	align-items: center;
+	justify-content: center;
+	padding: 12px 32px;
+	border-radius: 999px;
+	background: var(--city-green);
+	color: var(--city-navy);
+	font-family: "Montserrat", sans-serif;
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 36px;
+	text-decoration: none;
+}
+
+.koala-city-page .koala-city-why-koala__cta:focus-visible {
+	outline: 3px solid var(--city-navy);
+	outline-offset: 3px;
+}
+
+.koala-city-page .koala-city-why-koala__cta-label-source {
+	display: none;
+}
+
+@media (max-width: 1250px) {
+	.koala-city-page .koala-city-why-koala__content > .wp-block-group__inner-container {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+}
+
+@media (max-width: 767px) {
+	.koala-city-page .koala-city-why-koala__content {
+		padding: 48px 16px;
+	}
+
+	.koala-city-page .koala-city-why-koala__content > .wp-block-group__inner-container {
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+	}
+
+	.koala-city-page .koala-city-why-koala__visual,
+	.koala-city-page .koala-city-why-koala__copy,
+	.koala-city-page .koala-city-why-koala__visual > .wp-block-group__inner-container,
+	.koala-city-page .koala-city-why-koala__copy > .wp-block-group__inner-container {
+		display: contents;
+	}
+
+	.koala-city-page .koala-city-why-koala__title-block {
+		order: 1;
+	}
+
+	.koala-city-page .koala-city-why-koala__media {
+		order: 2;
+		height: 284px;
+		border-radius: 0;
+	}
+
+	.koala-city-page .koala-city-why-koala__benefits {
+		order: 3;
+		padding-top: 0;
+	}
+
+	.koala-city-page .koala-city-why-koala__features {
+		order: 4;
+	}
+
+	.koala-city-page .koala-city-why-koala__cta {
+		order: 5;
+		width: 100%;
+	}
+
+	.koala-city-page .koala-city-why-koala__title-block::after {
+		width: 100px;
+		height: 33px;
+		margin-top: 12px;
+	}
+
+	.koala-city-page .koala-city-why-koala__introduction,
+	.koala-city-page .koala-city-why-koala__heading {
+		font-size: 32px;
+		font-weight: 500;
+		line-height: 1.2;
+	}
+
+	.koala-city-page .koala-city-why-koala__heading,
+	.koala-city-page .koala-city-why-koala__heading strong {
+		color: var(--city-navy);
+	}
+
+	.koala-city-page .koala-city-why-koala__play {
+		width: 128px;
+		height: 128px;
+	}
+
+	.koala-city-page .koala-city-why-koala__benefit {
+		min-height: 48px;
+		padding: 10px 0 10px 31px;
+		font-size: 14px;
+		line-height: 27.225px;
+	}
+
+	.koala-city-page .koala-city-why-koala__benefit::before {
+		top: 12px;
+		width: 20px;
+		height: 20px;
+	}
+
+	.koala-city-page .koala-city-why-koala__feature {
+		min-height: 160px;
+		padding: 26px 10px;
+	}
+
+	.koala-city-page .koala-city-why-koala__feature-label {
+		font-size: 17px;
+		line-height: 21px;
+	}
+}

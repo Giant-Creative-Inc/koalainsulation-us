@@ -1,0 +1,168 @@
+.beanstalk-page .koala-city-testimonials {
+	padding-block: 80px;
+	background: #fff;
+}
+
+.beanstalk-page .koala-city-testimonials__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 24px;
+	width: 100%;
+	max-width: var(--city-content-width);
+	margin: 0 auto;
+	padding-inline: var(--city-page-gutter);
+}
+
+.beanstalk-page .koala-city-testimonials__intro {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0;
+	width: 100%;
+	max-width: 666px;
+	margin-inline: auto;
+	margin-bottom: 24px;
+	text-align: center;
+}
+
+.beanstalk-page .koala-city-testimonials__eyebrow,
+.beanstalk-page .koala-city-testimonials__heading,
+.beanstalk-page .koala-city-testimonials__description {
+	margin: 0;
+}
+
+.beanstalk-page .koala-city-testimonials__eyebrow {
+	font-family: var(--koala-font-heading, "Alegreya Sans", sans-serif);
+	font-size: 40px;
+	font-weight: 500;
+	line-height: 1.2;
+	color: #042e53;
+}
+
+.beanstalk-page .koala-city-testimonials__heading {
+	font-family: var(--koala-font-heading, "Alegreya Sans", sans-serif);
+	font-size: 72px;
+	font-weight: 700;
+	line-height: 1.2;
+	color: #afd56c;
+}
+
+.beanstalk-page .koala-city-testimonials__description {
+	margin-top: 24px;
+	font-family: var(--koala-font-body, "Filson Pro", sans-serif);
+	font-size: 18px;
+	line-height: 2;
+	color: #042e53;
+}
+
+.beanstalk-page .koala-city-testimonials__widget {
+	width: min(100%, 1132px);
+	margin-inline: auto;
+}
+
+.beanstalk-page .koala-city-testimonials__widget-space {
+	display: block;
+	min-height: 273px;
+}
+
+.beanstalk-page .koala-city-testimonials__fallback {
+	margin-top: 18px;
+	text-align: center;
+}
+
+.beanstalk-page .koala-city-testimonials__fallback-link {
+	color: #042e53;
+	font-weight: 700;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 4px;
+}
+
+.beanstalk-page .koala-city-testimonials__fallback-link:focus-visible {
+	outline: 3px solid #afd56c;
+	outline-offset: 4px;
+}
+
+.beanstalk-page .koala-city-testimonials__fallback-label-source {
+	display: none;
+}
+
+@media (max-width: 767px) {
+	.beanstalk-page .koala-city-testimonials {
+		padding: 48px 16px;
+		overflow-x: clip;
+	}
+
+	.beanstalk-page .koala-city-testimonials__content {
+		width: 100%;
+		max-width: 100%;
+		margin-inline: 0;
+		padding-inline: 0;
+	}
+
+	.beanstalk-page .koala-city-testimonials__intro {
+		align-self: stretch;
+		width: calc(100vw - 32px);
+		max-width: calc(100vw - 32px);
+		margin-inline: 0;
+	}
+
+	.beanstalk-page .koala-city-testimonials__eyebrow {
+		font-size: 30px;
+	}
+
+	.beanstalk-page .koala-city-testimonials__heading {
+		font-size: 48px;
+	}
+
+	.beanstalk-page .koala-city-testimonials__description {
+		font-size: 16px;
+		line-height: 1.65;
+	}
+
+	.beanstalk-page .koala-city-testimonials__widget,
+	.beanstalk-page .koala-city-testimonials__widget-space {
+		align-self: stretch;
+		width: calc(100vw - 32px);
+		max-width: calc(100vw - 32px);
+		min-width: 0;
+		margin-inline: 0;
+	}
+
+	.beanstalk-page .koala-city-testimonials__widget-space {
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	.beanstalk-page .koala-city-testimonials__widget-space .wp-gr,
+	.beanstalk-page .koala-city-testimonials__widget-space .grw-row,
+	.beanstalk-page .koala-city-testimonials__widget-space .grw-content,
+	.beanstalk-page .koala-city-testimonials__widget-space .rpi-slides {
+		width: auto !important;
+		max-width: 100% !important;
+		min-width: 0 !important;
+	}
+
+	.beanstalk-page .koala-city-testimonials__widget-space .grw-row {
+		flex-direction: column !important;
+		align-items: center !important;
+		gap: 24px;
+	}
+
+	.beanstalk-page .koala-city-testimonials__widget-space .grw-header {
+		width: min(100%, 283px);
+		margin-inline: auto !important;
+	}
+
+	.beanstalk-page .koala-city-testimonials__widget-space .grw-content {
+		flex: 0 1 auto !important;
+		margin-inline: 0 !important;
+	}
+
+	.beanstalk-page .koala-city-testimonials__widget-space .grw-review {
+		flex: 0 0 100% !important;
+		width: 100% !important;
+		max-width: 100% !important;
+		min-width: 0 !important;
+	}
+}

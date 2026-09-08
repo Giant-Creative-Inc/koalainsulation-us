@@ -1,0 +1,114 @@
+:root {
+	--beanstalk-navy: #17385f;
+	--beanstalk-green: #afd56c;
+	--beanstalk-text: #17202a;
+}
+
+@font-face {
+	font-family: "Filson Pro";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/wp-content/uploads/2024/06/FilsonProRegular.woff") format("woff");
+}
+
+@font-face {
+	font-family: "Filson Pro";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("/wp-content/uploads/2024/06/FilsonProMedium.woff") format("woff");
+}
+
+@font-face {
+	font-family: "Filson Pro";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("/wp-content/uploads/2024/06/FilsonProBold.woff") format("woff");
+}
+
+@font-face {
+	font-family: "Montserrat";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("/wp-content/uploads/fonts/e742afe643c24b91cd8e4c3647e7584c/montserrat--v31-normal-500.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Montserrat";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("/wp-content/uploads/fonts/e742afe643c24b91cd8e4c3647e7584c/montserrat--v31-normal-700.woff2") format("woff2");
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body.beanstalk-page { margin: 0; padding-top: var(--beanstalk-header-height, 170px); color: var(--beanstalk-text); font-family: "Filson Pro", sans-serif; }
+.beanstalk-header { position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; background: #fff; }
+.admin-bar .beanstalk-header { top: 32px; }
+.beanstalk-header__inner { width: 100%; max-width: 1440px; margin-inline: auto; padding-inline: 40px; }
+.beanstalk-header__utility { padding-block: 10px; background: #042e53; color: #fff; font-family: "Montserrat", sans-serif; font-size: 14px; line-height: 1.7; letter-spacing: .5px; }
+.beanstalk-header__utility .beanstalk-header__inner { min-height: 37.8px; display: flex; align-items: center; gap: 0; }
+.beanstalk-header__utility a { color: inherit; text-decoration: none; }
+.beanstalk-header__location { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.beanstalk-header__location img { width: 18px; height: 18px; flex: 0 0 auto; }
+.beanstalk-header__all-locations { padding-inline: 14px; color: #fff !important; font-weight: 500; }
+.beanstalk-header__utility-phone { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.beanstalk-header__main { padding-block: 16px; background: #fff; box-shadow: -25px 4px 54px rgba(0, 0, 0, .22); }
+.beanstalk-header__main-inner { min-height: 80px; display: flex; align-items: center; gap: 0; }
+.beanstalk-header__logo { flex: 0 0 auto; display: block; line-height: 0; }
+.beanstalk-header__logo img { width: 115px; height: 80px; object-fit: contain; }
+.beanstalk-header__nav { margin-left: auto; }
+.beanstalk-header__menu, .beanstalk-header__submenu { margin: 0; padding: 0; list-style: none; }
+.beanstalk-header__menu { display: flex; align-items: center; gap: 0; }
+.beanstalk-header__menu a, .beanstalk-header__menu-row > span { color: rgba(0, 0, 0, .5); text-decoration: none; font-family: "Filson Pro", sans-serif; font-size: 18px; font-weight: 500; line-height: 1.5; }
+.beanstalk-header__menu > li > a { display: block; padding: 12px; }
+.beanstalk-header__menu-row { min-height: 51px; padding: 12px; display: flex; align-items: center; gap: 12px; }
+.beanstalk-header__menu-row button { padding: 0; border: 0; background: transparent; cursor: pointer; font-size: 20px; line-height: 1; }
+.beanstalk-header__menu-row button img { display: block; transition: transform .16s ease; }
+.beanstalk-header__dropdown { position: relative; }
+.beanstalk-header__submenu { position: absolute; top: calc(100% + 18px); left: -18px; width: 290px; padding: 0; background: #fff; border-radius: 0 0 8px 8px; box-shadow: 1px 8px 80px 0 rgba(33, 33, 33, .08); opacity: 0; visibility: hidden; transform: translateY(-6px); transition: .16s ease; }
+.beanstalk-header__submenu a { display: block; padding: 24px; font-size: 16px; font-weight: 500; }
+.beanstalk-header__submenu a:hover, .beanstalk-header__submenu a:focus-visible { background: transparent; color: var(--beanstalk-green); }
+.beanstalk-header__dropdown:hover > .beanstalk-header__submenu,
+.beanstalk-header__dropdown:focus-within > .beanstalk-header__submenu,
+.beanstalk-header__dropdown.is-open > .beanstalk-header__submenu { opacity: 1; visibility: visible; transform: none; }
+.beanstalk-header__toggle, .beanstalk-header__close, .beanstalk-header__mobile-phone { display: none; }
+
+@media (max-width: 991px) {
+	body.beanstalk-page { padding-top: var(--beanstalk-header-height, 138px); }
+	body.beanstalk-menu-open { overflow: hidden; }
+	.beanstalk-header__inner { padding-inline: 20px; }
+	.beanstalk-header__utility .beanstalk-header__inner { justify-content: center; }
+	.beanstalk-header__all-locations, .beanstalk-header__utility-phone { display: none; }
+	.beanstalk-header__main-inner { min-height: 48px; justify-content: space-between; gap: 0; }
+	.beanstalk-header__logo img { width: 69px; height: 48px; }
+	.beanstalk-header__mobile-phone { display: inline-flex; align-items: center; justify-content: center; margin: 0; padding: 7.5px 15px; border: 1px solid #042e53; border-radius: 25px; background: #fff; color: #212121; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; font-weight: 400; line-height: 25.5px; letter-spacing: .5px; white-space: nowrap; }
+	.beanstalk-header__toggle { width: 40px; height: 17px; margin: 0; padding: 0 6px; border: 0; background: transparent; display: flex; flex-direction: column; justify-content: space-between; gap: 0; cursor: pointer; }
+	.beanstalk-header__toggle span { display: block; width: 28px; height: 2px; margin-inline: auto; background: #042e53; }
+	.beanstalk-header__nav { position: fixed; inset: 0; z-index: 110; overflow-y: auto; padding: 24px 16px; background: #fff; transform: translateX(100%); visibility: hidden; transition: transform .25s ease, visibility .25s; }
+	.beanstalk-header__nav.is-open { transform: none; visibility: visible; }
+	.beanstalk-header__close { position: static; display: inline-flex; width: 18px; height: 24px; align-items: center; justify-content: center; margin: 0 0 4px 12px; padding: 0; border: 0; background: transparent; color: #363636; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 24px; line-height: 24px; cursor: pointer; }
+	.beanstalk-header__menu { display: block; }
+	.beanstalk-header__menu > li { border: 0; }
+	.beanstalk-header__menu > li > a, .beanstalk-header__menu-row { min-height: 51px; padding: 12px 0; display: flex; align-items: center; }
+	.beanstalk-header__menu a, .beanstalk-header__menu-row > span { color: rgba(0, 0, 0, .5); font-size: 18px; }
+	.beanstalk-header__menu-row > a, .beanstalk-header__menu-row > span { flex: 1; }
+	.beanstalk-header__menu-row button { width: 40px; height: 27px; display: inline-flex; align-items: center; justify-content: center; color: #042e53; }
+	.beanstalk-header__menu-row button img { filter: none; }
+	.beanstalk-header__menu-row button[aria-expanded="true"] img { transform: rotate(180deg); }
+	.beanstalk-header__submenu { position: static; width: auto; max-height: 0; padding: 0 0 0 12px; overflow: hidden; background: #fff; box-shadow: none; opacity: 1; visibility: visible; transform: none; transition: max-height .25s ease; }
+	.beanstalk-header__dropdown.is-open > .beanstalk-header__submenu { max-height: 1000px; padding-bottom: 12px; }
+	.beanstalk-header__submenu a { padding: 9px 0; color: rgba(0, 0, 0, .5); font-size: 16px; font-weight: 500; }
+	.beanstalk-header__submenu a:hover, .beanstalk-header__submenu a:focus-visible { color: var(--beanstalk-green); }
+}
+
+@media (max-width: 782px) {
+	.admin-bar .beanstalk-header { top: 46px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.beanstalk-header__nav, .beanstalk-header__submenu { transition: none; }
+}

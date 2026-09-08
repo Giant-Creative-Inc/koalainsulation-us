@@ -1,0 +1,65 @@
+@font-face {
+	font-family: "Poppins";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/wp-content/uploads/fonts/e742afe643c24b91cd8e4c3647e7584c/poppins--v24-normal-400.woff2") format("woff2");
+}
+
+.beanstalk-footer { background: rgb(126, 180, 163); }
+.beanstalk-footer a { text-decoration: none; }
+.beanstalk-footer p { margin: 0; }
+.beanstalk-footer__inner { width: 100%; max-width: 1440px; margin-inline: auto; padding-inline: 40px; display: flex; flex-direction: column; }
+.beanstalk-footer__content { width: 100%; margin: 80px 0 9px; display: flex; flex-direction: column; row-gap: 48px; }
+.beanstalk-footer__columns { display: grid; grid-template-columns: auto auto auto auto; justify-content: center; gap: 80px; }
+.beanstalk-footer__column { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; row-gap: 24px; color: #fff; font-family: "Filson Pro", sans-serif; }
+.beanstalk-footer__column a, .beanstalk-footer__column address { margin: 0; color: rgba(255, 255, 255, .7); font-family: "Filson Pro", sans-serif; font-size: 14px; font-style: normal; font-weight: 400; line-height: 21px; transition: color .2s ease-in; }
+.beanstalk-footer__column a:hover, .beanstalk-footer__column a:focus-visible { color: #fff; }
+.beanstalk-footer__column .beanstalk-footer__heading { margin: 0; color: #fff; font-size: 18px; font-weight: 500; line-height: 27px; }
+.beanstalk-footer__column .beanstalk-footer__heading:hover, .beanstalk-footer__column .beanstalk-footer__heading:focus-visible { color: #043968; }
+.beanstalk-footer__services > a:not(.beanstalk-footer__heading) { line-height: 27px; }
+.beanstalk-footer__contact { width: 180px; }
+.beanstalk-footer__logo { width: 99px; height: 72px; align-self: center; display: flex; align-items: center; justify-content: center; }
+.beanstalk-footer__logo img { width: 99px; height: 69px; object-fit: contain; filter: grayscale(1) brightness(0) invert(1); }
+.beanstalk-footer__facts { display: grid; grid-template-columns: auto auto auto; justify-content: center; gap: 80px; color: #fff; font-family: "Filson Pro", sans-serif; font-size: 12px; font-weight: 600; line-height: 18px; }
+.beanstalk-footer__financing { width: 100%; padding-block: 20px; color: #f5f5f5; font-family: "Filson Pro", sans-serif; font-size: 12px; line-height: 24px; }
+.beanstalk-footer__financing p { margin: 12px 0; padding-left: 40px; }
+.beanstalk-footer__financing a { color: inherit; text-decoration: underline; }
+.beanstalk-footer__financing a:hover, .beanstalk-footer__financing a:focus-visible { text-decoration: none; }
+.beanstalk-footer__bottom { min-height: 69px; margin-bottom: 16px; padding: 24px; display: flex; align-items: center; justify-content: space-between; column-gap: 80px; border-radius: 8px; background: rgba(255, 255, 255, .05); }
+.beanstalk-footer__legal { display: flex; align-items: center; font-family: "Filson Pro", sans-serif; font-size: 14px; font-weight: 400; line-height: 21px; }
+.beanstalk-footer__legal span { padding-right: 12px; color: #fff; }
+.beanstalk-footer__legal a { padding-inline: 12px; color: rgba(255, 255, 255, .7); }
+.beanstalk-footer__legal a:last-child { padding-right: 0; }
+
+@media (max-width: 991px) {
+	.beanstalk-footer__content { margin-block: 64px; row-gap: 32px; }
+	.beanstalk-footer__columns, .beanstalk-footer__facts { gap: 32px; }
+	.beanstalk-footer__bottom { flex-direction: column; align-items: flex-start; row-gap: 32px; }
+}
+
+@media (max-width: 767px) {
+	.beanstalk-footer__inner { padding-inline: 20px; }
+	.beanstalk-footer__content { margin-bottom: 48px; }
+	.beanstalk-footer__columns { grid-template-columns: 1fr 1fr; gap: 24px; }
+	.beanstalk-footer__column { row-gap: 16px; }
+	.beanstalk-footer__facts { grid-template-columns: auto auto; gap: 16px; }
+	.beanstalk-footer__legal { flex-direction: column; align-items: flex-start; gap: 12px; }
+	.beanstalk-footer__bottom { row-gap: 16px; }
+}
+
+@media (max-width: 478px) {
+	.beanstalk-footer__inner { padding-inline: 0; }
+	.beanstalk-footer__content { margin-top: 32px; padding-inline: 20px; }
+	.beanstalk-footer__columns { grid-template-columns: 1fr; gap: 24px; }
+	.beanstalk-footer__column { width: 100%; row-gap: 12px; }
+	.beanstalk-footer__logo { align-self: flex-start; }
+	.beanstalk-footer__facts { grid-template-columns: 1fr; gap: 14px; }
+	.beanstalk-footer__financing { padding: 20px 0; }
+	.beanstalk-footer__financing p { padding-inline: 20px; }
+	.beanstalk-footer__bottom { margin-bottom: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.beanstalk-footer__column a { transition: none; }
+}

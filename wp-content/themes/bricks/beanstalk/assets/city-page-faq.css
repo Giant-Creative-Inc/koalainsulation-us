@@ -1,0 +1,229 @@
+.koala-city-page .koala-city-faq {
+	background: #fff;
+	color: var(--city-navy);
+}
+
+.koala-city-page .koala-city-faq__content {
+	max-width: var(--city-content-width);
+	margin-inline: auto;
+	padding-block: 96px;
+	padding-inline: var(--city-page-gutter);
+}
+
+.koala-city-page .koala-city-faq__content > .wp-block-group__inner-container {
+	display: grid;
+	grid-template-columns: 544px minmax(0, 1fr);
+	align-items: start;
+	gap: 58px;
+}
+
+.koala-city-page .koala-city-faq__intro > .wp-block-group__inner-container {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 48px;
+}
+
+.koala-city-page .koala-city-faq__title-block::after {
+	display: block;
+	width: 164px;
+	height: 54px;
+	background: url("city-page/faq-accent.png") center / contain no-repeat;
+	content: "";
+}
+
+.koala-city-page .koala-city-faq__heading-prefix,
+.koala-city-page .koala-city-faq__heading,
+.koala-city-page .koala-city-faq__introduction,
+.koala-city-page .koala-city-faq__answer,
+.koala-city-page .koala-city-faq__cta-label-source {
+	margin: 0;
+}
+
+.koala-city-page .koala-city-faq__heading-prefix {
+	font-family: "Alegreya Sans", sans-serif;
+	font-size: 40px;
+	font-weight: 500;
+	line-height: 1.2;
+}
+
+.koala-city-page .koala-city-faq__heading {
+	color: var(--city-green);
+	font-family: "Alegreya Sans", sans-serif;
+	font-size: 72px;
+	font-weight: 500;
+	line-height: 1.2;
+}
+
+.koala-city-page .koala-city-faq__introduction {
+	color: var(--city-navy);
+	font-family: "Filson Pro", sans-serif;
+	font-size: 18px;
+	font-weight: 400;
+	line-height: 36px;
+}
+
+.koala-city-page .koala-city-faq .koala-city-page__quote-cta,
+.koala-city-page .koala-city-faq .koala-city-why-koala__cta {
+	display: inline-flex;
+	min-height: 44px;
+	align-items: center;
+	justify-content: center;
+	padding: 4px 32px;
+	border-radius: 999px;
+	background: var(--city-green);
+	color: var(--city-navy);
+	font-family: "Montserrat", sans-serif;
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 36px;
+	text-decoration: none;
+}
+
+.koala-city-page .koala-city-faq__cta-label-source {
+	display: none;
+}
+
+.koala-city-page .koala-city-faq__items > .wp-block-group__inner-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.koala-city-page .koala-city-faq__item {
+  padding: 16px 0 30px;
+  margin: 0 0 16px;
+	border: 0;
+	border-bottom: 1px solid rgb(0 0 0 / 15%);
+}
+
+.koala-city-page .koala-city-faq__item:last-child {
+	border-bottom: 0;
+}
+
+.koala-city-page .koala-city-faq__item summary {
+	position: relative;
+	padding-right: 40px;
+	color: var(--city-navy);
+	font-family: "Alegreya Sans", sans-serif;
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 1.2;
+	cursor: pointer;
+	list-style: none;
+}
+
+.koala-city-page .koala-city-faq__item summary::-webkit-details-marker {
+	display: none;
+}
+
+.koala-city-page .koala-city-faq__item summary::after {
+	position: absolute;
+	top: 50%;
+	right: 0;
+	width: 24px;
+	height: 24px;
+	transform: translateY(-50%);
+	background-image: url("city-page/faq-chevron.svg");
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	content: "";
+}
+
+.koala-city-page .koala-city-faq__item summary:focus-visible {
+	border-radius: 4px;
+	outline: 3px solid var(--city-green);
+	outline-offset: 4px;
+}
+
+.koala-city-page .koala-city-faq__answer {
+	padding-top: 16px;
+	color: #908e8c;
+	font-family: "Filson Pro", sans-serif;
+	font-size: 18px;
+	font-weight: 400;
+	line-height: 36px;
+}
+
+@media (max-width: 980px) {
+	.koala-city-page .koala-city-faq__content > .wp-block-group__inner-container {
+		grid-template-columns: minmax(280px, 0.65fr) minmax(0, 1fr);
+		gap: 32px;
+	}
+}
+
+@media (max-width: 767px) {
+	.koala-city-page .koala-city-faq__content {
+		padding: 48px 16px;
+	}
+
+	.koala-city-page .koala-city-faq__content > .wp-block-group__inner-container {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+
+	.koala-city-page .koala-city-faq__intro,
+	.koala-city-page .koala-city-faq__intro > .wp-block-group__inner-container {
+		display: contents;
+	}
+
+	.koala-city-page .koala-city-faq__title-block {
+		order: 1;
+	}
+
+	.koala-city-page .koala-city-faq__introduction {
+		order: 2;
+		color: #908e8c;
+		font-size: 14px;
+		line-height: 22px;
+	}
+
+	.koala-city-page .koala-city-faq__items {
+		order: 3;
+	}
+
+	.koala-city-page .koala-city-faq .koala-city-page__quote-cta,
+	.koala-city-page .koala-city-faq .koala-city-why-koala__cta {
+		order: 4;
+		width: 100%;
+		min-height: 56px;
+		padding: 10px 32px;
+	}
+
+	.koala-city-page .koala-city-faq__title-block::after {
+		width: 82px;
+		height: 2px;
+		margin-top: 8px;
+		background: var(--city-green);
+	}
+
+	.koala-city-page .koala-city-faq__heading-prefix {
+		font-size: 24px;
+		line-height: normal;
+	}
+
+	.koala-city-page .koala-city-faq__heading {
+		margin-top: 8px;
+		font-size: 32px;
+		font-weight: 700;
+		line-height: normal;
+	}
+
+	.koala-city-page .koala-city-faq__item {
+		padding: 12px 0 16px;
+		border-bottom-color: rgb(0 0 0 / 10%);
+	}
+
+	.koala-city-page .koala-city-faq__item summary {
+		padding-right: 40px;
+		font-size: 16px;
+		line-height: 22px;
+	}
+
+	.koala-city-page .koala-city-faq__answer {
+		padding-top: 12px;
+		font-size: 13px;
+		line-height: 20px;
+	}
+}

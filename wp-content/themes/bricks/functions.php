@@ -2,6 +2,10 @@
 if (!defined('ABSPATH'))
     exit; // Exit if accessed directly
 
+// Beanstalk owns the lightweight Gutenberg rendering path for area-served
+// resources landing pages. All other requests continue through Bricks.
+require_once __DIR__ . '/beanstalk/bootstrap.php';
+
 // Redirect uppercase slugs to lowercase to prevent duplicate content.
 add_action('template_redirect', function () {
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
