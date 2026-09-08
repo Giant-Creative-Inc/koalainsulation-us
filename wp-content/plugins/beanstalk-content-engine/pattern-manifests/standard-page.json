@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "id": "beanstalk/standard-page",
+  "label": "Standard Page",
+  "description": "Portable page or post content with an editable heading and rich-text body.",
+  "version": "1.1.0",
+  "postTypes": [
+    "page",
+    "post",
+    "resources-landing-pa"
+  ],
+  "template": "standard-page.php",
+  "fields": {
+    "heading": {
+      "label": "Heading",
+      "type": "text",
+      "required": true,
+      "target": {
+        "block": "core/heading",
+        "name": "beanstalk-field-heading",
+        "attribute": "content"
+      }
+    },
+    "body": {
+      "label": "Body",
+      "type": "rich-text",
+      "required": true,
+      "target": {
+        "block": "core/paragraph",
+        "name": "beanstalk-field-body",
+        "attribute": "content"
+      }
+    }
+  }
+}

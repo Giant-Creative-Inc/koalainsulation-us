@@ -34,5 +34,14 @@ wp-content/themes/bricks/beanstalk/phpcs.xml.dist
 wp-content/themes/bricks/beanstalk/TESTING.md
 wp-content/themes/bricks/beanstalk/.phpunit.result.cache
 
+# Beanstalk Content Engine development files (runtime plugin files only)
+wp-content/plugins/beanstalk-content-engine/tests/
+wp-content/plugins/beanstalk-content-engine/docs/
+wp-content/plugins/beanstalk-content-engine/vendor/
+wp-content/plugins/beanstalk-content-engine/composer.json
+wp-content/plugins/beanstalk-content-engine/composer.lock
+wp-content/plugins/beanstalk-content-engine/phpcs.xml.dist
+wp-content/plugins/beanstalk-content-engine/.phpunit.result.cache
+
 # Claude Code local settings (personal, not shared)
 .claude/settings.local.json
