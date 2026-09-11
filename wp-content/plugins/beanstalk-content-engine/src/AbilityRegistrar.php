@@ -46,7 +46,13 @@ final class AbilityRegistrar {
 				'category'            => 'beanstalk',
 				'input_schema'        => array(
 					'type'                 => 'object',
-					'properties'           => array(),
+					'properties'           => array(
+						'request' => array(
+							'type' => 'string',
+							'enum' => array( 'catalog' ),
+						),
+					),
+					'required'             => array( 'request' ),
 					'additionalProperties' => false,
 				),
 				'output_schema'       => $this->destination_list_output_schema(),
@@ -64,7 +70,13 @@ final class AbilityRegistrar {
 				'category'            => 'beanstalk',
 				'input_schema'        => array(
 					'type'                 => 'object',
-					'properties'           => array(),
+					'properties'           => array(
+						'request' => array(
+							'type' => 'string',
+							'enum' => array( 'catalog' ),
+						),
+					),
+					'required'             => array( 'request' ),
 					'additionalProperties' => false,
 				),
 				'output_schema'       => $this->pattern_list_output_schema(),

@@ -3,7 +3,7 @@
  * Plugin Name: Beanstalk Content Engine
  * Plugin URI: https://github.com/Giant-Creative-Inc/beanstalk-content-engine
  * Description: Structured Gutenberg content definitions, WordPress abilities, and draft creation for Beanstalk and other block themes.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires at least: 6.9
  * Requires PHP: 8.0
  * Author: Giant Creative Inc.
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BEANSTALK_CONTENT_ENGINE_VERSION', '0.1.1' );
+define( 'BEANSTALK_CONTENT_ENGINE_VERSION', '0.1.2' );
 define( 'BEANSTALK_CONTENT_ENGINE_FILE', __FILE__ );
 define( 'BEANSTALK_CONTENT_ENGINE_PATH', plugin_dir_path( __FILE__ ) );
 
