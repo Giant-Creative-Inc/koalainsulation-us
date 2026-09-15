@@ -16,7 +16,7 @@ Custom Gravity Forms integration for Koala Insulation quote forms. It resolves w
 
 ## Settings
 
-Configure everything under **Settings → Koala Gravity Integration** in wp-admin. The following values are stored as WordPress options and editable from this one screen; when Notification Email is blank, it uses the documented Koala marketing-team default.
+Configure everything under **Settings → Koala Gravity Integration** in wp-admin. The following values are stored as WordPress options and editable from this one screen.
 
 ### General
 
@@ -96,7 +96,7 @@ Each row in this repeater configures:
 
 Everything downstream of location resolution — the n8n payload build, retry/backoff, the per-location Google Sheet webhook, and the Gravity Forms entry detail sidebar — is shared with the main Quote Form and requires no per-form code. Only these settings differ:
 
-- No location validation blocks submission (there's nothing dynamic to validate — the location is fixed configuration, not user input). If the configured location is somehow missing or deleted, the entry is still accepted and falls back to the **Default Location** (see **Lead Routing** below), flagged for review and notified, rather than showing the visitor an error.
+- No location validation blocks submission (there's nothing dynamic to validate — the location is fixed configuration, not user input). If the configured location is missing or deleted, the entry is still accepted and sent to n8n using the unmatched-lead ServiceMinder credentials rather than showing the visitor an error.
 - No `location_slug`/`location_id` hidden fields are needed or populated — only the optional page-URL field, if configured.
 - The thank-you redirect still goes to `{home_url}/{location-slug}/{thank-you-slug}` using the Thank You Page settings above.
 
@@ -127,21 +127,21 @@ A submission is **never rejected** for a missing location — that was a direct 
 
 1. **URL / hidden field** — the location resolved from the page URL or the posted `location_id`, as before. Entry meta `kgi_location_source = url`.
 2. **Exact ZIP owner** — if that fails, the submitted ZIP/postal code is looked up in the ownership index (in-memory, no API call) and its owning location is used. `kgi_location_source = zip`.
-3. **Default Location** — if that also fails, the lead is routed to the configured overflow location so it still reaches n8n. `kgi_location_source = default`, the entry is flagged (`kgi_needs_review`), and a notification email is sent. During background ZIP routing, a submitted ZIP with no exact owner and no owner within the configured radius is unassigned instead of retaining the page/default location; its source becomes `unresolved` and the review email is sent.
-4. **Unresolved** — if no location resolves and no default is configured, the entry is still saved, flagged (`kgi_location_source = unresolved`, `kgi_needs_review`), a notification is sent, **and it is still sent to n8n** with an empty location payload and a `location_found = false` flag (see below) so the n8n workflow can alert on it — e.g. post a Slack message — instead of the lead being dropped.
+3. **Unresolved** — if no location resolves, the entry is still saved, flagged (`kgi_location_source = unresolved`, `kgi_needs_review`), and emailed to the configured notification address for review. When an unmatched-lead ServiceMinder API key is configured, it is also sent to n8n with `location_found = false` and the fallback credentials. Without that API key, the entry is held for review and n8n is not called.
 
 | Field | Description |
 |---|---|
-| **Default Location** | The overflow franchise location for leads whose location can't be resolved from the page or ZIP. Leave as *None* to send such leads to n8n as "no location found" (flagged) rather than to a franchise. |
-| **Notification Email** | Where the Gravity Forms-style "needs routing review" email is sent when the default/unresolved fallback is used. Defaults to `marketingteam@koalainsulation.com` if blank, with `erin@giantcreative.ca` BCC'd. Gravity Forms renders its standard `{all_fields}` and `{entry_url}` merge tags, then WordPress `wp_mail()` sends the HTML so SMTP plugins can process and log it. |
+| **Unmatched Lead ServiceMinder API Key** | ServiceMinder API key sent to n8n when ZIP routing finds no related location. If blank, unresolved leads are saved and emailed but not posted to n8n. Matched leads continue using their location-specific key. |
+| **Unmatched Lead ServiceMinder ID** | Optional ServiceMinder account/location ID sent with the unmatched-lead API key. |
+| **Notification Email** | Receives a Gravity Forms-style alert for unresolved leads. Leave blank to disable email notifications. |
 
 Every lead sent to n8n carries three routing flags in its payload so the workflow can branch (e.g. alert vs. CRM push):
 
 | Payload field | Value |
 |---|---|
-| `location_found` | `true` when a real location was resolved (URL, ZIP, fixed config, or default); `false` when none was found. |
-| `location_source` | `url`, `zip`, `fixed`, `default`, or `unresolved` — how the location was determined. |
-| `needs_review` | `true` for `default`/`unresolved` leads (routed to a fallback or none), `false` for a confident match. |
+| `location_found` | `true` when a real location was resolved (URL, ZIP, or fixed config); `false` when none was found. An unresolved lead can still carry the separately configured unmatched-lead ServiceMinder credentials. |
+| `location_source` | `url`, `zip`, `fixed`, or `unresolved` — how the location was determined. |
+| `needs_review` | `true` for unresolved leads and `false` for a confident match. Retained for n8n payload compatibility. |
 
 The routing source and a "needs routing review" banner are shown on the Gravity Forms entry detail sidebar. The background job's nearest-location ZIP API refinement (below) still runs on top of whatever is resolved here, so even a defaulted lead can be reassigned to a closer owner before it's sent.
 
@@ -188,7 +188,7 @@ This must stay commented out. It writes to the same `key`/`keySm`/`url` fields t
 
 1. **Page load** — `includes/forms/field-population.php` resolves the current location from the URL (via `includes/location-resolver.php`, using the Country setting to know whether to expect a country-prefixed URL, and the Location Post Type setting to know which CPT to query) and writes it into the form's hidden routing fields. `includes/forms/assets.php` localizes that same resolved location, plus the marketing/attribution field IDs, to the frontend scripts — for the dataLayer push described below and for `assets/js/attribution.js`, which fills the attribution/tracking hidden fields client-side (see **Attribution & Tracking Fields** above).
 2. **Validation** — `includes/forms/form-handler.php` validates phone field formatting. It does **not** block on location: an unresolved location is logged only, so the lead is captured and routed downstream rather than rejected.
-3. **Submission** — on `gform_after_submission`, the location is resolved from the posted entry (`kgi_get_location_from_entry()`) → exact ZIP owner (`kgi_resolve_location_by_zip_exact()`) → the configured default location (see **Lead Routing** above), stored as entry meta with a `kgi_location_source`, and a background job is queued via WP-Cron. A default/unresolved fallback also flags the entry and emails staff.
+3. **Submission** — on `gform_after_submission`, the location is resolved from the posted entry (`kgi_get_location_from_entry()`) → exact ZIP owner (`kgi_resolve_location_by_zip_exact()`), stored as entry meta with a `kgi_location_source`, and a background job is queued via WP-Cron. An unresolved lead is flagged and sent using the unmatched-lead ServiceMinder credentials.
 4. **Background job** — `includes/jobs/background-jobs.php` builds the n8n payload (form fields + the location's ACF data) and POSTs it to the configured webhook, retrying up to `KGI_MAX_RETRIES` times with backoff on failure. This reads the location back from entry meta (`kgi_get_location_from_entry_meta()`), since by the time WP-Cron runs the submission request has long since ended.
 5. **Confirmation/redirect** — on `gform_confirmation`, the location is **independently re-resolved from the entry's posted field value** (`kgi_get_location_from_entry()`, not from entry meta) and the visitor is redirected to `{home_url}/{location-slug}/{thank-you-slug}`. This intentionally avoids depending on the meta written in step 3 — `gform_after_submission` is not guaranteed to have completed by the time `gform_confirmation` fires within the same request, and reading meta here previously caused the redirect to silently fall back to a generic thank-you URL with no location slug.
 6. **DataLayer push** — `assets/js/form-validation.js` listens for Gravity Forms' `gform_confirmation_loaded` JS event (fires just before the AJAX-submitted form navigates to its redirect confirmation) and pushes `{ event: 'quote_form_submission', locationName, locationId, ...marketing fields }` to `window.dataLayer`. Only non-PII fields are included — see `KGI_DATALAYER_FIELD_MAP_KEYS` in `includes/forms/assets.php`. This only fires for AJAX-enabled form submissions; a non-AJAX submission redirects entirely server-side with no opportunity for this JS to run.

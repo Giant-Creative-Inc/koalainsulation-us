@@ -9,11 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KGI_VERSION', '0.7.4' );
+define( 'KGI_VERSION', '0.7.5' );
 define( 'KGI_PLUGIN_FILE', dirname( __DIR__ ) . '/koala-gravity-integration.php' );
 define( 'KGI_PLUGIN_DIR', plugin_dir_path( KGI_PLUGIN_FILE ) );
 define( 'KGI_PLUGIN_BASENAME', plugin_basename( KGI_PLUGIN_FILE ) );
-define( 'KGI_DEFAULT_NOTIFICATION_EMAIL', 'marketingteam@koalainsulation.com' );
 /**
  * Returns the configured quote form ID from WordPress options.
  *
@@ -240,45 +239,17 @@ function kgi_get_page_url_field_id_for_form( int $form_id ): int {
 }
 
 /**
- * Returns the configured default (overflow) franchise location.
- *
- * A quote submission whose location can't be resolved from the request URL or
- * the submitted ZIP is routed here instead of being rejected, so no lead is
- * lost (see `kgi_handle_quote_form_submission()`). Returns null when no default
- * has been configured, in which case such a lead is captured and flagged for
- * manual routing rather than sent onward.
- *
- * @since 0.7.0
- *
- * @return WP_Post|null The default location post, or null if unset/invalid.
- */
-function kgi_get_default_location(): ?WP_Post {
-	$location_id = (int) get_option( 'kgi_default_location_id', 0 );
-
-	if ( $location_id <= 0 ) {
-		return null;
-	}
-
-	$post = get_post( $location_id );
-
-	return ( $post instanceof WP_Post && kgi_get_location_post_type() === $post->post_type ) ? $post : null;
-}
-
-/**
  * Returns the email address that receives unresolved-lead notifications.
  *
- * Falls back to the Koala marketing team when no dedicated address is
- * configured.
+ * @since 0.7.5
  *
- * @since 0.7.0
- *
- * @return string Email address.
+ * @return string Configured email address, or an empty string when disabled.
  */
 function kgi_get_notification_email(): string {
 	$email = get_option( 'kgi_notification_email', '' );
 	$email = is_string( $email ) ? trim( $email ) : '';
 
-	return '' !== $email ? $email : KGI_DEFAULT_NOTIFICATION_EMAIL;
+	return is_email( $email ) ? $email : '';
 }
 
 /**
