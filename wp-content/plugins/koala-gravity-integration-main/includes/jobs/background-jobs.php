@@ -300,10 +300,8 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 		$routed_location = null;
 
 		// A missing location is only a hard failure when it isn't the known
-		// "unresolved" case. An unresolved lead (no URL/ZIP match and no default
-		// location configured) is still sent to n8n — flagged, with an empty
-		// location payload — so the workflow can alert (e.g. post to Slack)
-		// instead of the lead being dropped.
+		// "unresolved" case. An unresolved lead (no URL/ZIP match) is still sent
+		// to n8n with the configured unmatched-lead ServiceMinder credentials.
 		if ( ! $location && 'unresolved' !== $location_source ) {
 			gform_update_meta( $entry_id, 'kgi_submission_status', 'failed' );
 			gform_update_meta( $entry_id, 'kgi_error_message', 'Location could not be resolved from entry meta.' );
@@ -337,7 +335,7 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 				gform_update_meta( $entry_id, 'kgi_zip_routing_status', 'unresolved' );
 
 				if ( ! $needs_review ) {
-					kgi_notify_unresolved_lead( $entry_id, $entry, 'unresolved' );
+					kgi_notify_unresolved_lead( $entry_id, $entry );
 				}
 
 				kgi_log(
@@ -356,6 +354,26 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 
 		if ( $location ) {
 			kgi_maybe_send_to_google_sheet( $entry_id, $entry, $location );
+		}
+
+		// Do not send an unresolved lead to n8n without the fallback
+		// ServiceMinder key. The downstream workflow would attempt a CRM request
+		// with empty credentials, so hold the saved/emailed entry for review.
+		if ( ! $location ) {
+			$fallback_api_key = get_option( 'kgi_unresolved_serviceminder_api_key', '' );
+			$fallback_api_key = is_string( $fallback_api_key ) ? trim( $fallback_api_key ) : '';
+
+			if ( '' === $fallback_api_key ) {
+				gform_update_meta( $entry_id, 'kgi_submission_status', 'held_for_review' );
+				gform_update_meta( $entry_id, 'kgi_error_message', '' );
+
+				kgi_log(
+					'Unresolved lead held for review. n8n was not called because the unmatched-lead ServiceMinder API key is not configured.',
+					array( 'entry_id' => $entry_id )
+				);
+
+				return;
+			}
 		}
 
 		$webhook_url = get_option( 'kgi_n8n_webhook_url', '' );
@@ -397,8 +415,8 @@ function kgi_process_quote_entry_job( int $entry_id ): void {
 			$location_payload = kgi_build_unresolved_location_payload();
 		}
 
-		// Routing flags so the n8n workflow can branch — e.g. post a Slack
-		// alert when no location was found instead of pushing to a CRM.
+		// Routing flags let n8n identify unmatched leads even when the configured
+		// fallback ServiceMinder credentials allow the normal CRM push to proceed.
 		$routing_flags = array(
 			'location_found'  => (bool) $location,
 			'location_source' => '' !== $location_source ? $location_source : ( $location ? 'url' : 'unresolved' ),

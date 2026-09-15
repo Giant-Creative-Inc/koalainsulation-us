@@ -99,13 +99,14 @@ function kgi_build_google_sheet_payload( array $entry, array $field_map, int $pa
 }
 
 /**
- * Builds an empty location payload for a lead with no resolvable location.
+ * Builds the fallback location payload for a lead with no resolvable location.
  *
  * Keeps the same keys as `kgi_build_location_payload()` so the n8n webhook
- * always receives a consistent shape — the values are just empty. Paired with
+ * always receives a consistent shape. The configured unmatched-lead
+ * ServiceMinder credentials let n8n use its normal ServiceMinder push for these
+ * leads while the other location values remain empty. Paired with
  * the `location_found`/`location_source` flags added by the background job, this
- * lets the n8n workflow detect a "no location found" lead and route it to an
- * alert (e.g. Slack) instead of a franchise CRM.
+ * still lets the n8n workflow identify and report a "no location found" lead.
  *
  * @since 0.7.0
  *
@@ -116,8 +117,8 @@ function kgi_build_unresolved_location_payload(): array {
 		'location_id'                    => null,
 		'location_name'                  => '',
 		'housecall_pro_api_key'          => '',
-		'location_serviceminder_api_key' => '',
-		'location_serviceminder_id'      => '',
+		'location_serviceminder_api_key' => get_option( 'kgi_unresolved_serviceminder_api_key', '' ),
+		'location_serviceminder_id'      => get_option( 'kgi_unresolved_serviceminder_id', '' ),
 	);
 }
 

@@ -65,6 +65,7 @@ function kgi_show_location_entry_details( array $form, array $entry ): void {
 
 	$has_failed  = in_array( $submission_status, array( 'failed', 'schedule_failed' ), true );
 	$is_retrying = 'retrying' === $submission_status;
+	$is_held     = 'held_for_review' === $submission_status;
 	$is_stuck    = 'queued' === $submission_status && $queued_at && ( time() - (int) $queued_at ) > 300;
 
 	?>
@@ -81,6 +82,11 @@ function kgi_show_location_entry_details( array $form, array $entry ): void {
 					<?php if ( $error_message ) : ?>
 						<br><code><?php echo esc_html( $error_message ); ?></code>
 					<?php endif; ?>
+				</div>
+			<?php elseif ( $is_held ) : ?>
+				<div style="background: #fff8e5; border-left: 4px solid #ffb900; padding: 8px 10px; margin-bottom: 10px;">
+					<strong><?php esc_html_e( 'Held for routing review.', 'koala-gravity-integration' ); ?></strong>
+					<?php esc_html_e( 'The lead was saved and emailed, but it was not posted to n8n because no unmatched-lead ServiceMinder API key is configured.', 'koala-gravity-integration' ); ?>
 				</div>
 			<?php elseif ( $is_retrying ) : ?>
 				<div style="background: #fff8e5; border-left: 4px solid #ffb900; padding: 8px 10px; margin-bottom: 10px;">
@@ -105,7 +111,7 @@ function kgi_show_location_entry_details( array $form, array $entry ): void {
 			<?php if ( $needs_review ) : ?>
 				<div style="background: #fff8e5; border-left: 4px solid #ffb900; padding: 8px 10px; margin-bottom: 10px;">
 					<strong><?php esc_html_e( 'Needs routing review.', 'koala-gravity-integration' ); ?></strong>
-					<?php esc_html_e( 'This lead could not be matched to a location from its page or ZIP and used a fallback. Confirm it reached the right franchise.', 'koala-gravity-integration' ); ?>
+					<?php esc_html_e( 'This lead could not be matched to a location from its page or ZIP. Review its unresolved-lead routing.', 'koala-gravity-integration' ); ?>
 				</div>
 			<?php endif; ?>
 

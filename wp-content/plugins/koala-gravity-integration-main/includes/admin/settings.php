@@ -153,11 +153,21 @@ function kgi_register_settings(): void {
 
 	register_setting(
 		'kgi_settings',
-		'kgi_default_location_id',
+		'kgi_unresolved_serviceminder_api_key',
 		array(
-			'type'              => 'integer',
-			'sanitize_callback' => 'absint',
-			'default'           => 0,
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default'           => '',
+		)
+	);
+
+	register_setting(
+		'kgi_settings',
+		'kgi_unresolved_serviceminder_id',
+		array(
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default'           => '',
 		)
 	);
 
@@ -263,9 +273,17 @@ function kgi_register_settings(): void {
 	);
 
 	add_settings_field(
-		'kgi_default_location_id',
-		__( 'Default Location', 'koala-gravity-integration' ),
-		'kgi_render_default_location_field',
+		'kgi_unresolved_serviceminder_api_key',
+		__( 'Unmatched Lead ServiceMinder API Key', 'koala-gravity-integration' ),
+		'kgi_render_unresolved_serviceminder_api_key_field',
+		'koala-gravity-integration',
+		'kgi_lead_routing_section'
+	);
+
+	add_settings_field(
+		'kgi_unresolved_serviceminder_id',
+		__( 'Unmatched Lead ServiceMinder ID', 'koala-gravity-integration' ),
+		'kgi_render_unresolved_serviceminder_id_field',
 		'koala-gravity-integration',
 		'kgi_lead_routing_section'
 	);
@@ -602,14 +620,10 @@ function kgi_sanitize_letters_dashes_slug( $value ): string {
 /**
  * Sanitizes the unresolved-lead notification email address.
  *
- * An empty value is preserved (so `kgi_get_notification_email()` falls back to
- * the Koala marketing team); a non-empty value must be a valid email or it is
- * discarded.
- *
- * @since 0.7.0
+ * @since 0.7.5
  *
  * @param mixed $value Raw option value.
- * @return string Sanitized email, or '' to use the admin-email fallback.
+ * @return string Sanitized email, or an empty string to disable notifications.
  */
 function kgi_sanitize_notification_email( $value ): string {
 	$value = is_string( $value ) ? trim( $value ) : '';
@@ -889,45 +903,59 @@ function kgi_render_zipcodeapi_key_field(): void {
 function kgi_render_lead_routing_section_intro(): void {
 	?>
 	<p class="description">
-		<?php esc_html_e( 'Submissions are never rejected for a missing location. When a lead\'s location can\'t be resolved from the page URL or its ZIP/postal code, it is routed to the Default Location below so the lead is still received, and the Notification Email is alerted to review it.', 'koala-gravity-integration' ); ?>
+		<?php esc_html_e( 'Submissions are never rejected for a missing location. When a lead\'s location can\'t be resolved from the page URL or its ZIP/postal code, it is sent to n8n with the unmatched-lead ServiceMinder credentials below and an email notification is sent for review.', 'koala-gravity-integration' ); ?>
 	</p>
 	<?php
 }
 
 /**
- * Renders the default (overflow) location selector.
+ * Renders the ServiceMinder API key used for unmatched leads.
  *
- * @since 0.7.0
+ * @since 0.7.4
  */
-function kgi_render_default_location_field(): void {
-	$selected  = (int) get_option( 'kgi_default_location_id', 0 );
-	$locations = get_posts(
-		array(
-			'post_type'      => kgi_get_location_post_type(),
-			'posts_per_page' => -1,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		)
-	);
+function kgi_render_unresolved_serviceminder_api_key_field(): void {
+	$value = get_option( 'kgi_unresolved_serviceminder_api_key', '' );
 	?>
-	<select name="kgi_default_location_id" id="kgi_default_location_id">
-		<option value="0"><?php esc_html_e( '— None (hold unresolved leads for manual routing) —', 'koala-gravity-integration' ); ?></option>
-		<?php foreach ( $locations as $location ) : ?>
-			<option value="<?php echo esc_attr( $location->ID ); ?>" <?php selected( $selected, (int) $location->ID ); ?>>
-				<?php echo esc_html( $location->post_title . ' (ID: ' . $location->ID . ')' ); ?>
-			</option>
-		<?php endforeach; ?>
-	</select>
+	<input
+		type="password"
+		name="kgi_unresolved_serviceminder_api_key"
+		id="kgi_unresolved_serviceminder_api_key"
+		value="<?php echo esc_attr( $value ); ?>"
+		class="regular-text"
+		autocomplete="new-password"
+	/>
 	<p class="description">
-		<?php esc_html_e( 'Overflow location for leads whose location can\'t be resolved from the page or ZIP. Leave as "None" to keep such leads in Gravity Forms (not sent onward) and only notify.', 'koala-gravity-integration' ); ?>
+		<?php esc_html_e( 'Sent to n8n when a submitted ZIP/postal code has no related location. If left blank, unresolved leads are saved and emailed for review but are not posted to n8n. Matched leads continue using their location-specific key.', 'koala-gravity-integration' ); ?>
 	</p>
 	<?php
 }
 
 /**
- * Renders the notification email input field.
+ * Renders the ServiceMinder ID used for unmatched leads.
  *
- * @since 0.7.0
+ * @since 0.7.4
+ */
+function kgi_render_unresolved_serviceminder_id_field(): void {
+	$value = get_option( 'kgi_unresolved_serviceminder_id', '' );
+	?>
+	<input
+		type="text"
+		name="kgi_unresolved_serviceminder_id"
+		id="kgi_unresolved_serviceminder_id"
+		value="<?php echo esc_attr( $value ); ?>"
+		class="regular-text"
+		autocomplete="off"
+	/>
+	<p class="description">
+		<?php esc_html_e( 'Optional ServiceMinder account/location ID sent with unmatched leads.', 'koala-gravity-integration' ); ?>
+	</p>
+	<?php
+}
+
+/**
+ * Renders the unresolved-lead notification email input field.
+ *
+ * @since 0.7.5
  */
 function kgi_render_notification_email_field(): void {
 	$value = get_option( 'kgi_notification_email', '' );
@@ -938,10 +966,9 @@ function kgi_render_notification_email_field(): void {
 		id="kgi_notification_email"
 		value="<?php echo esc_attr( $value ); ?>"
 		class="regular-text"
-		placeholder="<?php echo esc_attr( KGI_DEFAULT_NOTIFICATION_EMAIL ); ?>"
 	/>
 	<p class="description">
-		<?php esc_html_e( 'Where to send an alert when a lead is routed to the default location or can\'t be routed at all. Defaults to marketingteam@koalainsulation.com if left blank.', 'koala-gravity-integration' ); ?>
+		<?php esc_html_e( 'Where to send an alert when a lead cannot be matched to a location. Leave blank to disable email notifications.', 'koala-gravity-integration' ); ?>
 	</p>
 	<?php
 }
