@@ -1586,7 +1586,8 @@ add_action('template_redirect', 'custom_location_service_template');
  */
 function my_location_service_category_template_map() {
     $map = array(
-        'spray-foam-insulation-services' => 79684
+        'spray-foam-insulation-services' => 79684,
+        'blown-in-insulation-services'   => 79684,
     );
 
     // Let you override in a child theme or plugin
@@ -2753,15 +2754,17 @@ function output_custom_or_default_gtm_head()
             // rc.async = true;
             // document.head.appendChild(rc);
 
-            // --- 2. Load Hotjar ---
-            (function(h, o, t, j, a, r) {
-                h.hj = h.hj || function() { (h.hj.q = h.hj.q || []).push(arguments) };
-                h._hjSettings = { hjid: 6387685, hjsv: 6 };
-                a = o.getElementsByTagName('head')[0];
-                r = o.createElement('script'); r.async = 1;
-                r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
-                a.appendChild(r);
-            })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+            // --- 2. Load Hotjar (sampled: ~1 in 100 sessions) ---
+            if (Math.random() < 0.01) {
+                (function(h, o, t, j, a, r) {
+                    h.hj = h.hj || function() { (h.hj.q = h.hj.q || []).push(arguments) };
+                    h._hjSettings = { hjid: 6387685, hjsv: 6 };
+                    a = o.getElementsByTagName('head')[0];
+                    r = o.createElement('script'); r.async = 1;
+                    r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
+                    a.appendChild(r);
+                })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+            }
 
             // --- 3. Load national GTM ---
             if (!document.querySelector('script[src*="id=GTM-KSNRRFL8"]')) {
@@ -2917,12 +2920,77 @@ function koala_output_location_blog_schema()
 add_action('wp_head', 'koala_output_resources_landing_schema', 2);
 function koala_output_resources_landing_schema()
 {
-    if (is_admin() || !is_singular('resources-landing-pa')) {
+    if (is_admin()) {
         return;
     }
 
-    $post_id = get_the_ID();
-    $schema_raw = get_field('schema', $post_id);
+    // Beanstalk owns schema output for Areas-Served City Pages (it prints
+    // resource_lp_schema itself). Don't double-print on those.
+    if (function_exists('koala_is_beanstalk_area_served_page') && koala_is_beanstalk_area_served_page()) {
+        return;
+    }
+
+    $post_id = null;
+
+    if (is_singular('resources-landing-pa')) {
+        $post_id = get_the_ID();
+    } else {
+        // Meet the Team / Areas Served / Recent Projects resolve their
+        // resources-landing-pa post from the URL at render time (see
+        // page-meet-the-team.php etc.), not via is_page()/is_singular() —
+        // WordPress's main query for these URLs doesn't reliably report
+        // is_page() true by the time wp_head fires, so match the URL
+        // directly the same way those templates already do.
+        $suffix_term_map = [
+            'meet-the-team'   => 'meet-the-team',
+            'areas-served'    => 'areas-served',
+            'recent-projects' => 'recent-projects',
+        ];
+
+        $current_path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+        $path_parts = explode('/', $current_path);
+        $last_segment = end($path_parts);
+
+        if (isset($suffix_term_map[$last_segment])) {
+            $term_slug = $suffix_term_map[$last_segment];
+            $location_slug = trim(str_replace($last_segment, '', $current_path), '/');
+
+            $location = get_page_by_path($location_slug, OBJECT, 'location');
+
+            if ($location) {
+                $query = new WP_Query([
+                    'post_type'      => 'resources-landing-pa',
+                    'posts_per_page' => 1,
+                    'fields'         => 'ids',
+                    'no_found_rows'  => true,
+                    'meta_query'     => [
+                        [
+                            'key'     => 'rl_related_location',
+                            'value'   => $location->ID,
+                            'compare' => 'LIKE',
+                        ],
+                    ],
+                    'tax_query'      => [
+                        [
+                            'taxonomy' => 'resources-page-type',
+                            'field'    => 'slug',
+                            'terms'    => $term_slug,
+                        ],
+                    ],
+                ]);
+
+                if (!empty($query->posts)) {
+                    $post_id = $query->posts[0];
+                }
+            }
+        }
+    }
+
+    if (empty($post_id)) {
+        return;
+    }
+
+    $schema_raw = get_field('resource_lp_schema', $post_id);
     if (empty($schema_raw)) {
         return;
     }

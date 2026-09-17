@@ -140,6 +140,9 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
     if (event.key === "Enter") {
       var locationContainer = this.closest(".location-container");
       var inputZip = this.value.trim();
+      // The nav ZIP lookup should surface only the single nearest location,
+      // while other ZIP inputs keep showing the full ranked list.
+      var isNavZipInput = this.id === "my-zipcode-input-nav";
 
       if (inputZip === "") {
         document.getElementById("location-popup").style.display = "none";
@@ -353,8 +356,13 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
                         // Clear existing content before adding new locations
                         popupContainer.innerHTML = "";
 
-                        // Add new content for each sorted location
-                        nearbyLocationFinalArr.forEach((item) => {
+                        // Add new content for each sorted location. The nav ZIP
+                        // lookup is capped to the single nearest location.
+                        const locationsToRender = isNavZipInput
+                          ? nearbyLocationFinalArr.slice(0, 1)
+                          : nearbyLocationFinalArr;
+
+                        locationsToRender.forEach((item) => {
                           const locationDiv = document.createElement("div");
                           locationDiv.classList.add("location-item");
                           locationDiv.dataset.locationId = item.locationId;
@@ -528,9 +536,13 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
 
 document.querySelectorAll(".find-location-btn").forEach(function (button) {
   button.addEventListener("click", function () {
-    var inputZip = this.closest(".location-container")
-      .querySelector(".top-zipcode-input")
-      .value.trim();
+    var zipInputEl = this.closest(".location-container").querySelector(
+      ".top-zipcode-input"
+    );
+    var inputZip = zipInputEl.value.trim();
+    // The nav ZIP lookup should surface only the single nearest location,
+    // while other ZIP inputs keep showing the full ranked list.
+    var isNavZipInput = zipInputEl.id === "my-zipcode-input-nav";
 
     if (inputZip === "") {
       document.getElementById("location-popup").style.display = "none";
@@ -735,8 +747,13 @@ document.getElementById("get-estimate-popup").style.display = "none";
                       // Clear existing content before adding new locations
                       popupContainer.innerHTML = "";
 
-                      // Add new content for each sorted location
-                      nearbyLocationFinalArr.forEach((item) => {
+                      // Add new content for each sorted location. The nav ZIP
+                      // lookup is capped to the single nearest location.
+                      const locationsToRender = isNavZipInput
+                        ? nearbyLocationFinalArr.slice(0, 1)
+                        : nearbyLocationFinalArr;
+
+                      locationsToRender.forEach((item) => {
                         const locationDiv = document.createElement("div");
                         locationDiv.classList.add("location-item");
                         locationDiv.dataset.locationId = item.locationId;
