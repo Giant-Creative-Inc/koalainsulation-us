@@ -3,7 +3,7 @@
   "id": "koala/city-page",
   "label": "Koala City Page",
   "description": "Location-aware City Page with editable Hero, Residential Services, Commercial Services, Why Choose Koala, Testimonials, FAQ, and final CTA sections.",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "postTypes": ["resources-landing-pa"],
   "template": "city-page.php",
   "fields": {
@@ -28,9 +28,9 @@
     "commercial_services_benefit_2_description": {"label":"Commercial benefit 2 description","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-commercial-services-benefit-2-description","attribute":"content"}},
     "commercial_services_benefit_3_title": {"label":"Commercial benefit 3 title","type":"text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-commercial-services-benefit-3-title","attribute":"content"}},
     "commercial_services_benefit_3_description": {"label":"Commercial benefit 3 description","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-commercial-services-benefit-3-description","attribute":"content"}},
-    "commercial_services_image_1": {"label":"Commercial image 1 and alt text","type":"image","required":true,"target":{"block":"core/image","name":"koala-city-page-field-commercial-services-image-1","attribute":"image"}},
+    "commercial_services_image_1": {"label":"Commercial image 1 and alt text","type":"image","required":false,"target":{"block":"core/image","name":"koala-city-page-field-commercial-services-image-1","attribute":"image"}},
     "commercial_services_caption_1": {"label":"Commercial image 1 caption","type":"text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-commercial-services-caption-1","attribute":"content"}},
-    "commercial_services_image_2": {"label":"Commercial image 2 and alt text","type":"image","required":true,"target":{"block":"core/image","name":"koala-city-page-field-commercial-services-image-2","attribute":"image"}},
+    "commercial_services_image_2": {"label":"Commercial image 2 and alt text","type":"image","required":false,"target":{"block":"core/image","name":"koala-city-page-field-commercial-services-image-2","attribute":"image"}},
     "commercial_services_caption_2": {"label":"Commercial image 2 caption","type":"text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-commercial-services-caption-2","attribute":"content"}},
     "commercial_services_cta_label": {"label":"Commercial CTA label","type":"text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-commercial-services-cta-label","attribute":"content"}},
     "why_koala_introduction": {"label":"Why Choose Koala introduction","type":"text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-why-koala-introduction","attribute":"content"}},
@@ -40,7 +40,7 @@
     "why_koala_benefit_3": {"label":"Why Choose Koala benefit 3","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-why-koala-benefit-3","attribute":"content"}},
     "why_koala_benefit_4": {"label":"Why Choose Koala benefit 4","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-why-koala-benefit-4","attribute":"content"}},
     "why_koala_benefit_5": {"label":"Why Choose Koala benefit 5","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-why-koala-benefit-5","attribute":"content"}},
-    "why_koala_image": {"label":"Why Choose Koala image and alt text","type":"image","required":true,"target":{"block":"core/image","name":"koala-city-page-field-why-koala-image","attribute":"image"}},
+    "why_koala_image": {"label":"Why Choose Koala image and alt text","type":"image","required":false,"target":{"block":"core/image","name":"koala-city-page-field-why-koala-image","attribute":"image"}},
     "why_koala_feature_1": {"label":"Why Choose Koala feature tile 1","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-why-koala-feature-1","attribute":"content"}},
     "why_koala_feature_2": {"label":"Why Choose Koala feature tile 2","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-why-koala-feature-2","attribute":"content"}},
     "why_koala_feature_3": {"label":"Why Choose Koala feature tile 3","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-why-koala-feature-3","attribute":"content"}},
@@ -66,6 +66,6 @@
     "final_cta_heading": {"label":"Final CTA heading","type":"text","required":true,"target":{"block":"core/heading","name":"koala-city-page-field-final-cta-heading","attribute":"content"}},
     "final_cta_supporting_copy": {"label":"Final CTA supporting copy","type":"rich-text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-final-cta-supporting-copy","attribute":"content"}},
     "final_cta_button_label": {"label":"Final CTA button label","type":"text","required":true,"target":{"block":"core/paragraph","name":"koala-city-page-field-final-cta-button-label","attribute":"content"}},
-    "final_cta_decorative_image": {"label":"Final CTA decorative image and alt-text decision","type":"image","required":true,"target":{"block":"core/image","name":"koala-city-page-field-final-cta-decorative-image","attribute":"image"}}
+    "final_cta_decorative_image": {"label":"Final CTA decorative image and alt-text decision","type":"image","required":false,"target":{"block":"core/image","name":"koala-city-page-field-final-cta-decorative-image","attribute":"image"}}
   }
 }
