@@ -108,7 +108,7 @@ final class AbilityRegistrar {
 				'category'            => 'beanstalk',
 				'input_schema'        => $this->create_draft_input_schema(),
 				'output_schema'       => $this->create_draft_output_schema(),
-				'execute_callback'    => array( $this->drafts, 'create' ),
+				'execute_callback'    => array( $this, 'create_draft' ),
 				'permission_callback' => array( $this, 'draft_permission' ),
 				'meta'                => $this->ability_meta( false, false ),
 			)
@@ -126,6 +126,30 @@ final class AbilityRegistrar {
 				'permission_callback' => array( $this, 'content_permission' ),
 				'meta'                => $this->ability_meta( true, true ),
 			)
+		);
+	}
+
+	/**
+	 * Creates a draft while preserving a stable error code across MCP Adapter.
+	 *
+	 * MCP Adapter currently serializes only the WP_Error message returned by an
+	 * ability. Prefixing that message with the bounded WordPress error code lets
+	 * trusted callers classify the failure without exposing raw diagnostics.
+	 *
+	 * @param array $input Validated draft input.
+	 * @return array|\WP_Error
+	 */
+	public function create_draft( array $input ) {
+		$result = $this->drafts->create( $input );
+		if ( ! is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$code = sanitize_key( $result->get_error_code() );
+		return new \WP_Error(
+			$code,
+			$code . ': ' . $result->get_error_message(),
+			$result->get_error_data()
 		);
 	}
 
