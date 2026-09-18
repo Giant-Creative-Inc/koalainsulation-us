@@ -70,6 +70,9 @@ final class ContentBuilder {
 					return new WP_Error( 'beanstalk_pattern_target_mismatch', __( 'A pattern field target uses an unexpected block type.', 'beanstalk-content-engine' ) );
 				}
 				++$counts[ $field_id ];
+				if ( 'image' === $field['type'] && null === $content[ $field_id ] ) {
+					continue;
+				}
 				$block = $this->populate_block( $block, $target, $content[ $field_id ] );
 			}
 

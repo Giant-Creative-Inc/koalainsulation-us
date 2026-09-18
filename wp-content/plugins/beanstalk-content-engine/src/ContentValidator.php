@@ -34,6 +34,10 @@ final class ContentValidator {
 		foreach ( $manifest['fields'] as $field_id => $field ) {
 			if ( 'image' === $field['type'] ) {
 				$image = $content[ $field_id ] ?? null;
+				if ( ! $field['required'] && ( null === $image || '' === $image ) ) {
+					$sanitized[ $field_id ] = null;
+					continue;
+				}
 				if ( ! is_array( $image ) || array( 'id', 'alt' ) !== array_keys( $image ) || ! is_string( $image['alt'] ) ) {
 					return new WP_Error( 'beanstalk_invalid_image', __( 'An image field must contain only an attachment ID and alt text.', 'beanstalk-content-engine' ) );
 				}
