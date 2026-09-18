@@ -113,6 +113,20 @@ final class AbilityRegistrar {
 				'meta'                => $this->ability_meta( false, false ),
 			)
 		);
+
+		wp_register_ability(
+			'beanstalk/find-draft',
+			array(
+				'label'               => __( 'Find Beanstalk Draft', 'beanstalk-content-engine' ),
+				'description'         => __( 'Finds an unpublished Beanstalk draft by external ID without changing WordPress.', 'beanstalk-content-engine' ),
+				'category'            => 'beanstalk',
+				'input_schema'        => $this->find_draft_input_schema(),
+				'output_schema'       => $this->find_draft_output_schema(),
+				'execute_callback'    => array( $this->drafts, 'find' ),
+				'permission_callback' => array( $this, 'content_permission' ),
+				'meta'                => $this->ability_meta( true, true ),
+			)
+		);
 	}
 
 	/**
@@ -576,6 +590,53 @@ final class AbilityRegistrar {
 					'type'   => 'string',
 					'format' => 'uri',
 				),
+			),
+			'additionalProperties' => false,
+		);
+	}
+
+	/**
+	 * Returns the external-ID draft lookup input schema.
+	 *
+	 * @return array
+	 */
+	private function find_draft_input_schema(): array {
+		return array(
+			'type'                 => 'object',
+			'required'             => array( 'external_id', 'post_type' ),
+			'properties'           => array(
+				'external_id' => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => 191,
+					'pattern'   => '^[A-Za-z0-9][A-Za-z0-9._:-]*$',
+				),
+				'post_type'   => array(
+					'type'      => 'string',
+					'pattern'   => '^[a-z0-9_-]+$',
+					'maxLength' => 20,
+				),
+			),
+			'additionalProperties' => false,
+		);
+	}
+
+	/**
+	 * Returns the external-ID draft lookup output schema.
+	 *
+	 * @return array
+	 */
+	private function find_draft_output_schema(): array {
+		return array(
+			'type'                 => 'object',
+			'required'             => array( 'found' ),
+			'properties'           => array(
+				'found'       => array( 'type' => 'boolean' ),
+				'post_id'     => array( 'type' => 'integer' ),
+				'status'      => array( 'type' => 'string', 'enum' => array( 'draft' ) ),
+				'slug'        => array( 'type' => 'string' ),
+				'edit_url'    => array( 'type' => 'string', 'format' => 'uri' ),
+				'preview_url' => array( 'type' => 'string', 'format' => 'uri' ),
 			),
 			'additionalProperties' => false,
 		);

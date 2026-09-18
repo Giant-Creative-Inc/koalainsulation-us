@@ -120,11 +120,14 @@ final class CityPageContext {
 		}
 
 		$relationship = array( (string) $context['related_location_id'] );
-		if ( ! function_exists( 'update_field' ) || ! update_field( self::ACF_FIELD_KEY, $relationship, $post_id ) ) {
+		if ( ! function_exists( 'update_field' ) ) {
 			return $this->rollback( $post_id );
 		}
+		update_field( self::ACF_FIELD_KEY, $relationship, $post_id );
 
-		if ( get_post_meta( $post_id, self::RELATIONSHIP_KEY, true ) !== $relationship
+		$stored_relationship = get_post_meta( $post_id, self::RELATIONSHIP_KEY, true );
+		if ( ! is_array( $stored_relationship )
+			|| array( (int) $context['related_location_id'] ) !== array_map( 'intval', $stored_relationship )
 			|| self::ACF_FIELD_KEY !== get_post_meta( $post_id, '_' . self::RELATIONSHIP_KEY, true ) ) {
 			return $this->rollback( $post_id );
 		}

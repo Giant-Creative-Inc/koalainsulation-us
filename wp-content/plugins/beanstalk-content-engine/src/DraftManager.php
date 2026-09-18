@@ -15,6 +15,43 @@ use WP_Error;
 final class DraftManager {
 
 	/**
+	 * Finds an existing unpublished draft by its idempotency identity.
+	 *
+	 * @param array $input Validated lookup input.
+	 * @return array
+	 */
+	public function find( array $input ): array {
+		$external_id = sanitize_text_field( $input['external_id'] );
+		$post_type   = sanitize_key( $input['post_type'] );
+		$matches     = get_posts(
+			array(
+				'fields'         => 'ids',
+				'meta_key'       => '_beanstalk_ai_external_id', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Narrow idempotency lookup.
+				'meta_value'     => $external_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Narrow idempotency lookup.
+				'no_found_rows'  => true,
+				'post_status'    => 'draft',
+				'post_type'      => $post_type,
+				'posts_per_page' => 1,
+			)
+		);
+
+		if ( ! $matches ) {
+			return array( 'found' => false );
+		}
+
+		$post_id = (int) $matches[0];
+		$post    = get_post( $post_id );
+		return array(
+			'found'       => true,
+			'post_id'     => $post_id,
+			'status'      => 'draft',
+			'slug'        => $post->post_name,
+			'edit_url'    => get_edit_post_link( $post_id, 'raw' ),
+			'preview_url' => get_preview_post_link( $post_id ),
+		);
+	}
+
+	/**
 	 * Creates the draft service.
 	 *
 	 * @param PatternRegistry  $patterns          Pattern registry.
