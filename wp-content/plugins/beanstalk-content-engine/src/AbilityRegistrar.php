@@ -246,13 +246,31 @@ final class AbilityRegistrar {
 		);
 
 		if ( 'koala/city-page' === $manifest['id'] && in_array( 'resources-landing-pa', $manifest['postTypes'], true ) ) {
+			$locations = get_posts(
+				array(
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+					'orderby'        => 'title',
+					'order'          => 'ASC',
+					'post_status'    => 'publish',
+					'post_type'      => 'location',
+					'posts_per_page' => 200,
+				)
+			);
 			$output['draft_context'] = array(
 				'required' => true,
 				'fields'   => array(
 					array(
-						'id'    => 'related_location_id',
-						'label' => 'Related location ID',
-						'type'  => 'integer',
+						'id'      => 'related_location_id',
+						'label'   => 'Related location',
+						'type'    => 'integer',
+						'options' => array_map(
+							static fn( $post_id ) => array(
+								'id'    => (int) $post_id,
+								'label' => get_the_title( $post_id ),
+							),
+							$locations
+						),
 					),
 				),
 			);
@@ -422,13 +440,26 @@ final class AbilityRegistrar {
 							'maxItems' => 1,
 							'items'    => array(
 								'type'                 => 'object',
-								'required'             => array( 'id', 'label', 'type' ),
+								'required'             => array( 'id', 'label', 'type', 'options' ),
 								'properties'           => array(
 									'id'    => array( 'type' => 'string' ),
 									'label' => array( 'type' => 'string' ),
 									'type'  => array(
 										'type' => 'string',
 										'enum' => array( 'integer' ),
+									),
+									'options' => array(
+										'type'     => 'array',
+										'maxItems' => 200,
+										'items'    => array(
+											'type'                 => 'object',
+											'required'             => array( 'id', 'label' ),
+											'properties'           => array(
+												'id'    => array( 'type' => 'integer', 'minimum' => 1 ),
+												'label' => array( 'type' => 'string' ),
+											),
+											'additionalProperties' => false,
+										),
 									),
 								),
 								'additionalProperties' => false,
