@@ -3,7 +3,7 @@
   "id": "koala/city-page",
   "label": "Koala City Page",
   "description": "Location-aware City Page with editable Hero, Residential Services, Commercial Services, Why Choose Koala, Testimonials, FAQ, and final CTA sections.",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "postTypes": ["resources-landing-pa"],
   "template": "city-page.php",
   "fields": {

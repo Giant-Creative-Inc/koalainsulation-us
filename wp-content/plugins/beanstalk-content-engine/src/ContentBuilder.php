@@ -133,7 +133,8 @@ final class ContentBuilder {
 			$value = 'rich-text' === $field['type'] ? $value : esc_html( $value );
 			$html  = $this->replace_element_content( $block['innerHTML'], 'h[1-6]', $value );
 		} else {
-			$html = $this->replace_element_content( $block['innerHTML'], 'p', $value );
+			$value = 'rich-text' === $field['type'] ? $value : esc_html( $value );
+			$html  = $this->replace_element_content( $block['innerHTML'], 'p', $value );
 		}
 
 		$block['innerHTML']    = $html;
