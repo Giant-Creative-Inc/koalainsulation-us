@@ -9,6 +9,7 @@ use GiantCreative\BeanstalkContentEngine\PatternValidator;
 
 $manifest = json_decode( file_get_contents( dirname( __DIR__, 3 ) . '/themes/bricks/beanstalk/pattern-manifests/city-page.json' ), true );
 $validator = new PatternValidator();
+if ( '0.14.0' !== $manifest['version'] || ! isset( $manifest['structuredData'] ) ) throw new RuntimeException( 'The unified City Page contract version is incomplete.' );
 if ( is_wp_error( $validator->validate( $manifest ) ) ) throw new RuntimeException( 'The Koala editor layout must validate.' );
 $normalized = $validator->normalize_editor_layout( $manifest['editorLayout'], array_keys( $manifest['fields'] ) );
 if ( is_wp_error( $normalized ) || 1 !== $normalized['contractVersion'] ) throw new RuntimeException( 'The normalized layout contract is missing.' );
@@ -17,7 +18,7 @@ $referenced = $collect( $normalized['root'] ); sort( $referenced ); $declared = 
 if ( $referenced !== $declared ) throw new RuntimeException( 'The Koala layout must reference every field exactly once.' );
 $registrar = ( new ReflectionClass( GiantCreative\BeanstalkContentEngine\AbilityRegistrar::class ) )->newInstanceWithoutConstructor();
 $schema_method = new ReflectionMethod( $registrar, 'pattern_schema_output_schema' ); $schema_method->setAccessible( true ); $ability_schema = $schema_method->invoke( $registrar );
-if ( ! isset( $ability_schema['properties']['editor_layout'] ) || isset( $ability_schema['properties']['draft_context']['properties']['editor_layout'] ) ) throw new RuntimeException( 'The ability schema must expose editor_layout at the top level.' );
+if ( ! isset( $ability_schema['properties']['editor_layout'], $ability_schema['properties']['structured_data'] ) || isset( $ability_schema['properties']['draft_context']['properties']['editor_layout'] ) ) throw new RuntimeException( 'The ability schema must expose both contracts at the top level.' );
 $unsafe = $manifest['editorLayout']; $unsafe['root']['html'] = '<script>alert(1)</script>';
 if ( ! is_wp_error( $validator->normalize_editor_layout( $unsafe, array_keys( $manifest['fields'] ) ) ) ) throw new RuntimeException( 'Unknown markup must fail closed.' );
 $missing = $manifest['editorLayout']; $missing['root'] = array( 'type' => 'field', 'fieldId' => 'missing', 'display' => 'body' );

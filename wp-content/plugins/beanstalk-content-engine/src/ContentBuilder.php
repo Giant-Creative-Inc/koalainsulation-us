@@ -70,7 +70,10 @@ final class ContentBuilder {
 					return new WP_Error( 'beanstalk_pattern_target_mismatch', __( 'A pattern field target uses an unexpected block type.', 'beanstalk-content-engine' ) );
 				}
 				++$counts[ $field_id ];
-				$block = $this->populate_block( $block, $target, $content[ $field_id ] );
+				if ( 'image' === $field['type'] && null === $content[ $field_id ] ) {
+					continue;
+				}
+				$block = $this->populate_block( $block, $field, $content[ $field_id ] );
 			}
 
 			if ( ! empty( $block['innerBlocks'] ) ) {
@@ -90,11 +93,12 @@ final class ContentBuilder {
 	 * Populates one supported block.
 	 *
 	 * @param array $block  Parsed block.
-	 * @param array $target Field target.
+	 * @param array $field  Manifest field definition.
 	 * @param mixed $value  Sanitized value.
 	 * @return array
 	 */
-	private function populate_block( array $block, array $target, $value ): array {
+	private function populate_block( array $block, array $field, $value ): array {
+		$target = $field['target'];
 		if ( 'core/details' === $target['block'] && 'summary' === $target['attribute'] ) {
 			$summary            = '<summary>' . esc_html( $value ) . '</summary>';
 			$replace            = static fn( string $html ): string => (string) preg_replace( '/<summary>.*?<\/summary>/s', $summary, $html, 1 );
@@ -126,14 +130,35 @@ final class ContentBuilder {
 			$block['attrs']['sizeSlug'] = 'large';
 			$html                       = '<figure class="wp-block-image size-large">' . $image . '</figure>';
 		} elseif ( 'core/heading' === $target['block'] ) {
-			$level = isset( $block['attrs']['level'] ) ? (int) $block['attrs']['level'] : 2;
-			$html  = sprintf( '<h%1$d class="wp-block-heading">%2$s</h%1$d>', $level, esc_html( $value ) );
+			$value = 'rich-text' === $field['type'] ? $value : esc_html( $value );
+			$html  = $this->replace_element_content( $block['innerHTML'], 'h[1-6]', $value );
 		} else {
-			$html = '<p>' . $value . '</p>';
+			$value = 'rich-text' === $field['type'] ? $value : esc_html( $value );
+			$html  = $this->replace_element_content( $block['innerHTML'], 'p', $value );
 		}
 
 		$block['innerHTML']    = $html;
 		$block['innerContent'] = array( $html );
 		return $block;
+	}
+
+	/**
+	 * Replaces an element's contents while preserving template attributes and classes.
+	 *
+	 * @param string $html       Original block HTML.
+	 * @param string $tag_pattern Allowed tag-name regular expression.
+	 * @param string $content    Sanitized replacement content.
+	 * @return string
+	 */
+	private function replace_element_content( string $html, string $tag_pattern, string $content ): string {
+		$pattern = '/(<(' . $tag_pattern . ')\\b[^>]*>).*?(<\\/\\2>)/is';
+		$updated = preg_replace_callback(
+			$pattern,
+			static fn( array $matches ): string => $matches[1] . $content . $matches[3],
+			$html,
+			1
+		);
+
+		return is_string( $updated ) ? $updated : $html;
 	}
 }

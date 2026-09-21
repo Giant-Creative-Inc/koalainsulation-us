@@ -22,7 +22,7 @@ final class PatternValidator {
 	 */
 	public function validate( array $manifest ) {
 		$required_keys = array( 'id', 'label', 'description', 'version', 'postTypes', 'template', 'fields' );
-		$allowed_keys  = array_merge( array( '$schema', 'editorLayout' ), $required_keys );
+		$allowed_keys  = array_merge( array( '$schema', 'editorLayout', 'structuredData' ), $required_keys );
 
 		if ( array_diff( array_keys( $manifest ), $allowed_keys ) || array_diff( $required_keys, array_keys( $manifest ) ) ) {
 			return $this->error( __( 'A pattern manifest has missing or unsupported properties.', 'beanstalk-content-engine' ) );
@@ -74,6 +74,12 @@ final class PatternValidator {
 				return $layout;
 			}
 		}
+		if ( isset( $manifest['structuredData'] ) ) {
+			$result = $this->validate_structured_data( $manifest['structuredData'] );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		}
 
 		return true;
 	}
@@ -119,6 +125,24 @@ final class PatternValidator {
 	private function layout_guidance( array $node, array $out ): array { if ( isset( $node['writerGuidance'] ) ) $out['writerGuidance'] = trim( $node['writerGuidance'] ); return $out; }
 	private function bounded_string( $value, int $max ): bool { return is_string( $value ) && '' !== trim( $value ) && strlen( $value ) <= $max; }
 	private function layout_error(): WP_Error { return new WP_Error( 'beanstalk_invalid_editor_layout', __( 'A pattern manifest has an invalid editor layout.', 'beanstalk-content-engine' ) ); }
+
+	/** Validates the optional template-owned structured-data contract. */
+	private function validate_structured_data( $contract ) {
+		$keys = array( 'contractVersion', 'profile', 'label', 'produces', 'fields' );
+		if ( ! is_array( $contract ) || array_diff( array_keys( $contract ), $keys ) || array_diff( $keys, array_keys( $contract ) )
+			|| 1 !== $contract['contractVersion'] || ! is_string( $contract['profile'] ) || ! preg_match( '/^[a-z0-9-]+\/[a-z0-9-]+$/', $contract['profile'] )
+			|| ! $this->bounded_string( $contract['label'], 200 ) || ! is_array( $contract['produces'] ) || empty( $contract['produces'] )
+			|| ! is_array( $contract['fields'] ) || empty( $contract['fields'] ) ) return $this->error( __( 'A pattern manifest has an invalid structured-data contract.', 'beanstalk-content-engine' ) );
+		$entities = array( 'WebPage', 'Service', 'HomeAndConstructionBusiness', 'BreadcrumbList', 'FAQPage' );
+		if ( count( $contract['produces'] ) > 10 || count( array_unique( $contract['produces'] ) ) !== count( $contract['produces'] ) || array_diff( $contract['produces'], $entities ) ) return $this->error( __( 'A pattern manifest has unsupported or duplicate structured-data entities.', 'beanstalk-content-engine' ) );
+		foreach ( $contract['fields'] as $id => $field ) {
+			$field_keys = array( 'label', 'type', 'required', 'source' );
+			if ( ! is_string( $id ) || ! preg_match( '/^[a-z][a-z0-9_]*$/', $id ) || ! is_array( $field ) || array_diff( array_keys( $field ), $field_keys ) || array_diff( $field_keys, array_keys( $field ) )
+				|| ! $this->bounded_string( $field['label'], 200 ) || ! in_array( $field['type'], array( 'text', 'url', 'integer', 'string-list', 'boolean' ), true )
+				|| ! is_bool( $field['required'] ) || ! in_array( $field['source'], array( 'content-center', 'wordpress', 'wordpress-derived' ), true ) ) return $this->error( __( 'A pattern manifest structured-data field is invalid.', 'beanstalk-content-engine' ) );
+		}
+		return true;
+	}
 
 	/**
 	 * Validates one field.

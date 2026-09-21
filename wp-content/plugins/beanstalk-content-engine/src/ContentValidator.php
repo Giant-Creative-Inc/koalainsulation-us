@@ -34,6 +34,10 @@ final class ContentValidator {
 		foreach ( $manifest['fields'] as $field_id => $field ) {
 			if ( 'image' === $field['type'] ) {
 				$image = $content[ $field_id ] ?? null;
+				if ( ! $field['required'] && ( null === $image || '' === $image ) ) {
+					$sanitized[ $field_id ] = null;
+					continue;
+				}
 				if ( ! is_array( $image ) || array( 'id', 'alt' ) !== array_keys( $image ) || ! is_string( $image['alt'] ) ) {
 					return new WP_Error( 'beanstalk_invalid_image', __( 'An image field must contain only an attachment ID and alt text.', 'beanstalk-content-engine' ) );
 				}
@@ -58,7 +62,7 @@ final class ContentValidator {
 				return new WP_Error( 'beanstalk_invalid_content', __( 'Block markup is not allowed inside a pattern content field.', 'beanstalk-content-engine' ) );
 			}
 
-			$sanitized_value = 'text' === $field['type'] ? sanitize_text_field( $value ) : wp_kses(
+			$sanitized_value = 'text' === $field['type'] ? sanitize_text_field( $value ) : wp_kses_normalize_entities( wp_kses(
 				$value,
 				array(
 					'a'      => array(
@@ -73,7 +77,7 @@ final class ContentValidator {
 					's'      => array(),
 					'strong' => array(),
 				)
-			);
+			) );
 
 			if ( $field['required'] && '' === trim( wp_strip_all_tags( $sanitized_value ) ) ) {
 				return new WP_Error( 'beanstalk_empty_field', __( 'A required pattern content field is empty after sanitization.', 'beanstalk-content-engine' ) );

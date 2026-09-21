@@ -27,24 +27,24 @@
 				<!-- /wp:paragraph -->
 
 				<!-- wp:group {"className":"koala-city-hero__benefits","layout":{"type":"default"}} -->
-				<div class="wp-block-group koala-city-hero__benefits" role="list">
+				<div class="wp-block-group koala-city-hero__benefits">
 					<!-- wp:paragraph {"className":"koala-city-hero__benefit","metadata":{"name":"koala-city-page-field-hero-benefit-1"}} -->
-					<p class="koala-city-hero__benefit" role="listitem">FREE in-home evaluation</p>
+					<p class="koala-city-hero__benefit">FREE in-home evaluation</p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-hero__benefit","metadata":{"name":"koala-city-page-field-hero-benefit-2"}} -->
-					<p class="koala-city-hero__benefit" role="listitem">Licensed &amp; insured pros</p>
+					<p class="koala-city-hero__benefit">Licensed &amp; insured pros</p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-hero__benefit","metadata":{"name":"koala-city-page-field-hero-benefit-3"}} -->
-					<p class="koala-city-hero__benefit" role="listitem">Clean, 1-day service</p>
+					<p class="koala-city-hero__benefit">Clean, 1-day service</p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-hero__benefit","metadata":{"name":"koala-city-page-field-hero-benefit-4"}} -->
-					<p class="koala-city-hero__benefit" role="listitem">Same-week installation</p>
+					<p class="koala-city-hero__benefit">Same-week installation</p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-hero__benefit","metadata":{"name":"koala-city-page-field-hero-benefit-5"}} -->
-					<p class="koala-city-hero__benefit" role="listitem">Workmanship warranty</p>
+					<p class="koala-city-hero__benefit">Workmanship warranty</p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-hero__benefit","metadata":{"name":"koala-city-page-field-hero-benefit-6"}} -->
-					<p class="koala-city-hero__benefit" role="listitem">Utility rebate assistance</p>
+					<p class="koala-city-hero__benefit">Utility rebate assistance</p>
 					<!-- /wp:paragraph -->
 				</div>
 				<!-- /wp:group -->
@@ -125,9 +125,9 @@
 				<!-- /wp:paragraph -->
 
 				<!-- wp:group {"className":"koala-city-commercial-services__benefits","layout":{"type":"default"}} -->
-				<div class="wp-block-group koala-city-commercial-services__benefits" role="list">
+				<div class="wp-block-group koala-city-commercial-services__benefits">
 					<!-- wp:group {"className":"koala-city-commercial-services__benefit","layout":{"type":"default"}} -->
-					<div class="wp-block-group koala-city-commercial-services__benefit" role="listitem">
+					<div class="wp-block-group koala-city-commercial-services__benefit">
 						<!-- wp:paragraph {"className":"koala-city-commercial-services__benefit-title","metadata":{"name":"koala-city-page-field-commercial-services-benefit-1-title"}} -->
 						<p class="koala-city-commercial-services__benefit-title">Energy Code Compliance</p>
 						<!-- /wp:paragraph -->
@@ -138,7 +138,7 @@
 					<!-- /wp:group -->
 
 					<!-- wp:group {"className":"koala-city-commercial-services__benefit","layout":{"type":"default"}} -->
-					<div class="wp-block-group koala-city-commercial-services__benefit" role="listitem">
+					<div class="wp-block-group koala-city-commercial-services__benefit">
 						<!-- wp:paragraph {"className":"koala-city-commercial-services__benefit-title","metadata":{"name":"koala-city-page-field-commercial-services-benefit-2-title"}} -->
 						<p class="koala-city-commercial-services__benefit-title">Large Project Experience</p>
 						<!-- /wp:paragraph -->
@@ -149,7 +149,7 @@
 					<!-- /wp:group -->
 
 					<!-- wp:group {"className":"koala-city-commercial-services__benefit","layout":{"type":"default"}} -->
-					<div class="wp-block-group koala-city-commercial-services__benefit" role="listitem">
+					<div class="wp-block-group koala-city-commercial-services__benefit">
 						<!-- wp:paragraph {"className":"koala-city-commercial-services__benefit-title","metadata":{"name":"koala-city-page-field-commercial-services-benefit-3-title"}} -->
 						<p class="koala-city-commercial-services__benefit-title">Inspection &amp; Code Compliance</p>
 						<!-- /wp:paragraph -->
@@ -237,21 +237,21 @@
 				<!-- /wp:group -->
 
 				<!-- wp:group {"className":"koala-city-why-koala__benefits","layout":{"type":"default"}} -->
-				<div class="wp-block-group koala-city-why-koala__benefits" role="list">
+				<div class="wp-block-group koala-city-why-koala__benefits">
 					<!-- wp:paragraph {"className":"koala-city-why-koala__benefit","metadata":{"name":"koala-city-page-field-why-koala-benefit-1"}} -->
-					<p class="koala-city-why-koala__benefit" role="listitem"><strong>Workmanship warranty</strong> on every install</p>
+					<p class="koala-city-why-koala__benefit"><strong>Workmanship warranty</strong> on every install</p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-why-koala__benefit","metadata":{"name":"koala-city-page-field-why-koala-benefit-2"}} -->
-					<p class="koala-city-why-koala__benefit" role="listitem"><strong>FREE</strong> on-site evaluations &amp; written quotes</p>
+					<p class="koala-city-why-koala__benefit"><strong>FREE</strong> on-site evaluations &amp; written quotes</p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-why-koala__benefit","metadata":{"name":"koala-city-page-field-why-koala-benefit-3"}} -->
-					<p class="koala-city-why-koala__benefit" role="listitem">NJ Clean Energy Program <strong>rebate-eligible</strong> services</p>
+					<p class="koala-city-why-koala__benefit">NJ Clean Energy Program <strong>rebate-eligible</strong> services</p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-why-koala__benefit","metadata":{"name":"koala-city-page-field-why-koala-benefit-4"}} -->
-					<p class="koala-city-why-koala__benefit" role="listitem">Most jobs completed in <strong>just one day</strong></p>
+					<p class="koala-city-why-koala__benefit">Most jobs completed in <strong>just one day</strong></p>
 					<!-- /wp:paragraph -->
 					<!-- wp:paragraph {"className":"koala-city-why-koala__benefit","metadata":{"name":"koala-city-page-field-why-koala-benefit-5"}} -->
-					<p class="koala-city-why-koala__benefit" role="listitem">Locally licensed, insured <strong>{{service_area_name}} team</strong></p>
+					<p class="koala-city-why-koala__benefit">Locally licensed, insured <strong>{{service_area_name}} team</strong></p>
 					<!-- /wp:paragraph -->
 				</div>
 				<!-- /wp:group -->
@@ -288,8 +288,8 @@
 	</div>
 	<!-- /wp:group -->
 
-	<!-- wp:group {"align":"full","className":"koala-city-testimonials","layout":{"type":"default"}} -->
-	<section class="wp-block-group alignfull koala-city-testimonials" aria-labelledby="koala-city-testimonials-heading">
+	<!-- wp:group {"tagName":"section","align":"full","className":"koala-city-testimonials","layout":{"type":"default"}} -->
+	<section class="wp-block-group alignfull koala-city-testimonials">
 		<!-- wp:group {"className":"koala-city-testimonials__content","layout":{"type":"default"}} -->
 		<div class="wp-block-group koala-city-testimonials__content">
 			<!-- wp:group {"className":"koala-city-testimonials__intro","layout":{"type":"default"}} -->
@@ -297,7 +297,7 @@
 				<!-- wp:paragraph {"className":"koala-city-testimonials__eyebrow","metadata":{"name":"koala-city-page-field-testimonials-eyebrow"}} -->
 				<p class="koala-city-testimonials__eyebrow">Your Satisfaction is</p>
 				<!-- /wp:paragraph -->
-				<!-- wp:heading {"level":2,"className":"koala-city-testimonials__heading","metadata":{"name":"koala-city-page-field-testimonials-heading"}} -->
+				<!-- wp:heading {"level":2,"anchor":"koala-city-testimonials-heading","className":"koala-city-testimonials__heading","metadata":{"name":"koala-city-page-field-testimonials-heading"}} -->
 				<h2 id="koala-city-testimonials-heading" class="wp-block-heading koala-city-testimonials__heading">Our Top Priority</h2>
 				<!-- /wp:heading -->
 				<!-- wp:paragraph {"className":"koala-city-testimonials__description","metadata":{"name":"koala-city-page-field-testimonials-description"}} -->

@@ -15,6 +15,43 @@ use WP_Error;
 final class DraftManager {
 
 	/**
+	 * Finds an existing unpublished draft by its idempotency identity.
+	 *
+	 * @param array $input Validated lookup input.
+	 * @return array
+	 */
+	public function find( array $input ): array {
+		$external_id = sanitize_text_field( $input['external_id'] );
+		$post_type   = sanitize_key( $input['post_type'] );
+		$matches     = get_posts(
+			array(
+				'fields'         => 'ids',
+				'meta_key'       => '_beanstalk_ai_external_id', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Narrow idempotency lookup.
+				'meta_value'     => $external_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Narrow idempotency lookup.
+				'no_found_rows'  => true,
+				'post_status'    => 'draft',
+				'post_type'      => $post_type,
+				'posts_per_page' => 1,
+			)
+		);
+
+		if ( ! $matches ) {
+			return array( 'found' => false );
+		}
+
+		$post_id = (int) $matches[0];
+		$post    = get_post( $post_id );
+		return array(
+			'found'       => true,
+			'post_id'     => $post_id,
+			'status'      => 'draft',
+			'slug'        => $post->post_name,
+			'edit_url'    => get_edit_post_link( $post_id, 'raw' ),
+			'preview_url' => get_preview_post_link( $post_id ),
+		);
+	}
+
+	/**
 	 * Creates the draft service.
 	 *
 	 * @param PatternRegistry  $patterns          Pattern registry.
@@ -47,6 +84,13 @@ final class DraftManager {
 		}
 		if ( ! in_array( $post_type, $manifest['postTypes'], true ) ) {
 			return new WP_Error( 'beanstalk_unsupported_post_type', __( 'The requested post type is not supported by this pattern.', 'beanstalk-content-engine' ) );
+		}
+		if ( isset( $input['manifest_version'] ) && $input['manifest_version'] !== $manifest['version'] ) {
+			return new WP_Error( 'beanstalk_stale_manifest', __( 'The selected pattern manifest changed.', 'beanstalk-content-engine' ) );
+		}
+		$structured = $this->validate_structured_data( $input['structured_data'] ?? null, $manifest );
+		if ( is_wp_error( $structured ) ) {
+			return $structured;
 		}
 
 		$allowed = apply_filters( 'beanstalk_content_engine_allowed_post_types', array( 'page', 'post', 'resources-landing-pa' ) );
@@ -101,6 +145,12 @@ final class DraftManager {
 				'meta_input'   => array(
 					'_beanstalk_ai_external_id'      => $external_id,
 					'_beanstalk_ai_manifest_version' => $manifest['version'],
+					...( is_array( $structured ) ? array(
+						'_beanstalk_structured_data_profile'          => $manifest['structuredData']['profile'],
+						'_beanstalk_structured_data_contract_version' => 1,
+						'_beanstalk_structured_data_values'           => wp_json_encode( $structured ),
+						'_beanstalk_structured_data_contract_sha256'  => hash( 'sha256', wp_json_encode( $manifest['structuredData'] ) ),
+					) : array() ),
 				),
 				'post_content' => $post_content,
 				'post_name'    => $slug,
@@ -130,5 +180,28 @@ final class DraftManager {
 			'edit_url'    => get_edit_post_link( $post_id, 'raw' ),
 			'preview_url' => get_preview_post_link( $post_id ),
 		);
+	}
+
+	/** Validate only Content Center-owned values against the live manifest. */
+	private function validate_structured_data( $submitted, array $manifest ) {
+		if ( ! isset( $manifest['structuredData'] ) ) return null === $submitted ? null : new WP_Error( 'beanstalk_unexpected_structured_data', __( 'This pattern does not accept structured data.', 'beanstalk-content-engine' ) );
+		$contract = $manifest['structuredData'];
+		if ( ! is_array( $submitted ) || array( 'contract_version', 'profile', 'values' ) !== array_keys( $submitted ) || 1 !== $submitted['contract_version'] || $contract['profile'] !== $submitted['profile'] || ! is_array( $submitted['values'] ) ) return new WP_Error( 'beanstalk_invalid_structured_data', __( 'Structured-data contract evidence is invalid.', 'beanstalk-content-engine' ) );
+		$allowed = array_filter( $contract['fields'], static fn( $field ) => 'content-center' === $field['source'] );
+		if ( array_diff( array_keys( $submitted['values'] ), array_keys( $allowed ) ) ) return new WP_Error( 'beanstalk_unexpected_structured_data_value', __( 'Structured data contains an unexpected or WordPress-owned value.', 'beanstalk-content-engine' ) );
+		$values = array();
+		foreach ( $allowed as $id => $field ) {
+			if ( ! array_key_exists( $id, $submitted['values'] ) ) { if ( $field['required'] ) return new WP_Error( 'beanstalk_missing_structured_data_value', __( 'A required structured-data value is missing.', 'beanstalk-content-engine' ) ); continue; }
+			$value = $submitted['values'][ $id ];
+			if ( 'string-list' === $field['type'] ) {
+				if ( ! is_array( $value ) || empty( $value ) || count( $value ) > 25 || count( array_filter( $value, 'is_string' ) ) !== count( $value ) ) return new WP_Error( 'beanstalk_invalid_structured_data_value', __( 'A structured-data list is invalid.', 'beanstalk-content-engine' ) );
+				$value = array_map( 'sanitize_text_field', $value ); if ( in_array( '', $value, true ) ) return new WP_Error( 'beanstalk_invalid_structured_data_value', __( 'A structured-data list item is invalid.', 'beanstalk-content-engine' ) );
+			} elseif ( 'text' === $field['type'] ) {
+				if ( ! is_string( $value ) || '' === trim( $value ) || strlen( $value ) > 500 ) return new WP_Error( 'beanstalk_invalid_structured_data_value', __( 'A structured-data text value is invalid.', 'beanstalk-content-engine' ) );
+				$value = sanitize_text_field( $value );
+			} else return new WP_Error( 'beanstalk_invalid_structured_data_value', __( 'A structured-data value type is unsupported.', 'beanstalk-content-engine' ) );
+			$values[ $id ] = $value;
+		}
+		return $values;
 	}
 }

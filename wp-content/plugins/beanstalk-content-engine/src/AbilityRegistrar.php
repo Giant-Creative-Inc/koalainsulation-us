@@ -46,7 +46,13 @@ final class AbilityRegistrar {
 				'category'            => 'beanstalk',
 				'input_schema'        => array(
 					'type'                 => 'object',
-					'properties'           => array(),
+					'properties'           => array(
+						'request' => array(
+							'type' => 'string',
+							'enum' => array( 'catalog' ),
+						),
+					),
+					'required'             => array( 'request' ),
 					'additionalProperties' => false,
 				),
 				'output_schema'       => $this->destination_list_output_schema(),
@@ -64,7 +70,13 @@ final class AbilityRegistrar {
 				'category'            => 'beanstalk',
 				'input_schema'        => array(
 					'type'                 => 'object',
-					'properties'           => array(),
+					'properties'           => array(
+						'request' => array(
+							'type' => 'string',
+							'enum' => array( 'catalog' ),
+						),
+					),
+					'required'             => array( 'request' ),
 					'additionalProperties' => false,
 				),
 				'output_schema'       => $this->pattern_list_output_schema(),
@@ -96,10 +108,48 @@ final class AbilityRegistrar {
 				'category'            => 'beanstalk',
 				'input_schema'        => $this->create_draft_input_schema(),
 				'output_schema'       => $this->create_draft_output_schema(),
-				'execute_callback'    => array( $this->drafts, 'create' ),
+				'execute_callback'    => array( $this, 'create_draft' ),
 				'permission_callback' => array( $this, 'draft_permission' ),
 				'meta'                => $this->ability_meta( false, false ),
 			)
+		);
+
+		wp_register_ability(
+			'beanstalk/find-draft',
+			array(
+				'label'               => __( 'Find Beanstalk Draft', 'beanstalk-content-engine' ),
+				'description'         => __( 'Finds an unpublished Beanstalk draft by external ID without changing WordPress.', 'beanstalk-content-engine' ),
+				'category'            => 'beanstalk',
+				'input_schema'        => $this->find_draft_input_schema(),
+				'output_schema'       => $this->find_draft_output_schema(),
+				'execute_callback'    => array( $this->drafts, 'find' ),
+				'permission_callback' => array( $this, 'content_permission' ),
+				'meta'                => $this->ability_meta( true, true ),
+			)
+		);
+	}
+
+	/**
+	 * Creates a draft while preserving a stable error code across MCP Adapter.
+	 *
+	 * MCP Adapter currently serializes only the WP_Error message returned by an
+	 * ability. Prefixing that message with the bounded WordPress error code lets
+	 * trusted callers classify the failure without exposing raw diagnostics.
+	 *
+	 * @param array $input Validated draft input.
+	 * @return array|\WP_Error
+	 */
+	public function create_draft( array $input ) {
+		$result = $this->drafts->create( $input );
+		if ( ! is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$code = sanitize_key( $result->get_error_code() );
+		return new \WP_Error(
+			$code,
+			$code . ': ' . $result->get_error_message(),
+			$result->get_error_data()
 		);
 	}
 
@@ -235,15 +285,43 @@ final class AbilityRegistrar {
 		if ( isset( $manifest['editorLayout'] ) ) {
 			$output['editor_layout'] = $manifest['editorLayout'];
 		}
+		if ( isset( $manifest['structuredData'] ) ) {
+			$contract = $manifest['structuredData'];
+			$output['structured_data'] = array(
+				'contract_version'  => $contract['contractVersion'],
+				'profile'           => $contract['profile'],
+				'label'             => $contract['label'],
+				'produces'          => array_values( $contract['produces'] ),
+				'field_definitions' => array_map( static fn( $id, $field ) => array( 'id' => $id ) + $field, array_keys( $contract['fields'] ), array_values( $contract['fields'] ) ),
+			);
+		}
 
 		if ( 'koala/city-page' === $manifest['id'] && in_array( 'resources-landing-pa', $manifest['postTypes'], true ) ) {
+			$locations = get_posts(
+				array(
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+					'orderby'        => 'title',
+					'order'          => 'ASC',
+					'post_status'    => 'publish',
+					'post_type'      => 'location',
+					'posts_per_page' => 200,
+				)
+			);
 			$output['draft_context'] = array(
 				'required' => true,
 				'fields'   => array(
 					array(
-						'id'    => 'related_location_id',
-						'label' => 'Related location ID',
-						'type'  => 'integer',
+						'id'      => 'related_location_id',
+						'label'   => 'Related location',
+						'type'    => 'integer',
+						'options' => array_map(
+							static fn( $post_id ) => array(
+								'id'    => (int) $post_id,
+								'label' => get_the_title( $post_id ),
+							),
+							$locations
+						),
 					),
 				),
 			);
@@ -413,13 +491,26 @@ final class AbilityRegistrar {
 							'maxItems' => 1,
 							'items'    => array(
 								'type'                 => 'object',
-								'required'             => array( 'id', 'label', 'type' ),
+								'required'             => array( 'id', 'label', 'type', 'options' ),
 								'properties'           => array(
 									'id'    => array( 'type' => 'string' ),
 									'label' => array( 'type' => 'string' ),
 									'type'  => array(
 										'type' => 'string',
 										'enum' => array( 'integer' ),
+									),
+									'options' => array(
+										'type'     => 'array',
+										'maxItems' => 200,
+										'items'    => array(
+											'type'                 => 'object',
+											'required'             => array( 'id', 'label' ),
+											'properties'           => array(
+												'id'    => array( 'type' => 'integer', 'minimum' => 1 ),
+												'label' => array( 'type' => 'string' ),
+											),
+											'additionalProperties' => false,
+										),
 									),
 								),
 								'additionalProperties' => false,
@@ -429,6 +520,30 @@ final class AbilityRegistrar {
 					'additionalProperties' => false,
 				),
 				'editor_layout'    => array( 'type' => 'object' ),
+				'structured_data'  => $this->structured_data_output_schema(),
+			),
+			'additionalProperties' => false,
+		);
+	}
+
+	/** Returns the normalized structured-data contract output schema. */
+	private function structured_data_output_schema(): array {
+		return array(
+			'type'                 => 'object',
+			'required'             => array( 'contract_version', 'profile', 'label', 'produces', 'field_definitions' ),
+			'properties'           => array(
+				'contract_version'  => array( 'type' => 'integer', 'enum' => array( 1 ) ),
+				'profile'           => array( 'type' => 'string' ),
+				'label'             => array( 'type' => 'string' ),
+				'produces'          => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
+				'field_definitions' => array(
+					'type'  => 'array',
+					'items' => array(
+						'type' => 'object', 'required' => array( 'id', 'label', 'type', 'required', 'source' ),
+						'properties' => array( 'id' => array( 'type' => 'string' ), 'label' => array( 'type' => 'string' ), 'type' => array( 'type' => 'string' ), 'required' => array( 'type' => 'boolean' ), 'source' => array( 'type' => 'string' ) ),
+						'additionalProperties' => false,
+					),
+				),
 			),
 			'additionalProperties' => false,
 		);
@@ -455,6 +570,7 @@ final class AbilityRegistrar {
 					'pattern'   => '^[a-z0-9-]+/[a-z0-9-]+$',
 					'maxLength' => 100,
 				),
+				'manifest_version' => array( 'type' => 'string', 'maxLength' => 100 ),
 				'post_type'   => array(
 					'type'      => 'string',
 					'pattern'   => '^[a-z0-9_-]+$',
@@ -508,6 +624,16 @@ final class AbilityRegistrar {
 					),
 					'additionalProperties' => false,
 				),
+				'structured_data' => array(
+					'type'                 => 'object',
+					'required'             => array( 'contract_version', 'profile', 'values' ),
+					'properties'           => array(
+						'contract_version' => array( 'type' => 'integer' ),
+						'profile'          => array( 'type' => 'string' ),
+						'values'           => array( 'type' => 'object', 'additionalProperties' => true ),
+					),
+					'additionalProperties' => false,
+				),
 			),
 			'additionalProperties' => false,
 		);
@@ -537,6 +663,53 @@ final class AbilityRegistrar {
 					'type'   => 'string',
 					'format' => 'uri',
 				),
+			),
+			'additionalProperties' => false,
+		);
+	}
+
+	/**
+	 * Returns the external-ID draft lookup input schema.
+	 *
+	 * @return array
+	 */
+	private function find_draft_input_schema(): array {
+		return array(
+			'type'                 => 'object',
+			'required'             => array( 'external_id', 'post_type' ),
+			'properties'           => array(
+				'external_id' => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => 191,
+					'pattern'   => '^[A-Za-z0-9][A-Za-z0-9._:-]*$',
+				),
+				'post_type'   => array(
+					'type'      => 'string',
+					'pattern'   => '^[a-z0-9_-]+$',
+					'maxLength' => 20,
+				),
+			),
+			'additionalProperties' => false,
+		);
+	}
+
+	/**
+	 * Returns the external-ID draft lookup output schema.
+	 *
+	 * @return array
+	 */
+	private function find_draft_output_schema(): array {
+		return array(
+			'type'                 => 'object',
+			'required'             => array( 'found' ),
+			'properties'           => array(
+				'found'       => array( 'type' => 'boolean' ),
+				'post_id'     => array( 'type' => 'integer' ),
+				'status'      => array( 'type' => 'string', 'enum' => array( 'draft' ) ),
+				'slug'        => array( 'type' => 'string' ),
+				'edit_url'    => array( 'type' => 'string', 'format' => 'uri' ),
+				'preview_url' => array( 'type' => 'string', 'format' => 'uri' ),
 			),
 			'additionalProperties' => false,
 		);

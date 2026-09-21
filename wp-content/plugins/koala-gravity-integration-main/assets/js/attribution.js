@@ -245,10 +245,11 @@
 	 * Fills every mapped tracking hidden field on every form present.
 	 *
 	 * Reads kgiData.trackingFieldIds (form ID => { trackingKey => GF field ID })
-	 * localized on form pages. Only writes into an input that is currently
-	 * empty, so a value already supplied (e.g. by Gravity Forms' own dynamic
-	 * population) is never clobbered. Uses querySelectorAll and walks each known
-	 * form ID for the same duplicate-form / multi-form reasons as
+	 * localized on form pages. Every mapped field is overwritten, including
+	 * with an empty value. Cached HTML or server-side dynamic population may
+	 * contain another request's attribution, so preserving a pre-existing value
+	 * would risk submitting stale visitor data. Uses querySelectorAll and walks
+	 * each known form ID for the same duplicate-form / multi-form reasons as
 	 * form-validation.js.
 	 */
 	function fillForms() {
@@ -267,15 +268,13 @@
 					var fieldId = fieldMap[ key ];
 					var input = form.querySelector( 'input[name="input_' + fieldId + '"]' );
 
-					if ( ! input || input.value ) {
+					if ( ! input ) {
 						return;
 					}
 
 					var value = resolveValue( key, stored, formId );
 
-					if ( value ) {
-						input.value = value;
-					}
+					input.value = value;
 				} );
 			} );
 		} );
@@ -297,6 +296,9 @@
 	captureFirstTouch();
 	bindCtaCapture();
 	onReady( fillForms );
+	document.addEventListener( 'gform/post_render', fillForms );
+	document.addEventListener( 'submit', fillForms, true );
+	window.addEventListener( 'pageshow', fillForms );
 
 	// Re-fill after Gravity Forms rebuilds the DOM on multi-page or AJAX forms.
 	// gform_post_render is a jQuery-triggered event, so bind it via jQuery when

@@ -91,6 +91,7 @@ final class Bootstrap {
 		add_action( 'init', array( $this->patterns, 'register_pattern_category' ), 19 );
 		add_action( 'init', array( $this->patterns, 'register_fallback_patterns' ), 20 );
 		add_action( 'admin_notices', array( $this, 'dependency_notice' ) );
+		( new ServiceAreaSchema() )->register();
 	}
 
 	/** Registers the fallback and invites active themes to register providers. */
