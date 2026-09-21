@@ -158,6 +158,9 @@ final class PatternRegistry {
 			);
 			return $validation;
 		}
+		if ( isset( $manifest['editorLayout'] ) ) {
+			$manifest['editorLayout'] = $this->validator->normalize_editor_layout( $manifest['editorLayout'], array_keys( $manifest['fields'] ) );
+		}
 
 		$pattern_path = $provider['pattern_directory'] . '/' . $manifest['template'];
 		if ( ! is_readable( $pattern_path ) ) {

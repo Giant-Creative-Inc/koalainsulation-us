@@ -232,6 +232,9 @@ final class AbilityRegistrar {
 			'required_fields'  => $required,
 			'optional_fields'  => $optional,
 		);
+		if ( isset( $manifest['editorLayout'] ) ) {
+			$output['editor_layout'] = $manifest['editorLayout'];
+		}
 
 		if ( 'koala/city-page' === $manifest['id'] && in_array( 'resources-landing-pa', $manifest['postTypes'], true ) ) {
 			$output['draft_context'] = array(
@@ -425,6 +428,7 @@ final class AbilityRegistrar {
 					),
 					'additionalProperties' => false,
 				),
+				'editor_layout'    => array( 'type' => 'object' ),
 			),
 			'additionalProperties' => false,
 		);
