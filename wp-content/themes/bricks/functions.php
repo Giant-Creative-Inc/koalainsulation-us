@@ -2530,7 +2530,14 @@ add_action('wp_ajax_nopriv_match_location_by_zip', 'match_location_by_zip');
 
 function match_location_by_zip()
 {
-    check_ajax_referer('match_location', 'nonce');
+    // No nonce check here on purpose. This endpoint is a public, read-only ZIP
+    // lookup that returns only publicly visible location data and changes no
+    // state, so it needs no CSRF protection. Enforcing a nonce actively breaks
+    // it: with full-page caching (WP Rocket), anonymous visitors are served a
+    // cached page whose embedded nonce has since expired, so check_ajax_referer
+    // returns 403 and the finder silently fails. This is the recurring
+    // "zip search stopped working" bug. The sibling radius/distance endpoints
+    // are already nonce-free for the same reason.
     $zip = sanitize_text_field($_POST['zip_code']);
 
     $args = [

@@ -452,7 +452,6 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
                                 );
 
                                 locationPopup.style.display = "none";
-                                estimateCustomPopup.style.display = "flex";
 
                                 populateGravityLocationFields(
                                   clickedItemObj.locationZipcode,
@@ -462,23 +461,17 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
                                   }
                                 );
 
-                                // document.getElementById("zip-custom").value =
-                                //   clickedItemObj.locationZipcode;
-                                // document.getElementById("key-custom").value =
-                                //   clickedItemObj.locationKey;
-                                // document.getElementById("key-custom-sm").value =
-                                //   clickedItemObj.locationServiceminderKey;
-                                // document.getElementById("url-custom").value =
-                                //   clickedItemObj.websiteLink;
-                                setPopupPhoneLink(
-                                  "est-phone-number-custom",
-                                  clickedItemObj.mobileNumber
-                                );
-                                document.getElementById(
-                                  "tel-href-custom"
-                                ).href = `tel:${clickedItemObj.mobileNumber}`;
-
+                                // Open the Bricks estimate form popup (templateId
+                                // 4865) via an existing trigger, exactly like the
+                                // exact-match location button does. The old
+                                // estimate-popup-custom has no form, and its
+                                // tel-href-custom element was removed, which threw
+                                // "Cannot set properties of null (setting 'href')"
+                                // and left the fallback flow showing an empty popup.
                                 showGravityQuoteForms();
+                                document
+                                  .getElementById("national-nav-quote")
+                                  ?.click();
                               }
                             });
                           });
@@ -838,7 +831,6 @@ document.getElementById("get-estimate-popup").style.display = "none";
                               console.log("clickedItemObj---", clickedItemObj);
 
                               locationPopup.style.display = "none";
-                              estimateCustomPopup.style.display = "flex";
 
                               populateGravityLocationFields(
                                 clickedItemObj.locationZipcode,
@@ -848,23 +840,17 @@ document.getElementById("get-estimate-popup").style.display = "none";
                                 }
                               );
 
-                              // document.getElementById("zip-custom").value =
-                              //   clickedItemObj.locationZipcode;
-                              // document.getElementById("key-custom").value =
-                              //   clickedItemObj.locationKey;
-                              // document.getElementById("key-custom-sm").value =
-                              //   clickedItemObj.locationServiceminderKey;
-                              // document.getElementById("url-custom").value =
-                              //   clickedItemObj.websiteLink;
-                              setPopupPhoneLink(
-                                "est-phone-number-custom",
-                                clickedItemObj.mobileNumber
-                              );
-                              document.getElementById(
-                                "tel-href-custom"
-                              ).href = `tel:${clickedItemObj.mobileNumber}`;
-
+                              // Open the Bricks estimate form popup (templateId
+                              // 4865) via an existing trigger, exactly like the
+                              // exact-match location button does. The old
+                              // estimate-popup-custom has no form, and its
+                              // tel-href-custom element was removed, which threw
+                              // "Cannot set properties of null (setting 'href')"
+                              // and left the fallback flow showing an empty popup.
                               showGravityQuoteForms();
+                              document
+                                .getElementById("national-nav-quote")
+                                ?.click();
                             }
                           });
                         });
