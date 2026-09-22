@@ -51,6 +51,7 @@ final class ServiceAreaSchema {
 		$business_url = trailingslashit( get_permalink( $location_id ) );
 		$address      = get_post_meta( $location_id, 'location_address', true );
 		$address      = is_array( $address ) ? $address : array( 'address' => (string) $address );
+		$address      = $this->business_address( $location_id, $address );
 		$content      = (string) get_post_field( 'post_content', $post_id );
 		$offers       = $this->offered_services( $location_id, $content );
 		$service      = array(
@@ -85,7 +86,7 @@ final class ServiceAreaSchema {
 				),
 			);
 		}
-		$faq_items = $this->faq_items( (string) get_post_field( 'post_content', $post_id ) );
+		$faq_items = $this->faq_items( (string) get_post_field( 'post_content', $post_id ), $values, $location_id, $business_url );
 		$web_page  = array(
 			'@type'      => 'WebPage',
 			'@id'        => $page_url . '#webpage',
@@ -108,11 +109,11 @@ final class ServiceAreaSchema {
 				'telephone' => (string) get_post_meta( $location_id, 'location_phone_number', true ),
 				'address'   => array(
 					'@type'           => 'PostalAddress',
-					'streetAddress'   => (string) ( $address['street_address'] ?? $address['address'] ?? '' ),
-					'addressLocality' => (string) ( $address['city'] ?? '' ),
-					'addressRegion'   => (string) ( $address['state'] ?? '' ),
-					'postalCode'      => (string) ( $address['post_code'] ?? $address['zip'] ?? '' ),
-					'addressCountry'  => (string) ( $address['country'] ?? 'US' ),
+					'streetAddress'   => (string) ( $address['streetAddress'] ?? $address['street_address'] ?? $address['address'] ?? '' ),
+					'addressLocality' => (string) ( $address['addressLocality'] ?? $address['city'] ?? '' ),
+					'addressRegion'   => (string) ( $address['addressRegion'] ?? $address['state'] ?? '' ),
+					'postalCode'      => (string) ( $address['postalCode'] ?? $address['post_code'] ?? $address['zip'] ?? '' ),
+					'addressCountry'  => (string) ( $address['addressCountry'] ?? $address['country'] ?? 'US' ),
 				),
 			),
 			array(
@@ -169,10 +170,13 @@ final class ServiceAreaSchema {
 	/**
 	 * Read complete, visibly rendered FAQ pairs from the named city-page blocks.
 	 *
-	 * @param string $content Serialized Gutenberg content.
+	 * @param string              $content           Serialized Gutenberg content.
+	 * @param array<string,mixed> $structured_values Content Center schema values.
+	 * @param int                 $location_id       Providing franchise post ID.
+	 * @param string              $business_url      Providing franchise permalink.
 	 * @return array<int,array{question:string,answer:string}>
 	 */
-	private function faq_items( string $content ): array {
+	private function faq_items( string $content, array $structured_values = array(), int $location_id = 0, string $business_url = '' ): array {
 		$values = array();
 		$walk   = static function ( array $blocks ) use ( &$walk, &$values ): void {
 			foreach ( $blocks as $block ) {
@@ -191,12 +195,65 @@ final class ServiceAreaSchema {
 		};
 		$walk( parse_blocks( $content ) );
 		ksort( $values );
-		return array_values(
+		$items = array_values(
 			array_filter(
 				$values,
 				static fn( $item ) => ! empty( $item['question'] ) && ! empty( $item['answer'] )
 			)
 		);
+		return array_map(
+			fn( $item ) => array(
+				'question' => $this->replace_placeholders( $item['question'], $structured_values, $location_id, $business_url ),
+				'answer'   => $this->replace_placeholders( $item['answer'], $structured_values, $location_id, $business_url ),
+			),
+			$items
+		);
+	}
+
+	/**
+	 * Resolve the allowlisted City Page placeholders for plain-text schema values.
+	 *
+	 * @param string              $value             Placeholder-bearing text.
+	 * @param array<string,mixed> $structured_values Content Center schema values.
+	 * @param int                 $location_id       Providing franchise post ID.
+	 * @param string              $business_url      Providing franchise permalink.
+	 */
+	private function replace_placeholders( string $value, array $structured_values, int $location_id, string $business_url ): string {
+		$phone     = $location_id ? (string) get_post_meta( $location_id, 'location_phone_number', true ) : '';
+		$phone_url = preg_replace( '/[^0-9+]/', '', $phone );
+		return strtr(
+			$value,
+			array(
+				'{{service_area_name}}'  => (string) ( $structured_values['service_area_name'] ?? '' ),
+				'{{state_name}}'         => (string) ( $structured_values['state_name'] ?? '' ),
+				'{{state_abbreviation}}' => (string) ( $structured_values['state_abbreviation'] ?? '' ),
+				'{{location_name}}'      => $location_id ? (string) get_the_title( $location_id ) : '',
+				'{{location_home_url}}'  => $business_url,
+				'{{location_phone}}'     => $phone,
+				'{{location_phone_url}}' => $phone_url ? 'tel:' . $phone_url : '',
+			)
+		);
+	}
+
+	/**
+	 * Prefer the location's existing structured business address over a flattened display address.
+	 *
+	 * @param int                 $location_id Providing franchise post ID.
+	 * @param array<string,mixed> $fallback    Stored display-address fallback.
+	 */
+	private function business_address( int $location_id, array $fallback ): array {
+		$stored = json_decode( (string) get_post_meta( $location_id, 'schema', true ), true );
+		if ( is_array( $stored ) ) {
+			$nodes = isset( $stored['@graph'] ) ? $stored['@graph'] : $stored;
+			$nodes = isset( $nodes['@type'] ) ? array( $nodes ) : $nodes;
+			foreach ( $nodes as $node ) {
+				$types = isset( $node['@type'] ) ? (array) $node['@type'] : array();
+				if ( array_intersect( array( 'HomeAndConstructionBusiness', 'LocalBusiness' ), $types ) && is_array( $node['address'] ?? null ) ) {
+					return $node['address'];
+				}
+			}
+		}
+		return $fallback;
 	}
 
 	/**
