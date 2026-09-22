@@ -75,11 +75,12 @@ final class ServiceAreaSchema {
 				'@type'           => 'OfferCatalog',
 				'name'            => 'Insulation Services',
 				'itemListElement' => array_map(
-					static fn( $name ) => array(
+					static fn( $offer ) => array(
 						'@type'       => 'Offer',
 						'itemOffered' => array(
 							'@type' => 'Service',
-							'name'  => $name,
+							'name'  => $offer['name'],
+							'url'   => $offer['url'],
 						),
 					),
 					$offers
@@ -264,15 +265,16 @@ final class ServiceAreaSchema {
 	 *
 	 * @param int    $location_id Providing franchise post ID.
 	 * @param string $content     Serialized Gutenberg content.
-	 * @return array<int,string>
+	 * @return array<int,array{name:string,url:string}>
 	 */
 	private function offered_services( int $location_id, string $content ): array {
 		$service_ids = get_post_meta( $location_id, 'location_service', true );
 		if ( ! is_array( $service_ids ) ) {
 			return array();
 		}
-		$visible = strtolower( wp_strip_all_tags( $content ) );
-		$offers  = array();
+		$visible                  = strtolower( wp_strip_all_tags( $content ) );
+		$has_dynamic_service_grid = $this->has_block( parse_blocks( $content ), 'koala/location-services' );
+		$offers                   = array();
 		foreach ( $service_ids as $service_id ) {
 			$service = get_post( (int) $service_id );
 			if ( ! $service || 'location-service' !== $service->post_type || 'publish' !== $service->post_status ) {
@@ -282,11 +284,33 @@ final class ServiceAreaSchema {
 			if ( '' === $name ) {
 				$name = trim( (string) get_the_title( $service->ID ) );
 			}
-			if ( '' !== $name && false !== strpos( $visible, strtolower( $name ) ) ) {
-				$offers[] = $name;
+			$url = (string) get_permalink( $service->ID );
+			if ( '' !== $name && '' !== $url && ( $has_dynamic_service_grid || false !== strpos( $visible, strtolower( $name ) ) ) ) {
+				$offers[ $service->ID ] = array(
+					'name' => $name,
+					'url'  => $url,
+				);
 			}
 		}
-		return array_values( array_unique( $offers ) );
+		return array_values( $offers );
+	}
+
+	/**
+	 * Recursively find a named Gutenberg block.
+	 *
+	 * @param array<int,array<string,mixed>> $blocks Parsed blocks.
+	 * @param string                         $name   Full block name.
+	 */
+	private function has_block( array $blocks, string $name ): bool {
+		foreach ( $blocks as $block ) {
+			if ( $name === (string) ( $block['blockName'] ?? '' ) ) {
+				return true;
+			}
+			if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) && $this->has_block( $block['innerBlocks'], $name ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** Whether the queried post owns the service-area profile. */

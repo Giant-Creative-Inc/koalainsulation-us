@@ -27,6 +27,21 @@ namespace {
 	function wp_strip_all_tags( string $value ): string {
 		return strip_tags( $value );
 	}
+	function parse_blocks( string $content ): array {
+		return false !== strpos( $content, 'wp:koala/location-services' )
+			? array(
+				array(
+					'blockName'   => 'core/group',
+					'innerBlocks' => array(
+						array( 'blockName' => 'koala/location-services', 'innerBlocks' => array() ),
+					),
+				),
+			)
+			: array();
+	}
+	function get_permalink( int $post_id ): string {
+		return 'https://example.test/bergen-county/services/' . $post_id . '/';
+	}
 }
 
 namespace GiantCreative\BeanstalkContentEngine {
@@ -36,10 +51,18 @@ namespace GiantCreative\BeanstalkContentEngine {
 	$result = $method->invoke(
 		new ServiceAreaSchema(),
 		99,
-		'<p>We install Spray Foam Insulation and Air Sealing for local homes. Draft Service is not eligible.</p>'
+		'<!-- wp:group --><!-- wp:koala/location-services /--><!-- /wp:group -->'
 	);
-	if ( array( 'Spray Foam Insulation', 'Air Sealing' ) !== $result ) {
-		throw new \RuntimeException( 'Services were not resolved from the published WordPress location relationship.' );
+	$expected = array(
+		array( 'name' => 'Spray Foam Insulation', 'url' => 'https://example.test/bergen-county/services/11/' ),
+		array( 'name' => 'Air Sealing', 'url' => 'https://example.test/bergen-county/services/12/' ),
+	);
+	if ( $expected !== $result ) {
+		throw new \RuntimeException( 'The dynamic residential-service grid did not produce all published WordPress location services.' );
+	}
+	$static_result = $method->invoke( new ServiceAreaSchema(), 99, '<p>We install Spray Foam Insulation for local homes.</p>' );
+	if ( array( $expected[0] ) !== $static_result ) {
+		throw new \RuntimeException( 'Static content did not limit offers to visibly named services.' );
 	}
 	if ( array() !== $method->invoke( new ServiceAreaSchema(), 100, '<p>Spray Foam Insulation</p>' ) ) {
 		throw new \RuntimeException( 'A location without WordPress service relationships produced offers.' );
