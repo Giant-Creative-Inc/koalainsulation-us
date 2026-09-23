@@ -27,7 +27,9 @@ function koala_is_beanstalk_area_served_page(): bool {
 	$post_id = get_queried_object_id();
 
 	return $post_id > 0
-		&& has_term( 'areas-served', 'resources-page-type', $post_id );
+		&& has_term( 'areas-served', 'resources-page-type', $post_id )
+		&& function_exists( 'beanstalk_content_engine_is_city_page_enabled' )
+		&& beanstalk_content_engine_is_city_page_enabled( $post_id );
 }
 
 /**
