@@ -316,10 +316,7 @@ final class AbilityRegistrar {
 						'label'   => 'Related location',
 						'type'    => 'integer',
 						'options' => array_map(
-							static fn( $post_id ) => array(
-								'id'    => (int) $post_id,
-								'label' => get_the_title( $post_id ),
-							),
+							array( $this, 'city_page_location_option' ),
 							$locations
 						),
 					),
@@ -328,6 +325,52 @@ final class AbilityRegistrar {
 		}
 
 		return $output;
+	}
+
+	/** Return a location choice with WordPress-owned schema defaults. */
+	private function city_page_location_option( int $post_id ): array {
+		$state      = trim( (string) get_post_meta( $post_id, 'location_state', true ) );
+		$normalized = function_exists( 'koala_beanstalk_normalize_state' )
+			? koala_beanstalk_normalize_state( $state )
+			: $this->normalize_location_state( $state );
+
+		return array(
+			'id'       => $post_id,
+			'label'    => get_the_title( $post_id ),
+			'defaults' => array_filter(
+				array(
+					'service_area_name'  => get_the_title( $post_id ),
+					'state_name'         => (string) ( $normalized['name'] ?? '' ),
+					'state_abbreviation' => (string) ( $normalized['abbreviation'] ?? '' ),
+					'service_type'       => 'Insulation Services',
+				),
+				static fn( $value ) => '' !== $value
+			),
+		);
+	}
+
+	/** Normalize common US state values when the active theme helper is absent. */
+	private function normalize_location_state( string $state ): array {
+		$states = array(
+			'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas', 'CA' => 'California',
+			'CO' => 'Colorado', 'CT' => 'Connecticut', 'DE' => 'Delaware', 'FL' => 'Florida', 'GA' => 'Georgia',
+			'HI' => 'Hawaii', 'ID' => 'Idaho', 'IL' => 'Illinois', 'IN' => 'Indiana', 'IA' => 'Iowa',
+			'KS' => 'Kansas', 'KY' => 'Kentucky', 'LA' => 'Louisiana', 'ME' => 'Maine', 'MD' => 'Maryland',
+			'MA' => 'Massachusetts', 'MI' => 'Michigan', 'MN' => 'Minnesota', 'MS' => 'Mississippi', 'MO' => 'Missouri',
+			'MT' => 'Montana', 'NE' => 'Nebraska', 'NV' => 'Nevada', 'NH' => 'New Hampshire', 'NJ' => 'New Jersey',
+			'NM' => 'New Mexico', 'NY' => 'New York', 'NC' => 'North Carolina', 'ND' => 'North Dakota', 'OH' => 'Ohio',
+			'OK' => 'Oklahoma', 'OR' => 'Oregon', 'PA' => 'Pennsylvania', 'RI' => 'Rhode Island', 'SC' => 'South Carolina',
+			'SD' => 'South Dakota', 'TN' => 'Tennessee', 'TX' => 'Texas', 'UT' => 'Utah', 'VT' => 'Vermont',
+			'VA' => 'Virginia', 'WA' => 'Washington', 'WV' => 'West Virginia', 'WI' => 'Wisconsin', 'WY' => 'Wyoming',
+		);
+		$upper  = strtoupper( $state );
+		if ( isset( $states[ $upper ] ) ) {
+			return array( 'name' => $states[ $upper ], 'abbreviation' => $upper );
+		}
+		$code = array_search( strtolower( $state ), array_map( 'strtolower', $states ), true );
+		return false === $code
+			? array( 'name' => $state, 'abbreviation' => '' )
+			: array( 'name' => $states[ $code ], 'abbreviation' => $code );
 	}
 
 	/**
@@ -506,8 +549,12 @@ final class AbilityRegistrar {
 											'type'                 => 'object',
 											'required'             => array( 'id', 'label' ),
 											'properties'           => array(
-												'id'    => array( 'type' => 'integer', 'minimum' => 1 ),
-												'label' => array( 'type' => 'string' ),
+												'id'       => array( 'type' => 'integer', 'minimum' => 1 ),
+												'label'    => array( 'type' => 'string' ),
+												'defaults' => array(
+													'type'                 => 'object',
+													'additionalProperties' => array( 'type' => 'string' ),
+												),
 											),
 											'additionalProperties' => false,
 										),
