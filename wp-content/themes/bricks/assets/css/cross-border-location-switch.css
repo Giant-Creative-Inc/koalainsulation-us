@@ -31,15 +31,17 @@
   margin: 0;
   color: #003b70;
   font-size: clamp(40px, 5vw, 64px);
-  font-weight: 700;
+  font-family: "Alegreya Sans";
+  font-weight: 500;
+  letter-spacing: -3%;
   line-height: 1.1;
 }
 
 .koala-country-switch__panel p {
   margin: 28px 0 0;
   color: #333;
-  font-size: clamp(20px, 2.2vw, 30px);
-  font-weight: 700;
+  font-family: "Filson pro";
+  font-size: clamp(16px, 2.2vw, 20px);
   line-height: 1.35;
 }
 
@@ -74,7 +76,7 @@
   padding: 16px 34px;
   border: 0;
   border-radius: 999px;
-  font-family: inherit;
+  font-family: "Filson pro";
   font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
