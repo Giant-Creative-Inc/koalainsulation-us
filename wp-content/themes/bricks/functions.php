@@ -27,7 +27,10 @@ function koala_render_google_reviews($location_id = 0)
 /** Fill the shared Bricks review placeholder with location or corporate reviews. */
 function koala_render_bricks_google_review_placeholder($content, $post = null, $area = 'content')
 {
-    if (strpos($content, 'id="google-review-shortcode-wrapper"') === false) {
+    $has_google_placeholder = strpos($content, 'id="google-review-shortcode-wrapper"') !== false;
+    $has_legacy_corporate_placeholder = strpos($content, 'id="main-page-stories-widget"') !== false;
+
+    if (!$has_google_placeholder && !$has_legacy_corporate_placeholder) {
         return $content;
     }
 
@@ -44,9 +47,18 @@ function koala_render_bricks_google_review_placeholder($content, $post = null, $
         . '#main-page-widget,#main-page-stories-widget,#local-page-widget,#local-page-stories-widget{display:none!important}'
         . '</style>';
 
+    if ($has_google_placeholder) {
+        return preg_replace(
+            '/(<div id="google-review-shortcode-wrapper"[^>]*>)\s*<\/div>/',
+            $styles . '$1' . $widget . '</div>',
+            $content,
+            1
+        );
+    }
+
     return preg_replace(
-        '/(<div id="google-review-shortcode-wrapper"[^>]*>)\s*<\/div>/',
-        $styles . '$1' . $widget . '</div>',
+        '/<div id="main-page-stories-widget"/',
+        $styles . '<div id="google-review-shortcode-wrapper" class="brxe-div">' . $widget . '</div><div id="main-page-stories-widget"',
         $content,
         1
     );
