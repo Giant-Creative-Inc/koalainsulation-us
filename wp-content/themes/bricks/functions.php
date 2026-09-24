@@ -507,6 +507,7 @@ function enqueue_custom_scripts()
         $cross_border_path = get_template_directory() . '/assets/js/cross-border-location-switch.js';
         $cross_border_version = file_exists($cross_border_path) ? filemtime($cross_border_path) : null;
         wp_enqueue_script('koala-cross-border-location-switch', get_template_directory_uri() . '/assets/js/cross-border-location-switch.js', array(), $cross_border_version, true);
+        wp_enqueue_style('koala-cross-border-location-switch', get_template_directory_uri() . '/assets/css/cross-border-location-switch.css', array(), $cross_border_version);
         wp_localize_script('koala-cross-border-location-switch', 'koalaCrossBorderLocation', [
             'country' => 'US',
         ]);
