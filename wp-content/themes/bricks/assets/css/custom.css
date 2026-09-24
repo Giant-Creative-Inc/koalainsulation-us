@@ -1147,7 +1147,21 @@ background-color:#97d700;
 transition:all 0.2s ease-in;
 color:var(--bricks-color-wrshvk);
 font-family:"Filson pro";
+font-size:18px;
+line-height:27px;
+font-weight:600;
 display:flex;
+}
+
+.koala-estimate-button.brxe-div:hover {
+color:var(--bricks-color-idapwb);
+background-color:#7eb4a3;
+}
+
+.koala-estimate-button.brxe-div > .brxe-text-basic {
+font-size:18px;
+line-height:27px;
+font-weight:600;
 }
 
 .partner-wrapper h2 {
