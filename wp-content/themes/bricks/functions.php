@@ -457,6 +457,17 @@ function enqueue_custom_scripts()
 
     // custom-service-js handles the header ZIP lookup and estimate popup.
     $custom_service_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom-service.js');
+    $is_corporate_page = !$single_location_page && !$single_location_service;
+    if ($is_corporate_page) {
+        $cross_border_path = get_template_directory() . '/assets/js/cross-border-location-switch.js';
+        $cross_border_version = file_exists($cross_border_path) ? filemtime($cross_border_path) : null;
+        wp_enqueue_script('koala-cross-border-location-switch', get_template_directory_uri() . '/assets/js/cross-border-location-switch.js', array(), $cross_border_version, true);
+        wp_enqueue_style('koala-cross-border-location-switch', get_template_directory_uri() . '/assets/css/cross-border-location-switch.css', array(), $cross_border_version);
+        wp_localize_script('koala-cross-border-location-switch', 'koalaCrossBorderLocation', [
+            'country' => 'US',
+        ]);
+    }
+
     wp_enqueue_script('custom-service-js', get_template_directory_uri() . '/assets/js/custom-service.js', array('jquery'), $custom_service_ver, true);
 
     $needs_service_scripts = $front_page || $location_page || $single_location_page || $single_service_page || $single_location_service;

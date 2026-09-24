@@ -1,0 +1,143 @@
+.koala-country-switch[hidden] {
+  display: none;
+}
+
+.koala-country-switch {
+  position: fixed;
+  z-index: 100000;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(10, 24, 41, 0.62);
+}
+
+.koala-country-switch.is-open {
+  display: flex;
+}
+
+.koala-country-switch__panel {
+  position: relative;
+  width: min(100%, 960px);
+  padding: 64px 56px 72px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(5, 20, 38, 0.28);
+  text-align: center;
+}
+
+.koala-country-switch__panel h2 {
+  margin: 0;
+  color: #003b70;
+  font-size: clamp(40px, 5vw, 64px);
+  font-family: "Alegreya Sans";
+  font-weight: 500;
+  letter-spacing: -3%;
+  line-height: 1.1;
+}
+
+.koala-country-switch__panel p {
+  margin: 28px 0 0;
+  color: #333;
+  font-family: "Filson pro";
+  font-size: clamp(16px, 2.2vw, 20px);
+  line-height: 1.35;
+}
+
+.koala-country-switch__close {
+  position: absolute;
+  top: 22px;
+  right: 26px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: #0f1f35;
+  font-size: 42px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.koala-country-switch__actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 42px;
+}
+
+.koala-country-switch__visit,
+.koala-country-switch__stay {
+  display: inline-flex;
+  min-height: 62px;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 34px;
+  border: 0;
+  border-radius: 999px;
+  font-family: "Filson pro";
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.koala-country-switch__visit {
+  background: #003f73;
+  color: #fff;
+}
+
+.koala-country-switch__stay {
+  background: #97d700;
+  color: #003f73;
+}
+
+.koala-country-switch__visit:hover,
+.koala-country-switch__visit:focus-visible {
+  background: #002f57;
+  color: #fff;
+}
+
+.koala-country-switch__stay:hover,
+.koala-country-switch__stay:focus-visible {
+  background: #84bd00;
+}
+
+body.koala-country-switch-open {
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .koala-country-switch {
+    padding: 18px;
+  }
+
+  .koala-country-switch__panel {
+    padding: 58px 22px 32px;
+  }
+
+  .koala-country-switch__panel h2 {
+    font-size: 34px;
+  }
+
+  .koala-country-switch__panel p {
+    margin-top: 20px;
+    font-size: 19px;
+  }
+
+  .koala-country-switch__actions {
+    flex-direction: column;
+    margin-top: 30px;
+  }
+
+  .koala-country-switch__visit,
+  .koala-country-switch__stay {
+    width: 100%;
+    min-height: 56px;
+    padding: 14px 22px;
+    font-size: 16px;
+  }
+}
