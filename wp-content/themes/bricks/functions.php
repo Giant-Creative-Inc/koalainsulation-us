@@ -21,6 +21,35 @@ function koala_render_google_reviews($location_id = 0)
     return $shortcode === '' ? '' : '<div class="koala-google-reviews">' . do_shortcode($shortcode) . '</div>';
 }
 
+/** Fill the shared Bricks review placeholder with location or corporate reviews. */
+function koala_render_bricks_google_review_placeholder($content, $post = null, $area = 'content')
+{
+    if (strpos($content, 'id="google-review-shortcode-wrapper"') === false) {
+        return $content;
+    }
+
+    $post_id = $post instanceof WP_Post ? (int) $post->ID : (int) get_queried_object_id();
+    $location_id = $post_id && get_post_type($post_id) === 'location' ? $post_id : 0;
+    $widget = koala_render_google_reviews($location_id);
+
+    if ($widget === '') {
+        return $content;
+    }
+
+    $styles = '<style id="koala-google-reviews-visibility">'
+        . '#google-review-shortcode-wrapper{display:flex!important;visibility:visible!important}'
+        . '#main-page-widget,#main-page-stories-widget,#local-page-widget,#local-page-stories-widget{display:none!important}'
+        . '</style>';
+
+    return preg_replace(
+        '/(<div id="google-review-shortcode-wrapper"[^>]*>)\s*<\/div>/',
+        $styles . '$1' . $widget . '</div>',
+        $content,
+        1
+    );
+}
+add_filter('bricks/frontend/render_data', 'koala_render_bricks_google_review_placeholder', 20, 3);
+
 // Redirect uppercase slugs to lowercase to prevent duplicate content.
 add_action('template_redirect', function () {
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';

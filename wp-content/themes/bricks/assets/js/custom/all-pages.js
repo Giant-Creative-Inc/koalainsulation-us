@@ -50,6 +50,10 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function loadNiceJobAfterInteraction(script) {
+    // Review widgets are now rendered by Google Reviews. Keep the legacy
+    // markup inert while Bricks templates are migrated on staging.
+    return;
+
     if (
       niceJobScriptQueued ||
       document.querySelector('script[src*="cdn.nicejob.co"]')
