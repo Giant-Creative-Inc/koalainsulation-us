@@ -62,7 +62,7 @@ if ($location) {
     get_header();
 
     $niceJobId = get_field('location_nicejob_id', $location_id);
-    $gr_shortCode = get_field('google_review_shortcode', $location_id);
+    $gr_shortCode = koala_get_google_review_shortcode($location_id);
 
     $query = new WP_Query(array(
         'post_type' => 'location-why-koala',

@@ -73,7 +73,7 @@ if ($query->have_posts()):
 
             $nicejobId = get_field('location_nicejob_id', $location_post_id);
 
-            $gr_shortCode = get_field('google_review_shortcode', $location_post_id);
+            $gr_shortCode = koala_get_google_review_shortcode($location_post_id);
 
             //additional services
             $other_services = get_posts(array(

@@ -46,7 +46,7 @@ function show_location_page($location_slug)
 
     $niceJobId = get_field('location_nicejob_id', $location_id);
 
-    $gr_shortCode = get_field('google_review_shortcode', $location_id);
+    $gr_shortCode = koala_get_google_review_shortcode($location_id);
 
     ?>
     <main id="brx-content">

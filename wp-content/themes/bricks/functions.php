@@ -2,6 +2,25 @@
 if (!defined('ABSPATH'))
     exit; // Exit if accessed directly
 
+/** Resolve a location Google Reviews shortcode, then the site corporate feed. */
+function koala_get_google_review_shortcode($location_id = 0)
+{
+    $shortcode = $location_id ? (string) get_post_meta((int) $location_id, 'google_review_shortcode', true) : '';
+    if ($shortcode === '') {
+        $shortcode = (string) get_option('koala_corporate_google_review_shortcode', '');
+    }
+
+    $shortcode = trim($shortcode);
+    return preg_match('/^\[grw\s+id=(?:"|\')?[1-9][0-9]*(?:"|\')?\s*\/?\]$/', $shortcode) ? $shortcode : '';
+}
+
+/** Render an allowlisted Google Reviews widget without a NiceJob fallback. */
+function koala_render_google_reviews($location_id = 0)
+{
+    $shortcode = koala_get_google_review_shortcode($location_id);
+    return $shortcode === '' ? '' : '<div class="koala-google-reviews">' . do_shortcode($shortcode) . '</div>';
+}
+
 // Redirect uppercase slugs to lowercase to prevent duplicate content.
 add_action('template_redirect', function () {
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
@@ -1560,12 +1579,11 @@ function custom_location_service_template()
                       $service_template_html = do_shortcode('[bricks_template id="' . $template_id . '"]');
                     }
 
-                    $google_review_shortcode = get_post_meta($location_post_id, 'google_review_shortcode', true);
+                    $google_review_widget = koala_render_google_reviews($location_post_id);
 
-                    if (!empty($google_review_shortcode)) {
-                      $google_review_widget = '<div id="google-review-shortcode-wrapper">' . do_shortcode($google_review_shortcode) . '</div>';
+                    if ($google_review_widget !== '') {
                       $service_template_html = preg_replace(
-                        '/<div class="nj-badge"><\/div>/',
+                        '/<div class="(?:koala-google-reviews-placeholder|nj-badge)"><\/div>/',
                         $google_review_widget,
                         $service_template_html,
                         1
@@ -1859,7 +1877,7 @@ function get_location_data($data)
         'nicejobId' => get_post_meta($location_post[0]->ID, 'location_nicejob_id', true),
         'hcpKey' => get_post_meta($location_post[0]->ID, 'housecall_pro_api_key', true),
         'smKey' => get_post_meta($location_post[0]->ID, 'location_serviceminder_api_key', true),
-        'grShortcode' => get_post_meta($location_post[0]->ID, 'google_review_shortcode', true),
+        'grShortcode' => koala_get_google_review_shortcode($location_post[0]->ID),
         'fbLink' => get_post_meta($location_post[0]->ID, 'location_facebook_link', true),
         'instaLink' => get_post_meta($location_post[0]->ID, 'location_instagram_link', true),
         'linkedinLink' => get_post_meta($location_post[0]->ID, 'location_linkedin_link', true),
