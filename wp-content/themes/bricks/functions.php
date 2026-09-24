@@ -2,6 +2,69 @@
 if (!defined('ABSPATH'))
     exit; // Exit if accessed directly
 
+/** Resolve a location Google Reviews shortcode, then the site corporate feed. */
+function koala_get_google_review_shortcode($location_id = 0)
+{
+    $shortcode = $location_id ? (string) get_post_meta((int) $location_id, 'google_review_shortcode', true) : '';
+    if ($shortcode === '') {
+        $shortcode = (string) get_option('koala_corporate_google_review_shortcode', '');
+        if (trim($shortcode) === '') {
+            $shortcode = '[grw id="13780"]';
+        }
+    }
+
+    $shortcode = trim($shortcode);
+    return preg_match('/^\[grw\s+id=(?:"|\')?[1-9][0-9]*(?:"|\')?\s*\/?\]$/', $shortcode) ? $shortcode : '';
+}
+
+/** Render an allowlisted Google Reviews widget without a NiceJob fallback. */
+function koala_render_google_reviews($location_id = 0)
+{
+    $shortcode = koala_get_google_review_shortcode($location_id);
+    return $shortcode === '' ? '' : '<div class="koala-google-reviews">' . do_shortcode($shortcode) . '</div>';
+}
+
+/** Fill the shared Bricks review placeholder with location or corporate reviews. */
+function koala_render_bricks_google_review_placeholder($content, $post = null, $area = 'content')
+{
+    $has_google_placeholder = strpos($content, 'id="google-review-shortcode-wrapper"') !== false;
+    $has_legacy_corporate_placeholder = strpos($content, 'id="main-page-stories-widget"') !== false;
+
+    if (!$has_google_placeholder && !$has_legacy_corporate_placeholder) {
+        return $content;
+    }
+
+    $post_id = $post instanceof WP_Post ? (int) $post->ID : (int) get_queried_object_id();
+    $location_id = $post_id && get_post_type($post_id) === 'location' ? $post_id : 0;
+    $widget = koala_render_google_reviews($location_id);
+
+    if ($widget === '') {
+        return $content;
+    }
+
+    $styles = '<style id="koala-google-reviews-visibility">'
+        . '#google-review-shortcode-wrapper{display:flex!important;visibility:visible!important}'
+        . '#main-page-widget,#main-page-stories-widget,#local-page-widget,#local-page-stories-widget{display:none!important}'
+        . '</style>';
+
+    if ($has_google_placeholder) {
+        return preg_replace(
+            '/(<div id="google-review-shortcode-wrapper"[^>]*>)\s*<\/div>/',
+            $styles . '$1' . $widget . '</div>',
+            $content,
+            1
+        );
+    }
+
+    return preg_replace(
+        '/<div id="main-page-stories-widget"/',
+        $styles . '<div id="google-review-shortcode-wrapper" class="brxe-div">' . $widget . '</div><div id="main-page-stories-widget"',
+        $content,
+        1
+    );
+}
+add_filter('bricks/frontend/render_data', 'koala_render_bricks_google_review_placeholder', 20, 3);
+
 // Redirect uppercase slugs to lowercase to prevent duplicate content.
 add_action('template_redirect', function () {
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
@@ -1566,10 +1629,23 @@ function custom_location_service_template()
                   echo '<main id="brx-content">';
 
                     if (class_exists('\Bricks\Templates')) {
-                      echo (new \Bricks\Templates())->render_shortcode(array('id' => $template_id));
+                      $service_template_html = (new \Bricks\Templates())->render_shortcode(array('id' => $template_id));
                     } else {
-                      echo do_shortcode('[bricks_template id="' . $template_id . '"]');
+                      $service_template_html = do_shortcode('[bricks_template id="' . $template_id . '"]');
                     }
+
+                    $google_review_widget = koala_render_google_reviews($location_post_id);
+
+                    if ($google_review_widget !== '') {
+                      $service_template_html = preg_replace(
+                        '/<div class="(?:koala-google-reviews-placeholder|nj-badge)"><\/div>/',
+                        $google_review_widget,
+                        $service_template_html,
+                        1
+                      );
+                    }
+
+                    echo $service_template_html;
                   echo '</main>';
 
                   get_footer();
@@ -1856,7 +1932,7 @@ function get_location_data($data)
         'nicejobId' => get_post_meta($location_post[0]->ID, 'location_nicejob_id', true),
         'hcpKey' => get_post_meta($location_post[0]->ID, 'housecall_pro_api_key', true),
         'smKey' => get_post_meta($location_post[0]->ID, 'location_serviceminder_api_key', true),
-        'grShortcode' => get_post_meta($location_post[0]->ID, 'google_review_shortcode', true),
+        'grShortcode' => koala_get_google_review_shortcode($location_post[0]->ID),
         'fbLink' => get_post_meta($location_post[0]->ID, 'location_facebook_link', true),
         'instaLink' => get_post_meta($location_post[0]->ID, 'location_instagram_link', true),
         'linkedinLink' => get_post_meta($location_post[0]->ID, 'location_linkedin_link', true),
