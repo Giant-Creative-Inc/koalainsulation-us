@@ -17,3 +17,12 @@ test("US site redirects only when the visitor accepts", () => {
   assert.equal(locationSwitch.getSwitchUrl("M5V 3A8", "US", false), null);
   assert.equal(locationSwitch.getSwitchUrl("90210", "US", true), null);
 });
+
+test("US site supplies branded Canadian switch-dialog copy", () => {
+  assert.deepEqual(locationSwitch.getDialogCopy("US"), {
+    title: "Switch to the Canadian site?",
+    message: "It looks like you entered a Canadian postal code.",
+    visitLabel: "Visit Canadian Site",
+    stayLabel: "Stay on U.S. Site",
+  });
+});
