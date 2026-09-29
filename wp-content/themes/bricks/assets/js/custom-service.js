@@ -138,6 +138,11 @@ document.addEventListener("DOMContentLoaded", function () {
 document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
   input.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
+      // Force Hotjar recording for this flow specifically, regardless of the
+      // general 1-in-100 sampling — the team wants full visibility into the
+      // zip/location lookup search.
+      if (window.koalaLoadHotjar) window.koalaLoadHotjar();
+
       var locationContainer = this.closest(".location-container");
       var inputZip = this.value.trim();
       // The nav ZIP lookup should surface only the single nearest location,
@@ -529,6 +534,11 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
 
 document.querySelectorAll(".find-location-btn").forEach(function (button) {
   button.addEventListener("click", function () {
+    // Force Hotjar recording for this flow specifically, regardless of the
+    // general 1-in-100 sampling — the team wants full visibility into the
+    // zip/location lookup search.
+    if (window.koalaLoadHotjar) window.koalaLoadHotjar();
+
     var zipInputEl = this.closest(".location-container").querySelector(
       ".top-zipcode-input"
     );
@@ -598,7 +608,7 @@ document.querySelectorAll(".find-location-btn").forEach(function (button) {
           // document.getElementById("url").value = locations.website;
           setPopupPhoneLink("est-phone-number", locations.phone);
           document.getElementById("tel-href").href = "tel:" + locations.phone;
-document.getElementById("get-estimate-popup").style.display = "none";
+          document.getElementById("get-estimate-popup").style.display = "none";
         } else {
           console.log("No direct zip match found.");
           const allLocations = data.data.locations;

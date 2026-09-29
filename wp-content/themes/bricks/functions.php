@@ -2818,6 +2818,24 @@ function output_custom_or_default_gtm_head()
         window.koalaLocationBodyMarkup = '';
         window.koalaInteractionScriptsLoaded = false;
 
+        // Hotjar loader, exposed globally and idempotent so it can be called
+        // either from the general sampled path below, or forced to 100% for
+        // specific flows we want full session coverage on (e.g. the zip/
+        // location lookup search — see custom-service.js).
+        window.koalaHotjarLoaded = false;
+        window.koalaLoadHotjar = function() {
+            if (window.koalaHotjarLoaded) return;
+            window.koalaHotjarLoaded = true;
+            (function(h, o, t, j, a, r) {
+                h.hj = h.hj || function() { (h.hj.q = h.hj.q || []).push(arguments) };
+                h._hjSettings = { hjid: 6387685, hjsv: 6 };
+                a = o.getElementsByTagName('head')[0];
+                r = o.createElement('script'); r.async = 1;
+                r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
+                a.appendChild(r);
+            })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+        };
+
         // Insert arbitrary saved markup while recreating script elements so
         // they execute. External scripts retain document order.
         window.koalaInjectLocationMarkup = async function(markup, target) {
@@ -2891,14 +2909,7 @@ function output_custom_or_default_gtm_head()
 
             // --- 2. Load Hotjar (sampled: ~1 in 100 sessions) ---
             if (Math.random() < 0.01) {
-                (function(h, o, t, j, a, r) {
-                    h.hj = h.hj || function() { (h.hj.q = h.hj.q || []).push(arguments) };
-                    h._hjSettings = { hjid: 6387685, hjsv: 6 };
-                    a = o.getElementsByTagName('head')[0];
-                    r = o.createElement('script'); r.async = 1;
-                    r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
-                    a.appendChild(r);
-                })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+                window.koalaLoadHotjar();
             }
 
             // --- 3. Load national GTM ---
