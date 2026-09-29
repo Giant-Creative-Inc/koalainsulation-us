@@ -2954,6 +2954,80 @@ function output_custom_or_default_gtm_head()
 }
 add_action('wp_head', 'output_custom_or_default_gtm_head', 1);
 
+// The header/footer nav (why-koala, why-reinsulate, homeowner-incentives, home,
+// FAQ, testimonials, terms, privacy) is a Bricks Builder template stored in the
+// DB, not a theme file — Bricks always renders it with the same static,
+// national-page hrefs. all-pages.js rewrites these to location-scoped URLs
+// client-side after fetching /wp-json/custom/v1/location-data/{slug}, but a
+// crawler reading the raw HTML only ever sees the national hrefs, which is bad
+// for location-page internal linking/SEO. This rewrites the same set of links
+// server-side, in the actual HTML response, using the same first-URL-segment
+// location lookup used elsewhere in this file — no JS required for crawlers.
+add_action('template_redirect', function () {
+    if (is_admin() || is_feed() || wp_doing_ajax() || defined('REST_REQUEST')) {
+        return;
+    }
+
+    $path          = trim(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+    $first_segment = sanitize_title(strtok($path, '/'));
+
+    if (!$first_segment) {
+        return;
+    }
+
+    $location_ids = get_posts([
+        'post_type'      => 'location',
+        'name'           => $first_segment,
+        'posts_per_page' => 1,
+        'no_found_rows'  => true,
+        'fields'         => 'ids',
+    ]);
+
+    if (!$location_ids) {
+        return;
+    }
+
+    $location_url = get_permalink($location_ids[0]);
+
+    if (!$location_url) {
+        return;
+    }
+
+    ob_start(function ($html) use ($location_url, $first_segment) {
+        $rewrites = [
+            'why-koala-link'         => $location_url . '/why-koala',
+            'why-koala-link-footer'  => $location_url . '/why-koala',
+            'why-reinsulate-link'        => $location_url . '/why-reinsulate',
+            'why-reinsulate-link-footer' => $location_url . '/why-reinsulate',
+            'homeowner-link'         => $location_url . '/homeowner-incentives',
+            'homeowner-link-footer'  => $location_url . '/homeowner-incentives',
+            'faq-nav-link'           => $location_url . '/faq',
+            'faq-ft-link'            => $location_url . '/faq',
+            'testimonials-nav-link'  => $location_url . '/testimonials',
+            'testimonials-ft-link'   => $location_url . '/testimonials',
+            'ft-terms-and-conditions' => $location_url . '/terms-and-conditions',
+            'ft-privacy-policy'      => $location_url . '/privacy-policy',
+        ];
+
+        // Matches all-pages.js: the "locations" directory page keeps the home
+        // link pointing at the national homepage rather than this location.
+        if ($first_segment !== 'locations') {
+            $rewrites['nav-home'] = $location_url;
+            $rewrites['ft-home']  = $location_url;
+        }
+
+        foreach ($rewrites as $element_id => $new_href) {
+            $html = preg_replace(
+                '/(id=["\']' . preg_quote($element_id, '/') . '["\'][^>]*?href=["\'])[^"\']*(["\'])/i',
+                '$1' . esc_attr($new_href) . '$2',
+                $html
+            );
+        }
+
+        return $html;
+    });
+}, 20);
+
 add_action('wp_head', 'koala_output_location_schema', 2);
 function koala_output_location_schema()
 {
