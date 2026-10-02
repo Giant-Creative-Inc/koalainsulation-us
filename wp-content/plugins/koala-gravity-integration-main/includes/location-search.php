@@ -87,13 +87,15 @@ function kgi_build_location_search_response( string $raw_code, string $visitor_i
 		}
 
 		$locations[] = array(
-			'id'       => $post->ID,
-			'slug'     => $post->post_name,
-			'title'    => html_entity_decode( $post->post_title, ENT_QUOTES, 'UTF-8' ),
-			'address'  => (string) get_field( 'location_address', $post->ID ),
-			'phone'    => (string) get_field( 'location_phone_number', $post->ID ),
-			'website'  => (string) get_permalink( $post ),
-			'distance' => $row['distance'],
+			'id'           => $post->ID,
+			'slug'         => $post->post_name,
+			'title'        => html_entity_decode( $post->post_title, ENT_QUOTES, 'UTF-8' ),
+			'address'      => (string) get_field( 'location_address', $post->ID ),
+			'phone'        => (string) get_field( 'location_phone_number', $post->ID ),
+			'website'      => (string) get_permalink( $post ),
+			'zipcode'      => (string) get_field( 'location_zipcode', $post->ID ),
+			'matched_code' => $row['matched_code'],
+			'distance'     => $row['distance'],
 		);
 	}
 
