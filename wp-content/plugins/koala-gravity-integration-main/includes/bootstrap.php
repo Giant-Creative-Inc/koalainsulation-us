@@ -23,7 +23,10 @@ function kgi_bootstrap(): void {
 
 	require_once KGI_PLUGIN_DIR . 'includes/logger.php';
 	require_once KGI_PLUGIN_DIR . 'includes/location-resolver.php';
+	require_once KGI_PLUGIN_DIR . 'includes/zip-lookup-log.php';
+	require_once KGI_PLUGIN_DIR . 'includes/location-search.php';
 	require_once KGI_PLUGIN_DIR . 'includes/admin/entry-details.php';
+	require_once KGI_PLUGIN_DIR . 'includes/admin/zip-lookup-log-page.php';
 	require_once KGI_PLUGIN_DIR . 'includes/admin/resend.php';
 	require_once KGI_PLUGIN_DIR . 'includes/admin/settings.php';
 	require_once KGI_PLUGIN_DIR . 'includes/forms/assets.php';
@@ -39,6 +42,8 @@ function kgi_bootstrap(): void {
 	kgi_register_resend_hooks();
 	kgi_register_settings_hooks();
 	kgi_register_form_hooks();
+	kgi_register_location_search_hooks();
+	kgi_register_zip_lookup_log_page_hooks();
 
 	add_action( 'init', 'kgi_maybe_warm_location_zip_index', 20 );
 	add_action( 'acf/save_post', 'kgi_refresh_location_zip_index', 20 );

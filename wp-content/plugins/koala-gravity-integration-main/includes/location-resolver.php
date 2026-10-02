@@ -15,19 +15,37 @@ if ( ! defined( 'ABSPATH' ) ) {
 const KGI_LOCATION_ZIP_INDEX_TRANSIENT = 'kgi_location_zip_index';
 
 /**
- * Transient key prefix for cached zipcodeapi.com radius distance lookups.
+ * Transient key prefix for cached zipcodeapi.com radius lookups.
  *
- * The full key appends a hash of the queried ZIP and radius. Distances between
- * ZIP centroids never change, so these are cached for a long time and reused
- * across entries.
+ * Each cached value is a list of `[ code, distance ]` pairs. The prefix
+ * changed from the earlier code-only cache (`kgi_zipdist_`) so old entries are
+ * never read in the new format.
  */
-const KGI_ZIP_RADIUS_CACHE_PREFIX = 'kgi_zipdist_';
+const KGI_ZIP_RADIUS_CACHE_PREFIX = 'kgi_ziprad2_';
+
+/**
+ * How long a radius lookup is cached, in seconds (30 days).
+ *
+ * Distances between ZIP/postal-code centres never change. Ownership is
+ * matched against the location index at read time, so ZIP changes on a
+ * location still apply immediately.
+ */
+const KGI_ZIP_RADIUS_CACHE_TTL = 2592000;
+
+/**
+ * Transient that pauses zipcodeapi.com requests after a 429 response.
+ *
+ * Once the plan's hourly limit is reached, zipcodeapi.com refuses requests for
+ * the rest of the hour, so further requests would only fail.
+ */
+const KGI_ZIPCODEAPI_COOLDOWN_TRANSIENT = 'kgi_zipcodeapi_cooldown';
+
 
 /**
  * Returns the zipcodeapi.com API key used for the nearest-location fallback.
  *
- * Configured on the plugin settings page. An empty value disables the
- * fallback entirely (the resolver keeps its original-location behavior).
+ * Configured on the plugin settings page. With no key, lookups for unowned
+ * codes fail as `missing_api_key` and are recorded in the ZIP lookup log.
  *
  * @since 0.6.0
  *
@@ -216,20 +234,27 @@ function kgi_refresh_location_zip_index( $post_id ): void {
  *
  * Resolution order:
  *   1. Exact owner of the submitted ZIP (the form's original location is
- *      preferred when it is among duplicate owners).
+ *      preferred when it is among duplicate owners). No API request.
  *   2. When no location owns the ZIP, the nearest owning location within the
- *      configured radius, looked up via zipcodeapi.com (US ZIP codes and
- *      Canadian postal codes; requires an API key). See
- *      kgi_find_nearest_location_by_zip().
- *   3. No location when neither lookup finds an owner.
+ *      configured radius, from at most one cached zipcodeapi.com request. See
+ *      kgi_lookup_nearby_locations().
+ *   3. No location. The background job then sends the lead to unmatched lead
+ *      routing so Koala can route it manually.
+ *
+ * When no location is returned, `kgi_zip_routing_status` records why
+ * (`no_location_in_range`, `invalid_code` or `lookup_failed_{error type}`)
+ * and `kgi_original_location_id` keeps the page location, so the entry shows
+ * where the lead was submitted from.
  *
  * The entry's submitted values are untouched.
  *
  * @since 0.5.0
+ * @since 0.8.0 Uses a single zipcodeapi.com request. Failed lookups go to
+ *              unmatched routing with the reason recorded.
  *
  * @param mixed[] $entry             Gravity Forms entry array.
  * @param WP_Post $original_location Location originally resolved from the form.
- * @param int     $entry_id          Gravity Forms entry ID for diagnostic logging.
+ * @param int     $entry_id          Gravity Forms entry ID for diagnostics.
  * @return WP_Post|null Location to use for the n8n location payload, or null.
  */
 function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_location, int $entry_id = 0 ): ?WP_Post {
@@ -244,127 +269,176 @@ function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_loc
 
 	$owners = kgi_get_location_zip_index()[ $zip_code ] ?? array();
 
-	if ( empty( $owners ) ) {
-		// No location owns this ZIP. Try the nearest owning location; if that
-		// also fails, leave the submission unassigned for manual review.
-		$nearest = kgi_find_nearest_location_by_zip( $zip_code, $entry_id );
-
-		return $nearest instanceof WP_Post ? $nearest : null;
-	}
-
-	if ( count( $owners ) > 1 ) {
-		kgi_log(
-			'Duplicate ZIP/postal-code ownership found. Original location is preferred when applicable.',
-			array(
-				'entry_id'           => $entry_id,
-				'original_location'  => $original_location->ID,
-				'owner_location_ids' => $owners,
-			)
-		);
-	}
-
-	if ( in_array( $original_location->ID, $owners, true ) ) {
-		return $original_location;
-	}
-
-	$matched_location = get_post( (int) $owners[0] );
-
-	if ( ! $matched_location instanceof WP_Post || kgi_get_location_post_type() !== $matched_location->post_type ) {
-		return null;
-	}
-
-	return $matched_location;
-}
-
-/**
- * Finds the nearest owning location to a ZIP with no exact owner.
- *
- * Queries zipcodeapi.com for every ZIP within the configured radius of the
- * submitted ZIP, intersects those with the ownership index, and returns the
- * owner whose nearest ZIP is closest. Returns null (so the caller keeps the
- * original location) when the fallback is disabled, unavailable, or finds no
- * owner within range.
- *
- * Handles both US ZIP codes and Canadian postal codes (each uses a different
- * zipcodeapi.com endpoint); any other format returns null.
- *
- * @since 0.6.0
- *
- * @param string $normalized_zip Normalized submitted ZIP/postal code (see kgi_normalize_zip_code()).
- * @param int    $entry_id       Gravity Forms entry ID for diagnostic logging.
- * @return WP_Post|null Nearest owning location, or null.
- */
-function kgi_find_nearest_location_by_zip( string $normalized_zip, int $entry_id = 0 ): ?WP_Post {
-	$api_key = kgi_get_zipcodeapi_key();
-
-	if ( '' === $api_key ) {
-		return null;
-	}
-
-	$request = kgi_zip_api_request_parts( $normalized_zip );
-
-	if ( null === $request ) {
-		// Not a recognizable US ZIP or Canadian postal code.
-		return null;
-	}
-
-	// Step 1: every code within the radius of the submitted code (the filter).
-	$nearby_codes = kgi_get_zip_radius_codes( $request['code'], $request['country'], $api_key, $entry_id );
-
-	if ( empty( $nearby_codes ) ) {
-		return null;
-	}
-
-	// Step 2: keep only codes an actual location owns, then rank them by the
-	// precise driving/great-circle distance from the submitted code and pick
-	// the closest owner. This two-step (radius filter, then distance rank)
-	// mirrors the Canadian theme's zipcodeapi.com usage exactly.
-	$index            = kgi_get_location_zip_index();
-	$best_location_id = 0;
-	$best_distance    = null;
-
-	foreach ( $nearby_codes as $nearby_code ) {
-		$owners = $index[ $nearby_code ] ?? array();
-
-		if ( empty( $owners ) ) {
-			continue;
+	if ( ! empty( $owners ) ) {
+		if ( count( $owners ) > 1 ) {
+			kgi_log(
+				'Duplicate ZIP/postal-code ownership found. Original location is preferred when applicable.',
+				array(
+					'entry_id'           => $entry_id,
+					'original_location'  => $original_location->ID,
+					'owner_location_ids' => $owners,
+				)
+			);
 		}
 
-		$distance = kgi_get_zip_pair_distance( $request['code'], $nearby_code, $request['country'], $api_key, $entry_id );
-
-		if ( null === $distance ) {
-			continue;
+		if ( in_array( $original_location->ID, $owners, true ) ) {
+			return $original_location;
 		}
 
-		// Owners are stored ascending by ID, so ties resolve deterministically.
-		if ( null === $best_distance || $distance < $best_distance ) {
-			$best_distance    = $distance;
-			$best_location_id = (int) $owners[0];
+		$matched_location = get_post( (int) $owners[0] );
+
+		if ( $matched_location instanceof WP_Post && kgi_get_location_post_type() === $matched_location->post_type ) {
+			return $matched_location;
 		}
 	}
 
-	if ( $best_location_id <= 0 ) {
-		return null;
+	$lookup = kgi_lookup_nearby_locations( $zip_code, 'form', $entry_id );
+
+	if ( ! empty( $lookup['locations'] ) ) {
+		$nearest = get_post( (int) $lookup['locations'][0]['location_id'] );
+
+		if ( $nearest instanceof WP_Post && kgi_get_location_post_type() === $nearest->post_type ) {
+			return $nearest;
+		}
 	}
 
-	$location = get_post( $best_location_id );
+	if ( 'lookup_failed' === $lookup['status'] ) {
+		$reason = 'lookup_failed_' . $lookup['error_type'];
+	} elseif ( 'invalid' === $lookup['status'] ) {
+		$reason = 'invalid_code';
+	} else {
+		$reason = 'no_location_in_range';
+	}
 
-	if ( ! $location instanceof WP_Post || kgi_get_location_post_type() !== $location->post_type ) {
-		return null;
+	if ( $entry_id > 0 ) {
+		gform_update_meta( $entry_id, 'kgi_zip_routing_status', $reason );
+		gform_update_meta( $entry_id, 'kgi_original_location_id', $original_location->ID );
 	}
 
 	kgi_log(
-		'Nearest location resolved via zipcodeapi.com radius fallback.',
+		'ZIP/postal code could not be routed. Lead goes to unmatched routing.',
 		array(
-			'entry_id'            => $entry_id,
-			'submitted_zip'       => $request['code'],
-			'country'             => $request['country'],
-			'nearest_location_id' => $best_location_id,
-			'distance_miles'      => $best_distance,
+			'entry_id'             => $entry_id,
+			'original_location_id' => $original_location->ID,
+			'reason'               => $reason,
 		)
 	);
 
-	return $location;
+	return null;
+}
+
+/**
+ * Looks up the locations nearest to a ZIP/postal code.
+ *
+ * Makes at most one zipcodeapi.com request:
+ *   1. Exact owner in the ownership index: status `match`, no request.
+ *   2. Cached radius result: no request.
+ *   3. One radius request. Its response already includes each code's
+ *      distance, so no per-code distance requests are needed.
+ *
+ * Owned codes within the radius are grouped by location, keeping each
+ * location's closest code, and returned closest-first.
+ *
+ * Statuses: `match`, `nearby`, `no_match`, `invalid` (not a usable code for
+ * this site's country) and `lookup_failed` (with an `error_type`). Failed
+ * lookups are never cached and are recorded in the ZIP lookup log.
+ *
+ * @since 0.8.0
+ *
+ * @param string $raw_code Submitted ZIP/postal code in any case or spacing.
+ * @param string $source   'search' or 'form', recorded in the error log.
+ * @param int    $entry_id Gravity Forms entry ID for form lookups.
+ * @return array{status: string, error_type: string, code: string, locations: array<int, array{location_id: int, distance: float, matched_code: string}>}
+ */
+function kgi_lookup_nearby_locations( string $raw_code, string $source = 'search', int $entry_id = 0 ): array {
+	$code   = kgi_normalize_zip_code( $raw_code );
+	$result = array(
+		'status'     => 'invalid',
+		'error_type' => '',
+		'code'       => $code,
+		'locations'  => array(),
+	);
+
+	$request = kgi_zip_api_request_parts( $code );
+
+	if ( null === $request ) {
+		return $result;
+	}
+
+	$result['code'] = $request['code'];
+	$index          = kgi_get_location_zip_index();
+	$owners         = $index[ $request['code'] ] ?? array();
+
+	if ( ! empty( $owners ) ) {
+		$result['status'] = 'match';
+
+		foreach ( $owners as $owner_id ) {
+			$result['locations'][] = array(
+				'location_id'  => (int) $owner_id,
+				'distance'     => 0.0,
+				'matched_code' => $request['code'],
+			);
+		}
+
+		return $result;
+	}
+
+	$radius = kgi_get_zip_radius_distances( $request['code'], $request['country'] );
+
+	if ( isset( $radius['error_type'] ) ) {
+		$result['status']     = 'lookup_failed';
+		$result['error_type'] = $radius['error_type'];
+
+		kgi_record_zip_lookup_error(
+			array(
+				'source'      => $source,
+				'code'        => $request['code'],
+				'error_type'  => $radius['error_type'],
+				'http_status' => $radius['http_status'] ?? 0,
+				'message'     => $radius['message'] ?? '',
+				'entry_id'    => $entry_id,
+			)
+		);
+
+		return $result;
+	}
+
+	$nearest = array();
+
+	foreach ( $radius['codes'] as $pair ) {
+		$nearby_code = (string) $pair[0];
+		$distance    = (float) $pair[1];
+
+		foreach ( $index[ $nearby_code ] ?? array() as $owner_id ) {
+			$owner_id = (int) $owner_id;
+
+			if ( ! isset( $nearest[ $owner_id ] ) || $distance < $nearest[ $owner_id ]['distance'] ) {
+				$nearest[ $owner_id ] = array(
+					'location_id'  => $owner_id,
+					'distance'     => $distance,
+					'matched_code' => $nearby_code,
+				);
+			}
+		}
+	}
+
+	if ( empty( $nearest ) ) {
+		$result['status'] = 'no_match';
+
+		return $result;
+	}
+
+	usort(
+		$nearest,
+		static function ( array $a, array $b ): int {
+			return array( $a['distance'], $a['location_id'] ) <=> array( $b['distance'], $b['location_id'] );
+		}
+	);
+
+	$result['status']    = 'nearby';
+	$result['locations'] = $nearest;
+
+	return $result;
 }
 
 /**
@@ -458,178 +532,209 @@ function kgi_zipcodeapi_base_url( string $country, string $api_key ): string {
 }
 
 /**
- * Fetches (and caches) the normalized codes within the fallback radius.
+ * Returns the codes within the fallback radius with their distances.
  *
- * Sourced from zipcodeapi.com's radius endpoint. Both the US and Canadian
- * endpoints return a `zip_codes` list of `{ zip_code, ... }` items (the
- * Canadian v2 endpoint keeps the `zip_codes`/`zip_code` naming); `postal_codes`
- * / `postal_code` are also accepted defensively. Returned codes are normalized
- * (spaces stripped, uppercased) so they match the ownership index. Results are
- * cached for a week keyed by code, country, and radius; API/transport failures
- * return an empty array and are not cached, so a transient outage is retried on
- * the next entry.
+ * One zipcodeapi.com radius request, cached for 30 days per code. The US
+ * response lists `{ zip_code, distance, ... }` objects; the Canadian request
+ * uses the `simple` format (`postal_codes` plus a parallel `distances` list)
+ * with a 50,000-code limit, because the normal Canadian response stops at the
+ * nearest 250 postal codes. Both include distances, so no per-code distance
+ * requests are made.
  *
- * @since 0.6.0
+ * An unknown code (HTTP 404) is cached as an empty result. Any other failure
+ * is returned with a stable `error_type` and is never cached. After a 429, all
+ * requests pause until the hourly limit resets.
  *
- * @param string $code     API-ready code to search around (5-digit US ZIP or 6-char CA postal code).
- * @param string $country  'us' or 'ca'.
- * @param string $api_key  zipcodeapi.com API key.
- * @param int    $entry_id Gravity Forms entry ID for diagnostic logging.
- * @return string[] Normalized nearby codes.
+ * @since 0.8.0
+ *
+ * @param string $code    API-ready code (5-digit US ZIP or 6-character CA postal code).
+ * @param string $country 'us' or 'ca'.
+ * @return array{codes: array<int, array{0: string, 1: float}>}|array{error_type: string, http_status: int, message: string}
  */
-function kgi_get_zip_radius_codes( string $code, string $country, string $api_key, int $entry_id = 0 ): array {
+function kgi_get_zip_radius_distances( string $code, string $country ): array {
 	$radius    = kgi_get_zip_fallback_radius();
 	$cache_key = KGI_ZIP_RADIUS_CACHE_PREFIX . md5( $country . '_' . $code . '_' . $radius );
 	$cached    = get_transient( $cache_key );
 
 	if ( is_array( $cached ) ) {
-		return $cached;
+		return array( 'codes' => $cached );
 	}
 
-	$request_code = kgi_format_code_for_radius( $code, $country );
+	$api_key = kgi_get_zipcodeapi_key();
+
+	if ( '' === $api_key ) {
+		return array(
+			'error_type'  => 'missing_api_key',
+			'http_status' => 0,
+			'message'     => 'No zipcodeapi.com API key is configured.',
+		);
+	}
+
+	if ( false !== get_transient( KGI_ZIPCODEAPI_COOLDOWN_TRANSIENT ) ) {
+		return array(
+			'error_type'  => 'rate_limited',
+			'http_status' => 429,
+			'message'     => 'Paused until the zipcodeapi.com hourly limit resets.',
+		);
+	}
 
 	$url = sprintf(
 		'%s/radius.json/%s/%d/mile',
 		kgi_zipcodeapi_base_url( $country, $api_key ),
-		rawurlencode( $request_code ),
+		rawurlencode( kgi_format_code_for_radius( $code, $country ) ),
 		$radius
 	);
 
-	$body = kgi_zipcodeapi_get( $url, 'radius', $country, $entry_id );
-
-	if ( null === $body ) {
-		return array();
+	if ( 'ca' === $country ) {
+		$url = add_query_arg(
+			array(
+				'simple' => 'true',
+				'limit'  => 50000,
+			),
+			$url
+		);
 	}
 
-	$list = array();
+	$response = kgi_zipcodeapi_get( $url );
 
-	if ( ! empty( $body['zip_codes'] ) && is_array( $body['zip_codes'] ) ) {
-		$list       = $body['zip_codes'];
-		$code_field = 'zip_code';
-	} elseif ( ! empty( $body['postal_codes'] ) && is_array( $body['postal_codes'] ) ) {
-		$list       = $body['postal_codes'];
-		$code_field = 'postal_code';
-	} else {
-		return array();
+	if ( isset( $response['error_type'] ) ) {
+		if ( 'not_found' === $response['error_type'] ) {
+			set_transient( $cache_key, array(), KGI_ZIP_RADIUS_CACHE_TTL );
+
+			return array( 'codes' => array() );
+		}
+
+		if ( 'rate_limited' === $response['error_type'] ) {
+			// Pause until a minute past the next hour, when the limit resets.
+			set_transient(
+				KGI_ZIPCODEAPI_COOLDOWN_TRANSIENT,
+				1,
+				HOUR_IN_SECONDS - ( time() % HOUR_IN_SECONDS ) + MINUTE_IN_SECONDS
+			);
+		}
+
+		return $response;
+	}
+
+	$codes = kgi_extract_zip_radius_distances( $response['body'] );
+
+	set_transient( $cache_key, $codes, KGI_ZIP_RADIUS_CACHE_TTL );
+
+	return array( 'codes' => $codes );
+}
+
+/**
+ * Extracts normalized codes and distances from a radius response.
+ *
+ * Accepts the full response (a list of objects with `zip_code` or
+ * `postal_code` and `distance`) and the Canadian simple response (a list of
+ * code strings with a parallel `distances` list). Codes without a numeric
+ * distance are skipped. Duplicate codes keep their shortest distance.
+ *
+ * @since 0.8.0
+ *
+ * @param array<string, mixed> $body Decoded zipcodeapi.com response.
+ * @return array<int, array{0: string, 1: float}> `[ code, distance ]` pairs.
+ */
+function kgi_extract_zip_radius_distances( array $body ): array {
+	$lists = array(
+		'zip_codes'    => 'zip_code',
+		'postal_codes' => 'postal_code',
+	);
+	$pairs = array();
+
+	foreach ( $lists as $list_key => $code_field ) {
+		if ( empty( $body[ $list_key ] ) || ! is_array( $body[ $list_key ] ) ) {
+			continue;
+		}
+
+		$distances = isset( $body['distances'] ) && is_array( $body['distances'] ) ? array_values( $body['distances'] ) : array();
+
+		foreach ( array_values( $body[ $list_key ] ) as $position => $item ) {
+			if ( is_array( $item ) ) {
+				$value    = $item[ $code_field ] ?? ( $item['zip_code'] ?? '' );
+				$distance = $item['distance'] ?? null;
+			} else {
+				$value    = $item;
+				$distance = $distances[ $position ] ?? null;
+			}
+
+			$normalized = kgi_normalize_zip_code( $value );
+
+			if ( '' === $normalized || ! is_numeric( $distance ) ) {
+				continue;
+			}
+
+			$distance = (float) $distance;
+
+			if ( ! isset( $pairs[ $normalized ] ) || $distance < $pairs[ $normalized ] ) {
+				$pairs[ $normalized ] = $distance;
+			}
+		}
+
+		break;
 	}
 
 	$codes = array();
 
-	foreach ( $list as $item ) {
-		if ( ! is_array( $item ) || ! isset( $item[ $code_field ] ) ) {
-			continue;
-		}
-
-		$normalized = kgi_normalize_zip_code( $item[ $code_field ] );
-
-		if ( '' !== $normalized ) {
-			$codes[ $normalized ] = true;
-		}
+	foreach ( $pairs as $code => $distance ) {
+		// Numeric array keys are cast back to strings so ZIPs stay strings.
+		$codes[] = array( (string) $code, $distance );
 	}
-
-	$codes = array_keys( $codes );
-
-	set_transient( $cache_key, $codes, WEEK_IN_SECONDS );
 
 	return $codes;
 }
 
 /**
- * Fetches (and caches) the distance in miles between two codes.
+ * Performs a zipcodeapi.com GET request.
  *
- * Uses zipcodeapi.com's distance endpoint, which accepts space-stripped codes
- * for both countries (matching the Canadian theme). Results are cached for a
- * week keyed by the ordered pair and country. Returns null when the distance
- * can't be determined, so the caller skips that candidate.
- *
- * @since 0.6.0
- *
- * @param string $from     Normalized submitted code.
- * @param string $to       Normalized owned code to measure to.
- * @param string $country  'us' or 'ca'.
- * @param string $api_key  zipcodeapi.com API key.
- * @param int    $entry_id Gravity Forms entry ID for diagnostic logging.
- * @return float|null Distance in miles, or null.
- */
-function kgi_get_zip_pair_distance( string $from, string $to, string $country, string $api_key, int $entry_id = 0 ): ?float {
-	$cache_key = KGI_ZIP_RADIUS_CACHE_PREFIX . 'd_' . md5( $country . '_' . $from . '_' . $to );
-	$cached    = get_transient( $cache_key );
-
-	if ( is_numeric( $cached ) ) {
-		return (float) $cached;
-	}
-
-	$url = sprintf(
-		'%s/distance.json/%s/%s/mile',
-		kgi_zipcodeapi_base_url( $country, $api_key ),
-		rawurlencode( $from ),
-		rawurlencode( $to )
-	);
-
-	$body = kgi_zipcodeapi_get( $url, 'distance', $country, $entry_id );
-
-	if ( null === $body || ! isset( $body['distance'] ) || ! is_numeric( $body['distance'] ) ) {
-		return null;
-	}
-
-	$distance = (float) $body['distance'];
-
-	set_transient( $cache_key, $distance, WEEK_IN_SECONDS );
-
-	return $distance;
-}
-
-/**
- * Performs a zipcodeapi.com GET request and returns the decoded JSON body.
- *
- * Centralizes transport-error, HTTP-status, and API `error_msg` handling (the
- * API returns error_msg inside an HTTP 200 body). Returns null on any failure
- * so callers degrade to the original location.
+ * Classifies every failure with a stable `error_type`: `transport`,
+ * `rate_limited` (429), `auth_error` (401/403), `not_found` (404, an unknown
+ * code), `http_{status}`, `invalid_response` and `provider` (an `error_msg` in
+ * an HTTP 200 body).
  *
  * @since 0.6.0
+ * @since 0.8.0 Returns typed errors instead of null.
  *
- * @param string $url      Fully built request URL.
- * @param string $endpoint Endpoint label for logging ('radius' or 'distance').
- * @param string $country  'us' or 'ca'.
- * @param int    $entry_id Gravity Forms entry ID for diagnostic logging.
- * @return array<string, mixed>|null Decoded body, or null on failure.
+ * @param string $url Fully built request URL.
+ * @return array{body: array<string, mixed>}|array{error_type: string, http_status: int, message: string}
  */
-function kgi_zipcodeapi_get( string $url, string $endpoint, string $country, int $entry_id = 0 ): ?array {
+function kgi_zipcodeapi_get( string $url ): array {
 	$response = wp_remote_get( $url, array( 'timeout' => 10 ) );
 
 	if ( is_wp_error( $response ) ) {
-		kgi_log(
-			'zipcodeapi.com request failed.',
-			array(
-				'entry_id' => $entry_id,
-				'endpoint' => $endpoint,
-				'country'  => $country,
-				'error'    => $response->get_error_message(),
-			)
+		return array(
+			'error_type'  => 'transport',
+			'http_status' => 0,
+			'message'     => $response->get_error_message(),
 		);
-
-		return null;
 	}
 
-	$status = (int) wp_remote_retrieve_response_code( $response );
-	$body   = json_decode( wp_remote_retrieve_body( $response ), true );
+	$status  = (int) wp_remote_retrieve_response_code( $response );
+	$body    = json_decode( wp_remote_retrieve_body( $response ), true );
+	$message = is_array( $body ) && isset( $body['error_msg'] ) ? (string) $body['error_msg'] : '';
 
-	if ( 200 !== $status || ! is_array( $body ) || isset( $body['error_msg'] ) ) {
-		kgi_log(
-			'zipcodeapi.com response was not usable.',
-			array(
-				'entry_id'  => $entry_id,
-				'endpoint'  => $endpoint,
-				'country'   => $country,
-				'status'    => $status,
-				'error_msg' => is_array( $body ) && isset( $body['error_msg'] ) ? $body['error_msg'] : null,
-			)
-		);
-
-		return null;
+	if ( 429 === $status ) {
+		$error_type = 'rate_limited';
+	} elseif ( 401 === $status || 403 === $status ) {
+		$error_type = 'auth_error';
+	} elseif ( 404 === $status ) {
+		$error_type = 'not_found';
+	} elseif ( 200 !== $status ) {
+		$error_type = 'http_' . $status;
+	} elseif ( ! is_array( $body ) ) {
+		$error_type = 'invalid_response';
+	} elseif ( '' !== $message ) {
+		$error_type = 'provider';
+	} else {
+		return array( 'body' => $body );
 	}
 
-	return $body;
+	return array(
+		'error_type'  => $error_type,
+		'http_status' => $status,
+		'message'     => $message,
+	);
 }
 
 /**

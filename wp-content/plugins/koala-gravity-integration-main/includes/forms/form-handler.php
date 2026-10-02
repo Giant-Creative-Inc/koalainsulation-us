@@ -249,9 +249,23 @@ function kgi_notify_unresolved_lead( int $entry_id, array $entry ): void {
 		return;
 	}
 
+	$routing_status       = (string) gform_get_meta( $entry_id, 'kgi_zip_routing_status' );
+	$original_location_id = absint( gform_get_meta( $entry_id, 'kgi_original_location_id' ) );
+	$reason_html          = '<p><strong>' . esc_html__( 'Reason:', 'koala-gravity-integration' ) . '</strong> '
+		. esc_html( '' !== $routing_status ? kgi_describe_zip_routing_status( $routing_status ) : __( 'Could not be matched to a location', 'koala-gravity-integration' ) ) . '</p>';
+
+	if ( $original_location_id > 0 ) {
+		$reason_html .= '<p><strong>' . esc_html__( 'Submitted from location page:', 'koala-gravity-integration' ) . '</strong> '
+			. esc_html( (string) get_field( 'location_name', $original_location_id ) ) . '</p>';
+	}
+
+	if ( str_starts_with( $routing_status, 'lookup_failed_' ) ) {
+		$reason_html .= '<p>' . esc_html__( 'The ZIP lookup service was unavailable, so this lead most likely belongs to the location page it was submitted from.', 'koala-gravity-integration' ) . '</p>';
+	}
+
 	$subject_template = __( '[Koala] Lead needs routing review (unresolved) — {form_title}', 'koala-gravity-integration' );
 	$message_template = '<p>' . esc_html__( 'A quote submission could not be routed to a location. It was saved and sent to n8n using the unmatched-lead ServiceMinder credentials, but it still needs review.', 'koala-gravity-integration' ) . '</p>'
-		. '<p><strong>' . esc_html__( 'Routing status:', 'koala-gravity-integration' ) . '</strong> ' . esc_html__( 'unresolved', 'koala-gravity-integration' ) . '</p>'
+		. $reason_html
 		. '{all_fields}'
 		. '<p><a href="{entry_url}">' . esc_html__( 'Review this entry in Gravity Forms', 'koala-gravity-integration' ) . '</a></p>';
 	$subject          = GFCommon::replace_variables( $subject_template, $form, $entry, false, false, false, 'text' );
