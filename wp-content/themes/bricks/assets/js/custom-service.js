@@ -113,7 +113,8 @@ function koalaFindNearbyLocations(zipCode) {
 
       return {
         status: data.status,
-        message: data.message || fallbackMessage,
+        // Matches have no message; anything else without one is a failure.
+        message: data.message || (locations.length ? "" : fallbackMessage),
         locations: locations,
       };
     })
