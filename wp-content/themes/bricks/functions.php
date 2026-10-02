@@ -533,7 +533,8 @@ function enqueue_custom_scripts()
             'location-page',
             get_template_directory_uri() . '/assets/js/custom/location-page.js',
             array('google-maps', 'jquery'),
-            null,
+            // Versioned by file time so cached copies are replaced on deploy.
+            filemtime(get_stylesheet_directory() . '/assets/js/custom/location-page.js'),
             true
         );
         }
