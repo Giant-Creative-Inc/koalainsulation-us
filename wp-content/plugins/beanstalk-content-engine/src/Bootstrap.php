@@ -41,6 +41,13 @@ final class Bootstrap {
 	private AbilityRegistrar $abilities;
 
 	/**
+	 * Existing City Page bulk updater.
+	 *
+	 * @var CityPageUpdater
+	 */
+	private CityPageUpdater $city_page_updater;
+
+	/**
 	 * Whether hooks were registered.
 	 *
 	 * @var bool
@@ -49,14 +56,15 @@ final class Bootstrap {
 
 	/** Creates the service graph. */
 	private function __construct() {
-		$this->providers = new ProviderRegistry();
-		$validator       = new PatternValidator();
-		$this->patterns  = new PatternRegistry( $this->providers, $validator );
-		$content         = new ContentValidator();
-		$builder         = new ContentBuilder( $this->patterns );
-		$city_context    = new CityPageContext();
-		$drafts          = new DraftManager( $this->patterns, $content, $builder, $city_context );
-		$this->abilities = new AbilityRegistrar( $this->patterns, $drafts );
+		$this->providers         = new ProviderRegistry();
+		$validator               = new PatternValidator();
+		$this->patterns          = new PatternRegistry( $this->providers, $validator );
+		$content                 = new ContentValidator();
+		$builder                 = new ContentBuilder( $this->patterns );
+		$city_context            = new CityPageContext();
+		$drafts                  = new DraftManager( $this->patterns, $content, $builder, $city_context );
+		$this->city_page_updater = new CityPageUpdater( $this->patterns, $content, $builder, $city_context );
+		$this->abilities         = new AbilityRegistrar( $this->patterns, $drafts );
 	}
 
 	/**
@@ -91,7 +99,15 @@ final class Bootstrap {
 		add_action( 'init', array( $this->patterns, 'register_pattern_category' ), 19 );
 		add_action( 'init', array( $this->patterns, 'register_fallback_patterns' ), 20 );
 		add_action( 'admin_notices', array( $this, 'dependency_notice' ) );
+		add_action( 'cli_init', array( $this, 'register_cli_commands' ) );
 		( new ServiceAreaSchema() )->register();
+	}
+
+	/** Register the migration command only when WordPress is running under WP-CLI. */
+	public function register_cli_commands(): void {
+		if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( 'WP_CLI' ) ) {
+			\WP_CLI::add_command( 'beanstalk city-pages update', new CityPageCliCommand( $this->city_page_updater ) );
+		}
 	}
 
 	/** Registers the fallback and invites active themes to register providers. */

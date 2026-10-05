@@ -110,18 +110,44 @@ final class CityPageContext {
 	 * @return true|WP_Error
 	 */
 	public function apply( int $post_id, array $context ) {
+		$result = $this->assign( $post_id, $context );
+		return is_wp_error( $result ) ? $this->rollback( $post_id ) : true;
+	}
+
+	/**
+	 * Assign context to an existing page without deleting it on failure.
+	 *
+	 * Existing-page callers own restoration because they must restore the page,
+	 * taxonomy, relationship, and protected metadata as one migration unit.
+	 *
+	 * @param int   $post_id Existing post ID.
+	 * @param array $context Validated context.
+	 * @return true|WP_Error
+	 */
+	public function apply_existing( int $post_id, array $context ) {
+		return $this->assign( $post_id, $context );
+	}
+
+	/**
+	 * Assign and verify the fixed taxonomy and ACF relationship.
+	 *
+	 * @param int   $post_id Target post ID.
+	 * @param array $context Validated context.
+	 * @return true|WP_Error
+	 */
+	private function assign( int $post_id, array $context ) {
 		$term_result = wp_set_object_terms( $post_id, array( $context['areas_served_term_id'] ), self::TAXONOMY, false );
 		if ( is_wp_error( $term_result ) || empty( $term_result ) ) {
-			return $this->rollback( $post_id );
+			return new WP_Error( 'beanstalk_city_page_context_write_failed', __( 'The required City Page taxonomy could not be assigned.', 'beanstalk-content-engine' ) );
 		}
 		$assigned_terms = wp_get_object_terms( $post_id, self::TAXONOMY, array( 'fields' => 'ids' ) );
 		if ( is_wp_error( $assigned_terms ) || array( $context['areas_served_term_id'] ) !== array_map( 'intval', $assigned_terms ) ) {
-			return $this->rollback( $post_id );
+			return new WP_Error( 'beanstalk_city_page_context_write_failed', __( 'The required City Page taxonomy could not be verified.', 'beanstalk-content-engine' ) );
 		}
 
 		$relationship = array( (string) $context['related_location_id'] );
 		if ( ! function_exists( 'update_field' ) ) {
-			return $this->rollback( $post_id );
+			return new WP_Error( 'beanstalk_city_page_context_write_failed', __( 'The required City Page relationship could not be assigned.', 'beanstalk-content-engine' ) );
 		}
 		update_field( self::ACF_FIELD_KEY, $relationship, $post_id );
 
@@ -129,7 +155,7 @@ final class CityPageContext {
 		if ( ! is_array( $stored_relationship )
 			|| array( (int) $context['related_location_id'] ) !== array_map( 'intval', $stored_relationship )
 			|| self::ACF_FIELD_KEY !== get_post_meta( $post_id, '_' . self::RELATIONSHIP_KEY, true ) ) {
-			return $this->rollback( $post_id );
+			return new WP_Error( 'beanstalk_city_page_context_write_failed', __( 'The required City Page relationship could not be verified.', 'beanstalk-content-engine' ) );
 		}
 
 		return true;

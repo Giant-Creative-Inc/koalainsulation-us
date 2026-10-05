@@ -55,6 +55,8 @@ require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/ContentValidator.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/PatternRegistry.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/ContentBuilder.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/CityPageContext.php';
+require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/CityPageUpdater.php';
+require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/CityPageCliCommand.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/ServiceAreaSchema.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/DraftManager.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/AbilityRegistrar.php';
@@ -74,6 +76,15 @@ function beanstalk_content_engine_register_provider( array $provider ) {
 	return GiantCreative\BeanstalkContentEngine\Bootstrap::instance()
 		->providers()
 		->register( $provider );
+}
+
+/**
+ * Whether an existing City Page has completed the explicit Beanstalk migration.
+ *
+ * @param int $post_id WordPress post ID.
+ */
+function beanstalk_content_engine_is_city_page_enabled( int $post_id ): bool {
+	return 'koala/city-page' === get_post_meta( $post_id, '_beanstalk_template', true );
 }
 
 GiantCreative\BeanstalkContentEngine\Bootstrap::instance()->boot();
