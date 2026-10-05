@@ -700,13 +700,12 @@ function koala_beanstalk_render_location_reviews_block( array $attributes, strin
 		? '<a class="koala-city-testimonials__fallback-link" href="' . esc_url( $link ) . '">' . esc_html( $label ) . '</a>'
 		: '';
 
-	if ( 'google-reviews' !== $config['provider'] || ( ! $config['place_id'] && ! $config['feed_id'] ) || ! shortcode_exists( 'grw' ) ) {
+	if ( ! $config['feed_id'] || ! shortcode_exists( 'grw' ) ) {
 		return '<div class="koala-city-testimonials__fallback">' . $link_markup . '</div>';
 	}
 
-	$widget = $config['place_id']
-		? do_shortcode( sprintf( '[grw place_id="%s" view_mode="slider"]', esc_attr( $config['place_id'] ) ) )
-		: do_shortcode( sprintf( '[grw id="%d"]', $config['feed_id'] ) );
+	// Use the related location's Google review shortcode field exclusively.
+	$widget = do_shortcode( sprintf( '[grw id="%d"]', $config['feed_id'] ) );
 	if ( '' === trim( $widget ) ) {
 		return '<div class="koala-city-testimonials__fallback">' . $link_markup . '</div>';
 	}
