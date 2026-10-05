@@ -136,7 +136,8 @@
 	gap: 24px;
 }
 
-.koala-city-page .koala-city-commercial-services__gallery-image {
+.koala-city-page .koala-city-commercial-services__gallery-image,
+.koala-city-page .koala-city-commercial-services__gallery-item .wp-block-image {
 	width: 100%;
 	height: 360px;
 	margin: 0;
@@ -144,7 +145,8 @@
 	border-radius: 12px;
 }
 
-.koala-city-page .koala-city-commercial-services__gallery-image img {
+.koala-city-page .koala-city-commercial-services__gallery-image img,
+.koala-city-page .koala-city-commercial-services__gallery-item .wp-block-image img {
 	display: block;
 	width: 100%;
 	height: 100%;
@@ -270,7 +272,8 @@
 		gap: 8px;
 	}
 
-	.koala-city-page .koala-city-commercial-services__gallery-image {
+	.koala-city-page .koala-city-commercial-services__gallery-image,
+	.koala-city-page .koala-city-commercial-services__gallery-item .wp-block-image {
 		height: 200px;
 		border-radius: 6px;
 	}
