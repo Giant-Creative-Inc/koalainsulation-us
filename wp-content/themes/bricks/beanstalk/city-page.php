@@ -655,18 +655,15 @@ function koala_beanstalk_render_why_koala_video_block( array $attributes, string
 /**
  * Reduce the related location's review settings to public, allowlisted data.
  *
- * City Pages prefer the related location's Google Place ID and retain the
- * existing registered feed as a compatibility fallback. Both values are
- * reduced to strict allowlists so stored shortcode text is never executed.
+ * City Pages use the related location's Google review shortcode field.
+ * Only registered feed IDs are accepted; arbitrary shortcode text is rejected.
  *
  * @param array<string, mixed>|null $context Optional testable context.
- * @return array{provider:string,place_id:string,feed_id:int,review_url:string}
+ * @return array{provider:string,feed_id:int,review_url:string}
  */
 function koala_beanstalk_get_location_review_config( ?array $context = null ): array {
 	$context          = null === $context ? koala_beanstalk_get_location_context() : $context;
-	$stored_place_id  = isset( $context['google_place_id'] ) ? trim( (string) $context['google_place_id'] ) : '';
 	$google_shortcode = isset( $context['google_review_shortcode'] ) ? trim( (string) $context['google_review_shortcode'] ) : '';
-	$place_id         = preg_match( '/^[A-Za-z0-9_-]{10,255}$/', $stored_place_id ) ? $stored_place_id : '';
 	$feed_id          = 0;
 
 	if ( preg_match( '/^\[grw\s+id=(?:"|\')?([1-9][0-9]*)(?:"|\')?\s*\/?\]$/', $google_shortcode, $matches ) ) {
@@ -674,8 +671,7 @@ function koala_beanstalk_get_location_review_config( ?array $context = null ): a
 	}
 
 	return array(
-		'provider'   => ( $place_id || $feed_id ) ? 'google-reviews' : '',
-		'place_id'   => $place_id,
+		'provider'   => $feed_id ? 'google-reviews' : '',
 		'feed_id'    => $feed_id,
 		'review_url' => isset( $context['review_url'] ) ? (string) $context['review_url'] : '',
 	);

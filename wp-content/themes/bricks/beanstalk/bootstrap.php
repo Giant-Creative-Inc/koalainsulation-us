@@ -279,7 +279,7 @@ function koala_beanstalk_manage_review_assets(): void {
 	}
 
 	$config = koala_beanstalk_get_location_review_config();
-	if ( 'google-reviews' === $config['provider'] && ( $config['place_id'] || $config['feed_id'] ) ) {
+	if ( 'google-reviews' === $config['provider'] && $config['feed_id'] ) {
 		return;
 	}
 
