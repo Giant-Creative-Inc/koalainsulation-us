@@ -13,8 +13,8 @@
  *   2. Fill — on pages that carry one of this plugin's forms, write those
  *      values into the form's mapped hidden fields (kgiData.trackingFieldIds).
  *      For campaign params the current page URL wins (last touch) and the
- *      cookie is the fallback (first touch); referrer / landing page always
- *      come from the first-touch cookie.
+ *      cookie is the fallback (the cookie tracks last touch too); referrer /
+ *      landing page always come from the first-touch cookie.
  *
  * Everything is done client-side on purpose: the site serves forms from a
  * full-page cache, so server-side render injection would bake one visitor's
@@ -104,32 +104,49 @@
 	}
 
 	/**
-	 * Snapshots first-touch attribution into the cookie, once.
+	 * Captures attribution into the cookie. Runs on every page load.
 	 *
-	 * Skips entirely if the cookie already exists, so the stored values keep
-	 * the visitor's *first* landing page, referrer, and campaign — later visits
-	 * never overwrite them. Runs on every page load.
+	 * Landing page, referrer, and timestamp are *first touch*: written only
+	 * once, on the visitor's first page view, and never overwritten — they
+	 * describe how the visit began.
+	 *
+	 * Campaign params (UTMs and ad-platform click IDs) are *last touch*:
+	 * whenever one is present in the current URL it is refreshed in the cookie,
+	 * even on later page views. This is what keeps a campaign value available
+	 * on the form page when the visitor landed on a tagged URL and then
+	 * navigated to an untagged one — the classic case where the current-page
+	 * URL has no UTM but the form still needs it. Without this, a cookie
+	 * created on a first, untagged page view would stay permanently empty and
+	 * the hidden fields would never populate (the reported Denver behaviour).
+	 *
+	 * Only writes the cookie when something actually changed, so an untagged
+	 * page view after the cookie exists is a no-op.
 	 */
-	function captureFirstTouch() {
-		if ( getCookie( COOKIE_NAME ) ) {
-			return;
+	function captureAttribution() {
+		var stored = getStoredAttribution();
+		var changed = false;
+
+		// First touch: landing page / referrer / timestamp, set once.
+		if ( ! getCookie( COOKIE_NAME ) ) {
+			stored.landing_page = window.location.href;
+			stored.referrer = document.referrer || '';
+			stored.ts = new Date().toISOString();
+			changed = true;
 		}
 
-		var data = {
-			landing_page: window.location.href,
-			referrer: document.referrer || '',
-			ts: new Date().toISOString()
-		};
-
+		// Last touch: refresh any campaign param present in the current URL.
 		Object.keys( URL_PARAM_KEYS ).forEach( function ( key ) {
 			var value = getQueryParam( URL_PARAM_KEYS[ key ] );
 
-			if ( value ) {
-				data[ key ] = value;
+			if ( value && stored[ key ] !== value ) {
+				stored[ key ] = value;
+				changed = true;
 			}
 		} );
 
-		setCookie( COOKIE_NAME, JSON.stringify( data ), COOKIE_DAYS );
+		if ( changed ) {
+			setCookie( COOKIE_NAME, JSON.stringify( stored ), COOKIE_DAYS );
+		}
 	}
 
 	/**
@@ -221,7 +238,7 @@
 	 */
 	function resolveValue( key, stored, formId ) {
 		if ( URL_PARAM_KEYS.hasOwnProperty( key ) ) {
-			// Current URL (last touch) wins; first-touch cookie is the fallback.
+			// Current URL wins; the cookie (last campaign value seen) is the fallback.
 			return getQueryParam( URL_PARAM_KEYS[ key ] ) || ( stored[ key ] || '' );
 		}
 
@@ -245,11 +262,10 @@
 	 * Fills every mapped tracking hidden field on every form present.
 	 *
 	 * Reads kgiData.trackingFieldIds (form ID => { trackingKey => GF field ID })
-	 * localized on form pages. Every mapped field is overwritten, including
-	 * with an empty value. Cached HTML or server-side dynamic population may
-	 * contain another request's attribution, so preserving a pre-existing value
-	 * would risk submitting stale visitor data. Uses querySelectorAll and walks
-	 * each known form ID for the same duplicate-form / multi-form reasons as
+	 * localized on form pages. Only writes into an input that is currently
+	 * empty, so a value already supplied (e.g. by Gravity Forms' own dynamic
+	 * population) is never clobbered. Uses querySelectorAll and walks each known
+	 * form ID for the same duplicate-form / multi-form reasons as
 	 * form-validation.js.
 	 */
 	function fillForms() {
@@ -268,13 +284,15 @@
 					var fieldId = fieldMap[ key ];
 					var input = form.querySelector( 'input[name="input_' + fieldId + '"]' );
 
-					if ( ! input ) {
+					if ( ! input || input.value ) {
 						return;
 					}
 
 					var value = resolveValue( key, stored, formId );
 
-					input.value = value;
+					if ( value ) {
+						input.value = value;
+					}
 				} );
 			} );
 		} );
@@ -293,12 +311,9 @@
 		}
 	}
 
-	captureFirstTouch();
+	captureAttribution();
 	bindCtaCapture();
 	onReady( fillForms );
-	document.addEventListener( 'gform/post_render', fillForms );
-	document.addEventListener( 'submit', fillForms, true );
-	window.addEventListener( 'pageshow', fillForms );
 
 	// Re-fill after Gravity Forms rebuilds the DOM on multi-page or AJAX forms.
 	// gform_post_render is a jQuery-triggered event, so bind it via jQuery when

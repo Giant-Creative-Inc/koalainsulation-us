@@ -6,6 +6,57 @@ if (!defined('ABSPATH'))
 // resources landing pages. All other requests continue through Bricks.
 require_once __DIR__ . '/beanstalk/bootstrap.php';
 
+/** Resolve a location Google Reviews shortcode, then the site corporate feed. */
+function koala_get_google_review_shortcode($location_id = 0)
+{
+    $shortcode = $location_id ? (string) get_post_meta((int) $location_id, 'google_review_shortcode', true) : '';
+    if ($shortcode === '') {
+        $shortcode = (string) get_option('koala_corporate_google_review_shortcode', '');
+        if (trim($shortcode) === '') {
+            $shortcode = '[grw id="13780"]';
+        }
+    }
+
+    $shortcode = trim($shortcode);
+    return preg_match('/^\[grw\s+id=(?:"|\')?[1-9][0-9]*(?:"|\')?\s*\/?\]$/', $shortcode) ? $shortcode : '';
+}
+
+/** Render an allowlisted Google Reviews widget without a NiceJob fallback. */
+function koala_render_google_reviews($location_id = 0)
+{
+    $shortcode = koala_get_google_review_shortcode($location_id);
+    return $shortcode === '' ? '' : '<div class="koala-google-reviews">' . do_shortcode($shortcode) . '</div>';
+}
+
+/** Fill the shared Bricks review placeholder with location or corporate reviews. */
+function koala_render_bricks_google_review_placeholder($content, $post = null, $area = 'content')
+{
+    if (strpos($content, 'id="google-review-shortcode-wrapper"') === false) {
+        return $content;
+    }
+
+    $post_id = $post instanceof WP_Post ? (int) $post->ID : (int) get_queried_object_id();
+    $location_id = $post_id && get_post_type($post_id) === 'location' ? $post_id : 0;
+    $widget = koala_render_google_reviews($location_id);
+
+    if ($widget === '') {
+        return $content;
+    }
+
+    $styles = '<style id="koala-google-reviews-visibility">'
+        . '#google-review-shortcode-wrapper{display:flex!important;visibility:visible!important}'
+        . '#main-page-widget,#main-page-stories-widget,#local-page-widget,#local-page-stories-widget{display:none!important}'
+        . '</style>';
+
+    return preg_replace(
+        '/(<div id="google-review-shortcode-wrapper"[^>]*>)\s*<\/div>/',
+        $styles . '$1' . $widget . '</div>',
+        $content,
+        1
+    );
+}
+add_filter('bricks/frontend/render_data', 'koala_render_bricks_google_review_placeholder', 20, 3);
+
 // Redirect uppercase slugs to lowercase to prevent duplicate content.
 add_action('template_redirect', function () {
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
@@ -375,10 +426,6 @@ function enqueue_custom_scripts()
     $homeowner_incentives_page = is_page('homeowner-incentives');
     $service_page = is_page('services');
     $single_service_page = is_singular('location-service');
-    // National (non-location) service singles, e.g. /services/commercial-insulation-services.
-    // These render the photo slider (Bricks template "Services single page"), so they
-    // need Swiper too — is_singular('location-service') above does NOT match them.
-    $single_service_national = is_singular('service');
     $location_page = is_page('locations');
     $single_location_page = is_singular('location');
     $single_location_service = is_singular('location-service');
@@ -392,42 +439,12 @@ function enqueue_custom_scripts()
         filemtime(get_stylesheet_directory() . '/assets/css/custom.css') // Auto-updates version for cache busting
     );
 
-    // Swiper library + slider initialisers are only needed where custom slider
-    // markup renders: front page (services slider), single locations (partner
-    // slider), single location-service / why-koala / why-reinsulate (photo &
-    // before/after sliders). sliders.js was extracted from all-pages.js so the
-    // ~300 lines of Swiper init no longer ship on every page.
-    $needs_swiper = $front_page || $single_location_page || $why_koala_page || $why_reinsulate || $single_service_page || $single_service_national;
-    if ($needs_swiper) {
+    if ($front_page || $single_location_page || $why_koala_page || $why_reinsulate || $single_service_page) {
         wp_enqueue_script(
             'swiper-bundle',
             'https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js',
             array(),
             null,
-            true
-        );
-        $sliders_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/sliders.js');
-        wp_enqueue_script(
-            'koala-sliders',
-            get_template_directory_uri() . '/assets/js/custom/sliders.js',
-            array('jquery', 'swiper-bundle'),
-            $sliders_ver,
-            true
-        );
-    }
-
-    // Review-count integration (reviews.js) only needs to run where the
-    // #review-count target renders. Empirically that is single locations and
-    // landing pages; the script self-terminates when the target is absent, but
-    // gating keeps it off every other page. Extracted from all-pages.js.
-    $needs_reviews = $single_location_page || is_singular('landing-pages');
-    if ($needs_reviews) {
-        $reviews_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/reviews.js');
-        wp_enqueue_script(
-            'koala-reviews',
-            get_template_directory_uri() . '/assets/js/custom/reviews.js',
-            array(),
-            $reviews_ver,
             true
         );
     }
@@ -493,26 +510,8 @@ function enqueue_custom_scripts()
     $all_pages_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/all-pages.js');
     wp_enqueue_script('all-pages-js', get_template_directory_uri() . '/assets/js/custom/all-pages.js', array('jquery'), $all_pages_ver, true);
 
-    // popup.js: global Bricks popup helpers (?form= opener + CallRail re-swap for
-    // the Estimate popup #4865). The popup renders site-wide via the header, and
-    // both blocks self-guard, so this loads globally like all-pages.js. Extracted
-    // from all-pages.js; pure vanilla (no jQuery dependency).
-    $popup_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/popup.js');
-    wp_enqueue_script('koala-popup', get_template_directory_uri() . '/assets/js/custom/popup.js', array(), $popup_ver, true);
-
     // custom-service-js handles the header ZIP lookup and estimate popup.
     $custom_service_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom-service.js');
-    $is_corporate_page = !$single_location_page && !$single_location_service;
-    if ($is_corporate_page) {
-        $cross_border_path = get_template_directory() . '/assets/js/cross-border-location-switch.js';
-        $cross_border_version = file_exists($cross_border_path) ? filemtime($cross_border_path) : null;
-        wp_enqueue_script('koala-cross-border-location-switch', get_template_directory_uri() . '/assets/js/cross-border-location-switch.js', array(), $cross_border_version, true);
-        wp_enqueue_style('koala-cross-border-location-switch', get_template_directory_uri() . '/assets/css/cross-border-location-switch.css', array(), $cross_border_version);
-        wp_localize_script('koala-cross-border-location-switch', 'koalaCrossBorderLocation', [
-            'country' => 'US',
-        ]);
-    }
-
     wp_enqueue_script('custom-service-js', get_template_directory_uri() . '/assets/js/custom-service.js', array('jquery'), $custom_service_ver, true);
 
     $needs_service_scripts = $front_page || $location_page || $single_location_page || $single_service_page || $single_location_service;
@@ -1611,10 +1610,23 @@ function custom_location_service_template()
                   echo '<main id="brx-content">';
 
                     if (class_exists('\Bricks\Templates')) {
-                      echo (new \Bricks\Templates())->render_shortcode(array('id' => $template_id));
+                      $service_template_html = (new \Bricks\Templates())->render_shortcode(array('id' => $template_id));
                     } else {
-                      echo do_shortcode('[bricks_template id="' . $template_id . '"]');
+                      $service_template_html = do_shortcode('[bricks_template id="' . $template_id . '"]');
                     }
+
+                    $google_review_widget = koala_render_google_reviews($location_post_id);
+
+                    if ($google_review_widget !== '') {
+                      $service_template_html = preg_replace(
+                        '/<div class="(?:koala-google-reviews-placeholder|nj-badge)"><\/div>/',
+                        $google_review_widget,
+                        $service_template_html,
+                        1
+                      );
+                    }
+
+                    echo $service_template_html;
                   echo '</main>';
 
                   get_footer();
@@ -1642,7 +1654,8 @@ add_action('template_redirect', 'custom_location_service_template');
  */
 function my_location_service_category_template_map() {
     $map = array(
-        'spray-foam-insulation-services' => 79684
+        'spray-foam-insulation-services' => 79684,
+        'blown-in-insulation-services'   => 79684,
     );
 
     // Let you override in a child theme or plugin
@@ -1900,7 +1913,7 @@ function get_location_data($data)
         'nicejobId' => get_post_meta($location_post[0]->ID, 'location_nicejob_id', true),
         'hcpKey' => get_post_meta($location_post[0]->ID, 'housecall_pro_api_key', true),
         'smKey' => get_post_meta($location_post[0]->ID, 'location_serviceminder_api_key', true),
-        'grShortcode' => get_post_meta($location_post[0]->ID, 'google_review_shortcode', true),
+        'grShortcode' => koala_get_google_review_shortcode($location_post[0]->ID),
         'fbLink' => get_post_meta($location_post[0]->ID, 'location_facebook_link', true),
         'instaLink' => get_post_meta($location_post[0]->ID, 'location_instagram_link', true),
         'linkedinLink' => get_post_meta($location_post[0]->ID, 'location_linkedin_link', true),
@@ -2585,7 +2598,14 @@ add_action('wp_ajax_nopriv_match_location_by_zip', 'match_location_by_zip');
 
 function match_location_by_zip()
 {
-    check_ajax_referer('match_location', 'nonce');
+    // No nonce check here on purpose. This endpoint is a public, read-only ZIP
+    // lookup that returns only publicly visible location data and changes no
+    // state, so it needs no CSRF protection. Enforcing a nonce actively breaks
+    // it: with full-page caching (WP Rocket), anonymous visitors are served a
+    // cached page whose embedded nonce has since expired, so check_ajax_referer
+    // returns 403 and the finder silently fails. This is the recurring
+    // "zip search stopped working" bug. The sibling radius/distance endpoints
+    // are already nonce-free for the same reason.
     $zip = sanitize_text_field($_POST['zip_code']);
 
     $args = [
@@ -2809,15 +2829,17 @@ function output_custom_or_default_gtm_head()
             // rc.async = true;
             // document.head.appendChild(rc);
 
-            // --- 2. Load Hotjar ---
-            (function(h, o, t, j, a, r) {
-                h.hj = h.hj || function() { (h.hj.q = h.hj.q || []).push(arguments) };
-                h._hjSettings = { hjid: 6387685, hjsv: 6 };
-                a = o.getElementsByTagName('head')[0];
-                r = o.createElement('script'); r.async = 1;
-                r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
-                a.appendChild(r);
-            })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+            // --- 2. Load Hotjar (sampled: ~1 in 100 sessions) ---
+            if (Math.random() < 0.01) {
+                (function(h, o, t, j, a, r) {
+                    h.hj = h.hj || function() { (h.hj.q = h.hj.q || []).push(arguments) };
+                    h._hjSettings = { hjid: 6387685, hjsv: 6 };
+                    a = o.getElementsByTagName('head')[0];
+                    r = o.createElement('script'); r.async = 1;
+                    r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
+                    a.appendChild(r);
+                })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+            }
 
             // --- 3. Load national GTM ---
             if (!document.querySelector('script[src*="id=GTM-KSNRRFL8"]')) {
@@ -2973,12 +2995,77 @@ function koala_output_location_blog_schema()
 add_action('wp_head', 'koala_output_resources_landing_schema', 2);
 function koala_output_resources_landing_schema()
 {
-    if (is_admin() || !is_singular('resources-landing-pa')) {
+    if (is_admin()) {
         return;
     }
 
-    $post_id = get_the_ID();
-    $schema_raw = get_field('schema', $post_id);
+    // Beanstalk owns schema output for Areas-Served City Pages (it prints
+    // resource_lp_schema itself). Don't double-print on those.
+    if (function_exists('koala_is_beanstalk_area_served_page') && koala_is_beanstalk_area_served_page()) {
+        return;
+    }
+
+    $post_id = null;
+
+    if (is_singular('resources-landing-pa')) {
+        $post_id = get_the_ID();
+    } else {
+        // Meet the Team / Areas Served / Recent Projects resolve their
+        // resources-landing-pa post from the URL at render time (see
+        // page-meet-the-team.php etc.), not via is_page()/is_singular() —
+        // WordPress's main query for these URLs doesn't reliably report
+        // is_page() true by the time wp_head fires, so match the URL
+        // directly the same way those templates already do.
+        $suffix_term_map = [
+            'meet-the-team'   => 'meet-the-team',
+            'areas-served'    => 'areas-served',
+            'recent-projects' => 'recent-projects',
+        ];
+
+        $current_path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+        $path_parts = explode('/', $current_path);
+        $last_segment = end($path_parts);
+
+        if (isset($suffix_term_map[$last_segment])) {
+            $term_slug = $suffix_term_map[$last_segment];
+            $location_slug = trim(str_replace($last_segment, '', $current_path), '/');
+
+            $location = get_page_by_path($location_slug, OBJECT, 'location');
+
+            if ($location) {
+                $query = new WP_Query([
+                    'post_type'      => 'resources-landing-pa',
+                    'posts_per_page' => 1,
+                    'fields'         => 'ids',
+                    'no_found_rows'  => true,
+                    'meta_query'     => [
+                        [
+                            'key'     => 'rl_related_location',
+                            'value'   => $location->ID,
+                            'compare' => 'LIKE',
+                        ],
+                    ],
+                    'tax_query'      => [
+                        [
+                            'taxonomy' => 'resources-page-type',
+                            'field'    => 'slug',
+                            'terms'    => $term_slug,
+                        ],
+                    ],
+                ]);
+
+                if (!empty($query->posts)) {
+                    $post_id = $query->posts[0];
+                }
+            }
+        }
+    }
+
+    if (empty($post_id)) {
+        return;
+    }
+
+    $schema_raw = get_field('resource_lp_schema', $post_id);
     if (empty($schema_raw)) {
         return;
     }
@@ -3858,9 +3945,6 @@ function koala_defer_scripts($tag, $handle, $src) {
     // List of script handles from your audit to DEFER
     $defer_scripts = [
         'all-pages-js',
-        'koala-sliders',
-        'koala-reviews',
-        'koala-popup',
         'custom-service-js',
         'custom-map-init',
         'location-page',
