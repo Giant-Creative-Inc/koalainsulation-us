@@ -149,7 +149,7 @@ final class CityPageUpdater {
 		foreach ( $metadata as $key => $value ) {
 			if ( ! $this->write_meta( $post->ID, $key, $value ) ) {
 				$this->restore( $post->ID, $snapshot );
-				return new WP_Error( 'beanstalk_city_page_metadata_write_failed', __( 'Protected City Page metadata could not be written.', 'beanstalk-content-engine' ) );
+				return new WP_Error( 'beanstalk_city_page_metadata_write_failed', sprintf( __( 'Protected City Page metadata could not be written: %s.', 'beanstalk-content-engine' ), $key ) );
 			}
 		}
 
@@ -243,7 +243,7 @@ final class CityPageUpdater {
 		}
 		foreach ( $snapshot['metadata'] as $key => $stored ) {
 			if ( $stored['exists'] ) {
-				update_post_meta( $post_id, $key, $stored['value'] );
+				update_post_meta( $post_id, $key, wp_slash( $stored['value'] ) );
 			} else {
 				delete_post_meta( $post_id, $key );
 			}
@@ -258,7 +258,8 @@ final class CityPageUpdater {
 	 * @param mixed  $value   Metadata value.
 	 */
 	private function write_meta( int $post_id, string $key, $value ): bool {
-		update_post_meta( $post_id, $key, $value );
+		// WordPress unslashes metadata before storing it, including JSON escapes.
+		update_post_meta( $post_id, $key, wp_slash( $value ) );
 		return (string) get_post_meta( $post_id, $key, true ) === (string) $value;
 	}
 }
