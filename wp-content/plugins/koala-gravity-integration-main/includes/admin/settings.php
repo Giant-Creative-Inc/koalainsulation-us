@@ -153,6 +153,16 @@ function kgi_register_settings(): void {
 
 	register_setting(
 		'kgi_settings',
+		'kgi_zip_lookup_alert_emails',
+		array(
+			'type'              => 'string',
+			'sanitize_callback' => 'kgi_sanitize_zip_lookup_alert_emails',
+			'default'           => '',
+		)
+	);
+
+	register_setting(
+		'kgi_settings',
 		'kgi_unresolved_serviceminder_api_key',
 		array(
 			'type'              => 'string',
@@ -265,6 +275,14 @@ function kgi_register_settings(): void {
 		'kgi_zip_fallback_section'
 	);
 
+	add_settings_field(
+		'kgi_zip_lookup_alert_emails',
+		__( 'ZIP Lookup Alert Email(s)', 'koala-gravity-integration' ),
+		'kgi_render_zip_lookup_alert_emails_field',
+		'koala-gravity-integration',
+		'kgi_zip_fallback_section'
+	);
+
 	add_settings_section(
 		'kgi_lead_routing_section',
 		__( 'Lead Routing', 'koala-gravity-integration' ),
@@ -364,32 +382,33 @@ function kgi_register_settings(): void {
  */
 function kgi_get_payload_field_labels(): array {
 	return array(
-		'first_name'     => __( 'First Name', 'koala-gravity-integration' ),
-		'last_name'      => __( 'Last Name', 'koala-gravity-integration' ),
-		'email'          => __( 'Email', 'koala-gravity-integration' ),
-		'mobile_number'  => __( 'Mobile Number', 'koala-gravity-integration' ),
-		'address1'       => __( 'Address Line 1', 'koala-gravity-integration' ),
-		'address2'       => __( 'Address Line 2', 'koala-gravity-integration' ),
-		'city'           => __( 'City', 'koala-gravity-integration' ),
-		'state'          => __( 'State / Province', 'koala-gravity-integration' ),
-		'zip'            => __( 'ZIP / Postal Code', 'koala-gravity-integration' ),
-		'DoNotText'      => __( 'Do Not Text', 'koala-gravity-integration' ),
-		'DoNotEmail'     => __( 'Do Not Email', 'koala-gravity-integration' ),
-		'UtmSource'      => __( 'UTM Source', 'koala-gravity-integration' ),
-		'UtmMedium'      => __( 'UTM Medium', 'koala-gravity-integration' ),
-		'UtmCampaign'    => __( 'UTM Campaign', 'koala-gravity-integration' ),
-		'UtmTerm'        => __( 'UTM Term', 'koala-gravity-integration' ),
-		'UtmContent'     => __( 'UTM Content', 'koala-gravity-integration' ),
-		'gclid'          => __( 'Google Click ID (gclid)', 'koala-gravity-integration' ),
-		'gbraid'         => __( 'Google gbraid', 'koala-gravity-integration' ),
-		'wbraid'         => __( 'Google wbraid', 'koala-gravity-integration' ),
-		'fbclid'         => __( 'Facebook Click ID (fbclid)', 'koala-gravity-integration' ),
-		'msclkid'        => __( 'Microsoft Click ID (msclkid)', 'koala-gravity-integration' ),
-		'landing_page'   => __( 'Landing Page', 'koala-gravity-integration' ),
-		'referrer'       => __( 'Referrer', 'koala-gravity-integration' ),
-		'form_timestamp' => __( 'Timestamp', 'koala-gravity-integration' ),
-		'service'        => __( 'Service', 'koala-gravity-integration' ),
-		'cta_text'       => __( 'CTA Text', 'koala-gravity-integration' ),
+		'first_name'               => __( 'First Name', 'koala-gravity-integration' ),
+		'last_name'                => __( 'Last Name', 'koala-gravity-integration' ),
+		'email'                    => __( 'Email', 'koala-gravity-integration' ),
+		'mobile_number'            => __( 'Mobile Number', 'koala-gravity-integration' ),
+		'address1'                 => __( 'Address Line 1', 'koala-gravity-integration' ),
+		'address2'                 => __( 'Address Line 2', 'koala-gravity-integration' ),
+		'city'                     => __( 'City', 'koala-gravity-integration' ),
+		'state'                    => __( 'State / Province', 'koala-gravity-integration' ),
+		'zip'                      => __( 'ZIP / Postal Code', 'koala-gravity-integration' ),
+		'DoNotText'                => __( 'Do Not Text', 'koala-gravity-integration' ),
+		'DoNotEmail'               => __( 'Do Not Email', 'koala-gravity-integration' ),
+		'cust_smsmarketingconsent' => __( 'SMS Marketing Consent', 'koala-gravity-integration' ),
+		'UtmSource'                => __( 'UTM Source', 'koala-gravity-integration' ),
+		'UtmMedium'                => __( 'UTM Medium', 'koala-gravity-integration' ),
+		'UtmCampaign'              => __( 'UTM Campaign', 'koala-gravity-integration' ),
+		'UtmTerm'                  => __( 'UTM Term', 'koala-gravity-integration' ),
+		'UtmContent'               => __( 'UTM Content', 'koala-gravity-integration' ),
+		'gclid'                    => __( 'Google Click ID (gclid)', 'koala-gravity-integration' ),
+		'gbraid'                   => __( 'Google gbraid', 'koala-gravity-integration' ),
+		'wbraid'                   => __( 'Google wbraid', 'koala-gravity-integration' ),
+		'fbclid'                   => __( 'Facebook Click ID (fbclid)', 'koala-gravity-integration' ),
+		'msclkid'                  => __( 'Microsoft Click ID (msclkid)', 'koala-gravity-integration' ),
+		'landing_page'             => __( 'Landing Page', 'koala-gravity-integration' ),
+		'referrer'                 => __( 'Referrer', 'koala-gravity-integration' ),
+		'form_timestamp'           => __( 'Timestamp', 'koala-gravity-integration' ),
+		'service'                  => __( 'Service', 'koala-gravity-integration' ),
+		'cta_text'                 => __( 'CTA Text', 'koala-gravity-integration' ),
 	);
 }
 
@@ -638,6 +657,49 @@ function kgi_sanitize_notification_email( $value ): string {
 }
 
 /**
+ * Sanitizes the ZIP lookup alert addresses.
+ *
+ * Keeps only valid addresses and stores them comma-separated. Shows a
+ * settings error listing any address that was dropped.
+ *
+ * @since 0.8.0
+ *
+ * @param mixed $value Raw option value.
+ * @return string Comma-separated valid email addresses.
+ */
+function kgi_sanitize_zip_lookup_alert_emails( $value ): string {
+	$valid   = array();
+	$invalid = array();
+
+	foreach ( (array) preg_split( '/[\s,;]+/', is_string( $value ) ? $value : '' ) as $candidate ) {
+		$candidate = trim( (string) $candidate );
+
+		if ( '' === $candidate ) {
+			continue;
+		}
+
+		$email = sanitize_email( $candidate );
+
+		if ( is_email( $email ) ) {
+			$valid[] = $email;
+		} else {
+			$invalid[] = $candidate;
+		}
+	}
+
+	if ( ! empty( $invalid ) ) {
+		add_settings_error(
+			'kgi_zip_lookup_alert_emails',
+			'kgi_invalid_alert_emails',
+			/* translators: %s: comma-separated list of invalid addresses */
+			sprintf( __( 'These ZIP lookup alert addresses are not valid and were not saved: %s', 'koala-gravity-integration' ), implode( ', ', $invalid ) )
+		);
+	}
+
+	return implode( ', ', array_unique( $valid ) );
+}
+
+/**
  * Renders the quote form selector dropdown.
  *
  * @since 0.1.0
@@ -865,7 +927,7 @@ function kgi_render_zip_fallback_section_intro(): void {
 		<?php
 		printf(
 			/* translators: %d: search radius in miles. */
-			esc_html__( 'When a submitted ZIP or postal code matches no location, the lead is routed to the nearest location within %d miles using zipcodeapi.com (US ZIP codes and Canadian postal codes). Leave the key blank to disable this and keep routing unmatched codes to the form\'s original location.', 'koala-gravity-integration' ),
+			esc_html__( 'When a submitted ZIP or postal code matches no location, the lead is routed to the nearest location within %d miles using one zipcodeapi.com request (US ZIP codes and Canadian postal codes). Results are cached for 30 days. The same lookup powers the theme\'s location search. If a lookup fails, the lead goes to unmatched lead routing and the failure is recorded in the ZIP Lookup Log.', 'koala-gravity-integration' ),
 			(int) kgi_get_zip_fallback_radius()
 		);
 		?>
@@ -890,7 +952,31 @@ function kgi_render_zipcodeapi_key_field(): void {
 		autocomplete="off"
 	/>
 	<p class="description">
-		<?php esc_html_e( 'API key from zipcodeapi.com, used for the nearest-location fallback. Leave blank to disable the fallback.', 'koala-gravity-integration' ); ?>
+		<?php esc_html_e( 'API key from zipcodeapi.com, used for the nearest-location fallback and the location search. It stays on the server and is never sent to the browser.', 'koala-gravity-integration' ); ?>
+	</p>
+	<?php
+}
+
+/**
+ * Renders the ZIP lookup alert email input field.
+ *
+ * @since 0.8.0
+ */
+function kgi_render_zip_lookup_alert_emails_field(): void {
+	$value = get_option( 'kgi_zip_lookup_alert_emails', '' );
+	?>
+	<input
+		type="text"
+		name="kgi_zip_lookup_alert_emails"
+		id="kgi_zip_lookup_alert_emails"
+		value="<?php echo esc_attr( $value ); ?>"
+		class="regular-text"
+	/>
+	<p class="description">
+		<?php esc_html_e( 'Who to email when ZIP lookups fail (for example, the zipcodeapi.com hourly limit is reached or the API key stops working). Separate multiple addresses with commas. At most one email is sent per error type per hour. Leave blank to turn alerts off.', 'koala-gravity-integration' ); ?>
+	</p>
+	<p class="description">
+		<a href="<?php echo esc_url( admin_url( 'options-general.php?page=kgi-zip-lookup-log' ) ); ?>"><?php esc_html_e( 'View the ZIP Lookup Log', 'koala-gravity-integration' ); ?></a>
 	</p>
 	<?php
 }

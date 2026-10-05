@@ -58,6 +58,8 @@ function kgi_resend_entry_to_n8n( int $entry_id ): bool {
 		return false;
 	}
 
+	kgi_restore_page_location_for_resend( $entry_id, $entry );
+
 	// Clear the guard in kgi_process_quote_entry_job() that skips entries
 	// already marked `processing`/`succeeded`, so this runs again.
 	gform_update_meta( $entry_id, 'kgi_submission_status', 'queued' );
@@ -65,6 +67,57 @@ function kgi_resend_entry_to_n8n( int $entry_id ): bool {
 	kgi_process_quote_entry_job( $entry_id );
 
 	return 'succeeded' === gform_get_meta( $entry_id, 'kgi_submission_status' );
+}
+
+/**
+ * Restores the page location of an unmatched lead so Resend re-runs routing.
+ *
+ * A lead submitted from a location page goes to unmatched lead routing when
+ * its ZIP lookup fails or finds nothing. Restoring the page location lets the
+ * background job route it again with the current ZIP data, e.g. once
+ * zipcodeapi.com is available again. Leads with no page location are left
+ * unchanged.
+ *
+ * @since 0.8.0
+ *
+ * @param int     $entry_id Gravity Forms entry ID.
+ * @param mixed[] $entry    Gravity Forms entry array.
+ */
+function kgi_restore_page_location_for_resend( int $entry_id, array $entry ): void {
+	if ( 'unresolved' !== gform_get_meta( $entry_id, 'kgi_location_source' ) ) {
+		return;
+	}
+
+	$location_id = absint( gform_get_meta( $entry_id, 'kgi_original_location_id' ) );
+
+	if ( $location_id <= 0 ) {
+		// Leads routed before 0.8.0 only kept the page location in the form's
+		// hidden location ID field.
+		$field_id    = kgi_get_location_field_id_for_form( (int) ( $entry['form_id'] ?? 0 ), 'location_id' );
+		$location_id = $field_id > 0 ? absint( rgar( $entry, (string) $field_id ) ) : 0;
+	}
+
+	$location = kgi_resolve_fixed_location( $location_id );
+
+	if ( ! $location ) {
+		return;
+	}
+
+	gform_update_meta( $entry_id, 'kgi_location_status', 'resolved' );
+	gform_update_meta( $entry_id, 'kgi_location_id', $location->ID );
+	gform_update_meta( $entry_id, 'kgi_location_name', get_field( 'location_name', $location->ID ) );
+	gform_update_meta( $entry_id, 'kgi_location_source', 'url' );
+	gform_update_meta( $entry_id, 'kgi_needs_review', 0 );
+	gform_update_meta( $entry_id, 'kgi_routed_location_id', '' );
+	gform_update_meta( $entry_id, 'kgi_zip_routing_status', '' );
+
+	kgi_log(
+		'Page location restored for resend. ZIP routing will run again.',
+		array(
+			'entry_id'    => $entry_id,
+			'location_id' => $location->ID,
+		)
+	);
 }
 
 /**

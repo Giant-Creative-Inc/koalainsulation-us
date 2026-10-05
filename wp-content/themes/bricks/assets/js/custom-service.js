@@ -65,6 +65,70 @@ function resetGravityQuoteForms() {
     });
   }
 
+/**
+ * Finds the locations nearest to a ZIP code for the search bars.
+ *
+ * Calls Koala Gravity Integration's `kgi_find_location` action, which makes
+ * at most one cached zipcodeapi.com request with the server-side key.
+ * Resolves (never rejects) to { status, message, locations }, where each
+ * location uses the popup's item shape. `message` is the visitor-facing text
+ * for statuses with no locations ("no location nearby", "please try again
+ * later", invalid ZIP, too many searches).
+ */
+function koalaFindNearbyLocations(zipCode) {
+  var ajaxUrl =
+    (window.ajaxData && window.ajaxData.ajax_url) ||
+    (window.koalaData && window.koalaData.ajax_url) ||
+    "/wp-admin/admin-ajax.php";
+  var fallbackMessage =
+    "We're having trouble looking up your area right now. Please try again later.";
+
+  return fetch(ajaxUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      action: "kgi_find_location",
+      code: zipCode,
+    }),
+  })
+    .then((response) => response.json())
+    .then(function (data) {
+      var locations = (data.locations || []).map(function (location) {
+        return {
+          placeTitle: location.title,
+          placeAddress: location.address,
+          mobileNumber: location.phone,
+          websiteLink: location.website,
+          locationKey: "",
+          locationServiceminderKey: "",
+          locationId: location.id,
+          locationSlug: location.slug,
+          locationzipcode: location.zipcode,
+          matchedZipcode: [location.matched_code],
+          distance: location.distance,
+        };
+      });
+
+      return {
+        status: data.status,
+        // Matches have no message; anything else without one is a failure.
+        message: data.message || (locations.length ? "" : fallbackMessage),
+        locations: locations,
+      };
+    })
+    .catch(function (error) {
+      console.error("Location lookup failed:", error);
+
+      return {
+        status: "lookup_failed",
+        message: fallbackMessage,
+        locations: [],
+      };
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   const customService = document.getElementById("custom-service");
   const customServiceUl = document.getElementById("custom-service-ul");
@@ -156,9 +220,6 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
       }
 
       const zipCode = inputZip;
-      const radius = 60;
-      const apiKey =
-        "KscuTRFvJFCvE0IoDIp1XMtJqYOb3zAGqQuQLr2fouXcaCyHlBcKshJihTn4iBII";
 
       // var locations = document.querySelectorAll(".single-location");
 
@@ -214,166 +275,57 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
 
           } else {
             console.log("No direct zip match found.");
-            const allLocations = data.data.locations;
-            runFallbackSearch(zipCode, radius, apiKey, allLocations);
+            runFallbackSearch(zipCode);
           }
         })
         .catch((err) => {
           console.error("AJAX error:", err);
         });
 
-      function runFallbackSearch(zipCode, radius, apiKey, allLocations) {
+      function runFallbackSearch(zipCode) {
         if (!matchFound) {
           //initialize loader
           document.getElementById("loader-wrapper").style.display = "flex";
 
-          var matchedZipcodesArr = [];
           document.getElementById("location-popup").style.display = "none";
           console.log("Fetching nearby ZIP codes...");
 
-          // Make the API request
-          fetch(ajaxData.ajax_url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({
-              action: "get_zip_codes_in_radius",
-              nonce: ajaxData.zip_code_in_radius_nonce,
-              zip_code: zipCode,
-              radius: radius,
-              api_key: apiKey,
-            }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                console.log("ZIP codes within the radius:", data.data.response);
+          // One cached server lookup (Koala Gravity Integration) returns the
+          // nearby locations, closest first; no zipcodeapi.com key is used in
+          // the browser.
+          koalaFindNearbyLocations(zipCode).then(function (result) {
+            //hide loader
+            document.getElementById("loader-wrapper").style.display = "none";
 
-                if (
-                  data.data.response.zip_codes &&
-                  data.data.response.zip_codes.length > 0
-                ) {
-                  // Extract nearby ZIP codes
-                  const nearbyZips = data.data.response.zip_codes.map(
-                    (item) => item.zip_code
-                  );
-                  console.log("Nearby ZIP Codes:", nearbyZips);
-                  console.log('Location:', allLocations);
+            if (!result.locations.length) {
+              alert(result.message);
+              return;
+            }
 
-                  allLocations.forEach(function (location) {
-                    const zipcode = location.zipcode;
-                    const additionalZipcodes = location.additional_zipcodes || [];
+            nearbyLocationFinalArr = result.locations;
 
-                    const allZips = [zipcode, ...additionalZipcodes.map(zip => zip.trim())];
+            // Now proceed with displaying the sorted locations
+            document.getElementById(
+              "location-popup"
+            ).style.display = "flex";
+            popupInnerStatic.style.display = "none"; // Hide static content
 
-                    const matchingZips = allZips.filter(zip => nearbyZips.includes(zip));
+            // Clear existing content before adding new locations
+            popupContainer.innerHTML = "";
 
-                    if (matchingZips.length > 0) {
-                      console.log("Matching ZIP Codes:", matchingZips);
+            // Add new content for each sorted location. The nav ZIP
+            // lookup is capped to the single nearest location.
+            const locationsToRender = isNavZipInput
+              ? nearbyLocationFinalArr.slice(0, 1)
+              : nearbyLocationFinalArr;
 
-                      matchedZipcodesArr.push(...matchingZips);
+            locationsToRender.forEach((item) => {
+              const locationDiv = document.createElement("div");
+              locationDiv.classList.add("location-item");
+              locationDiv.dataset.locationId = item.locationId;
+              locationDiv.dataset.locationSlug = item.locationSlug;
 
-                      nearbyLocationFinalArr.push({
-                        placeTitle: location.title,
-                        placeAddress: location.address,
-                        mobileNumber: location.phone,
-                        websiteLink: location.website,
-                        locationKey: location.key,
-                        locationServiceminderKey: location.sm_key,
-                        locationId: location.id,
-                        locationSlug: location.slug,
-                        locationzipcode: zipcode,
-                        matchedZipcode: matchingZips,
-                      });
-                    }
-                  });
-
-                  console.log(
-                    "Final nearby locations array:",
-                    nearbyLocationFinalArr
-                  );
-
-                  if (nearbyLocationFinalArr.length > 0) {
-                    fetch(
-                      ajaxData.ajax_url,
-                      {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        body: new URLSearchParams({
-                          action: "get_zip_codes_distance_in_miles",
-                          input_zip: inputZip,
-                          nearby_zips: JSON.stringify(matchedZipcodesArr), // Send as JSON string
-                        }),
-                      }
-                    )
-                      .then((response) => response.json())
-                      .then((data) => {
-                        //hide loader
-                        document.getElementById(
-                          "loader-wrapper"
-                        ).style.display = "none";
-
-                        if (!data.success) {
-                          throw new Error(
-                            data.data.message || "Failed to fetch distances"
-                          );
-                        }
-
-                        console.log("Distance Data:", data.data);
-
-                        const sortedZipCodes = data.data.map(
-                          (item) => item.zip
-                        );
-
-                        console.log("Sorted ZIP Codes:", sortedZipCodes);
-
-                        // Reorder nearbyLocationFinalArr based on sorted zip codes
-                        nearbyLocationFinalArr.sort((a, b) => {
-                          // Find the first matching ZIP from sortedZipCodes in each location's matchedZipcode array
-                          const indexA = sortedZipCodes.findIndex((zip) =>
-                            a.matchedZipcode.includes(zip)
-                          );
-                          const indexB = sortedZipCodes.findIndex((zip) =>
-                            b.matchedZipcode.includes(zip)
-                          );
-
-                          // If no match is found, set index to Infinity so unmatched locations go last
-                          return (
-                            (indexA === -1 ? Infinity : indexA) -
-                            (indexB === -1 ? Infinity : indexB)
-                          );
-                        });
-
-                        console.log(
-                          "Sorted nearby locations:",
-                          nearbyLocationFinalArr
-                        );
-
-                        // Now proceed with displaying the sorted locations
-                        document.getElementById(
-                          "location-popup"
-                        ).style.display = "flex";
-                        popupInnerStatic.style.display = "none"; // Hide static content
-
-                        // Clear existing content before adding new locations
-                        popupContainer.innerHTML = "";
-
-                        // Add new content for each sorted location. The nav ZIP
-                        // lookup is capped to the single nearest location.
-                        const locationsToRender = isNavZipInput
-                          ? nearbyLocationFinalArr.slice(0, 1)
-                          : nearbyLocationFinalArr;
-
-                        locationsToRender.forEach((item) => {
-                          const locationDiv = document.createElement("div");
-                          locationDiv.classList.add("location-item");
-                          locationDiv.dataset.locationId = item.locationId;
-                          locationDiv.dataset.locationSlug = item.locationSlug;
-
-                          locationDiv.innerHTML = `
+              locationDiv.innerHTML = `
         <h3 class="brxe-heading heading-style-h2 locationitem_title">${item.placeTitle}</h3>
         <h3 class="brxe-heading text-size-regular locationitem_address">${item.placeAddress}</h3>
         <h3 class="brxe-heading text-size-regular locationitem_phone">${item.mobileNumber}</h3>
@@ -389,143 +341,98 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
           <p style="display:none;" class="location_zipcode">${item.locationzipcode}</p>
         </div>
       `;
-                          popupContainer.appendChild(locationDiv);
-                          document.getElementById("get-estimate-popup").style.display = "none";
-                        });
-
-                        const estimateCustomPopup = document.getElementById(
-                          "estimate-popup-custom"
-                        );
-                        const locationPopup =
-                          document.getElementById("location-popup");
-
-                        const locationPopupCloseBtn = document.getElementById(
-                          "estimate-custom-popup-close"
-                        );
-
-                        locationPopupCloseBtn.addEventListener(
-                          "click",
-                          function () {
-                            estimateCustomPopup.style.display = "none";
-                          }
-                        );
-
-                        // Attach event listeners after populating locations
-                        document
-                          .querySelectorAll(".quote-btn-custom")
-                          .forEach((button) => {
-                            button.addEventListener("click", function (event) {
-                              const locationItem =
-                                event.target.closest(".location-item");
-
-                              if (locationItem) {
-                                const clickedItemObj = {
-                                  placeTitle:
-                                    locationItem
-                                      .querySelector(".locationitem_title")
-                                      ?.textContent.trim() || null,
-                                  placeAddress:
-                                    locationItem
-                                      .querySelector(".locationitem_address")
-                                      ?.textContent.trim() || null,
-                                  mobileNumber:
-                                    locationItem
-                                      .querySelector(".locationitem_phone")
-                                      ?.textContent.trim() || null,
-                                  websiteLink:
-                                    locationItem
-                                      .querySelector(".locationitem_link")
-                                      ?.getAttribute("href") || null,
-                                  locationKey:
-                                    locationItem
-                                      .querySelector(".seletced_location_key")
-                                      ?.textContent.trim() || null,
-                                  locationServiceminderKey:
-                                    locationItem
-                                      .querySelector(
-                                        ".seletced_location_sm_key"
-                                      )
-                                      ?.textContent.trim() || null,
-                                  locationId: locationItem.dataset.locationId || null,
-                                  locationSlug: locationItem.dataset.locationSlug || null,
-                                  locationZipcode: inputZip || null,
-                                };
-
-                                console.log(
-                                  "clickedItemObj---",
-                                  clickedItemObj
-                                );
-
-                                locationPopup.style.display = "none";
-
-                                populateGravityLocationFields(
-                                  clickedItemObj.locationZipcode,
-                                  {
-                                    id: clickedItemObj.locationId,
-                                    slug: clickedItemObj.locationSlug,
-                                  }
-                                );
-
-                                // Open the Bricks estimate form popup (templateId
-                                // 4865) via an existing trigger, exactly like the
-                                // exact-match location button does. The old
-                                // estimate-popup-custom has no form, and its
-                                // tel-href-custom element was removed, which threw
-                                // "Cannot set properties of null (setting 'href')"
-                                // and left the fallback flow showing an empty popup.
-                                showGravityQuoteForms();
-                                document
-                                  .getElementById("national-nav-quote")
-                                  ?.click();
-                              }
-                            });
-                          });
-                      })
-                      .catch((error) => {
-                        //hide loader
-                        document.getElementById(
-                          "loader-wrapper"
-                        ).style.display = "none";
-
-                        console.error(
-                          "Error fetching zip code distances:",
-                          error
-                        );
-                      });
-                  } else {
-                    //hide loader
-                    document.getElementById("loader-wrapper").style.display =
-                      "none";
-
-                    alert(
-                      "Unfortunately we do not service your area at this time"
-                    );
-                  }
-                } else {
-                  //hide loader
-                  document.getElementById("loader-wrapper").style.display =
-                    "none";
-
-                  alert("No nearby ZIP codes found.");
-                }
-              } else {
-                //hide loader
-                document.getElementById("loader-wrapper").style.display =
-                  "none";
-
-                console.error("Error fetching ZIP codes:", data.data.message);
-                alert("Failed to fetch ZIP codes. Please try again.");
-              }
-            })
-            .catch((error) => {
-              //hide loader
-              document.getElementById("loader-wrapper").style.display = "none";
-
-              console.error("Network error:", error);
-              alert(
-                "Failed to fetch ZIP codes. Please check your network connection."
-              );
+              popupContainer.appendChild(locationDiv);
+              document.getElementById("get-estimate-popup").style.display = "none";
             });
+
+            const estimateCustomPopup = document.getElementById(
+              "estimate-popup-custom"
+            );
+            const locationPopup =
+              document.getElementById("location-popup");
+
+            const locationPopupCloseBtn = document.getElementById(
+              "estimate-custom-popup-close"
+            );
+
+            locationPopupCloseBtn.addEventListener(
+              "click",
+              function () {
+                estimateCustomPopup.style.display = "none";
+              }
+            );
+
+            // Attach event listeners after populating locations
+            document
+              .querySelectorAll(".quote-btn-custom")
+              .forEach((button) => {
+                button.addEventListener("click", function (event) {
+                  const locationItem =
+                    event.target.closest(".location-item");
+
+                  if (locationItem) {
+                    const clickedItemObj = {
+                      placeTitle:
+                        locationItem
+                          .querySelector(".locationitem_title")
+                          ?.textContent.trim() || null,
+                      placeAddress:
+                        locationItem
+                          .querySelector(".locationitem_address")
+                          ?.textContent.trim() || null,
+                      mobileNumber:
+                        locationItem
+                          .querySelector(".locationitem_phone")
+                          ?.textContent.trim() || null,
+                      websiteLink:
+                        locationItem
+                          .querySelector(".locationitem_link")
+                          ?.getAttribute("href") || null,
+                      locationKey:
+                        locationItem
+                          .querySelector(".seletced_location_key")
+                          ?.textContent.trim() || null,
+                      locationServiceminderKey:
+                        locationItem
+                          .querySelector(
+                            ".seletced_location_sm_key"
+                          )
+                          ?.textContent.trim() || null,
+                      locationId: locationItem.dataset.locationId || null,
+                      locationSlug: locationItem.dataset.locationSlug || null,
+                      locationZipcode: inputZip || null,
+                    };
+
+                    console.log(
+                      "clickedItemObj---",
+                      clickedItemObj
+                    );
+
+                    locationPopup.style.display = "none";
+
+                    populateGravityLocationFields(
+                      clickedItemObj.locationZipcode,
+                      {
+                        id: clickedItemObj.locationId,
+                        slug: clickedItemObj.locationSlug,
+                      }
+                    );
+
+                    // Open the Bricks estimate form popup (templateId
+                    // 4865) via an existing trigger, exactly like the
+                    // exact-match location button does. The old
+                    // estimate-popup-custom has no form, and its
+                    // tel-href-custom element was removed, which threw
+                    // "Cannot set properties of null (setting 'href')"
+                    // and left the fallback flow showing an empty popup.
+                    showGravityQuoteForms();
+                    document
+                      .getElementById("national-nav-quote")
+                      ?.click();
+                  }
+                });
+              });
+          });
         }
       }
     }
@@ -554,9 +461,6 @@ document.querySelectorAll(".find-location-btn").forEach(function (button) {
     }
 
     const zipCode = inputZip;
-    const radius = 60;
-    const apiKey =
-      "KscuTRFvJFCvE0IoDIp1XMtJqYOb3zAGqQuQLr2fouXcaCyHlBcKshJihTn4iBII";
 
     // var locations = document.querySelectorAll(".single-location");
     var nearbyLocationFinalArr = [];
@@ -611,158 +515,55 @@ document.querySelectorAll(".find-location-btn").forEach(function (button) {
           document.getElementById("get-estimate-popup").style.display = "none";
         } else {
           console.log("No direct zip match found.");
-          const allLocations = data.data.locations;
-          runFallbackSearch(zipCode, radius, apiKey, allLocations);
+          runFallbackSearch(zipCode);
         }
       })
       .catch((err) => {
         console.error("AJAX error:", err);
       });
-    function runFallbackSearch(zipCode, radius, apiKey, allLocations) {
+    function runFallbackSearch(zipCode) {
       if (!matchFound) {
         //initialize loader
         document.getElementById("loader-wrapper").style.display = "flex";
 
-        var matchedZipcodesArr = [];
         document.getElementById("location-popup").style.display = "none";
         console.log("No direct match found. Fetching nearby ZIP codes...");
 
-        // Make the API request
-        fetch(ajaxData.ajax_url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            action: "get_zip_codes_in_radius",
-            nonce: ajaxData.zip_code_in_radius_nonce,
-            zip_code: zipCode,
-            radius: radius,
-            api_key: apiKey,
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              console.log("ZIP codes within the radius:", data.data.response);
+        // One cached server lookup (Koala Gravity Integration) returns the
+        // nearby locations, closest first; no zipcodeapi.com key is used in
+        // the browser.
+        koalaFindNearbyLocations(zipCode).then(function (result) {
+          //hide loader
+          document.getElementById("loader-wrapper").style.display = "none";
 
-              if (
-                data.data.response.zip_codes &&
-                data.data.response.zip_codes.length > 0
-              ) {
-                // Extract nearby ZIP codes
-                const nearbyZips = data.data.response.zip_codes.map(
-                  (item) => item.zip_code
-                );
-                console.log("Nearby ZIP Codes:", nearbyZips);
+          if (!result.locations.length) {
+            alert(result.message);
+            return;
+          }
 
+          nearbyLocationFinalArr = result.locations;
 
-                allLocations.forEach(function (location) {
-                  const zipcode = location.zipcode;
-                  const additionalZipcodes = location.additional_zipcodes || [];
+          // Now proceed with displaying the sorted locations
+          document.getElementById("location-popup").style.display =
+            "flex";
+          popupInnerStatic.style.display = "none"; // Hide static content
 
-                  const allZips = [zipcode, ...additionalZipcodes.map(zip => zip.trim())];
+          // Clear existing content before adding new locations
+          popupContainer.innerHTML = "";
 
-                  const matchingZips = allZips.filter(zip => nearbyZips.includes(zip));
+          // Add new content for each sorted location. The nav ZIP
+          // lookup is capped to the single nearest location.
+          const locationsToRender = isNavZipInput
+            ? nearbyLocationFinalArr.slice(0, 1)
+            : nearbyLocationFinalArr;
 
-                  if (matchingZips.length > 0) {
-                    console.log("Matching ZIP Codes:", matchingZips);
+          locationsToRender.forEach((item) => {
+            const locationDiv = document.createElement("div");
+            locationDiv.classList.add("location-item");
+            locationDiv.dataset.locationId = item.locationId;
+            locationDiv.dataset.locationSlug = item.locationSlug;
 
-                    matchedZipcodesArr.push(...matchingZips);
-
-                    nearbyLocationFinalArr.push({
-                      placeTitle: location.title,
-                      placeAddress: location.address,
-                      mobileNumber: location.phone,
-                      websiteLink: location.website,
-                      locationKey: location.key,
-                      locationServiceminderKey: location.sm_key,
-                      locationId: location.id,
-                      locationSlug: location.slug,
-                      locationzipcode: zipcode,
-                      matchedZipcode: matchingZips,
-                    });
-                  }
-                });
-
-                console.log(
-                  "Final nearby locations array:",
-                  nearbyLocationFinalArr
-                );
-
-                if (nearbyLocationFinalArr.length > 0) {
-                  fetch(ajaxData.ajax_url, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: new URLSearchParams({
-                      action: "get_zip_codes_distance_in_miles",
-                      input_zip: inputZip,
-                      nearby_zips: JSON.stringify(matchedZipcodesArr), // Send as JSON string
-                    }),
-                  })
-                    .then((response) => response.json())
-                    .then((data) => {
-                      //hide loader
-                      document.getElementById("loader-wrapper").style.display =
-                        "none";
-
-                      if (!data.success) {
-                        throw new Error(
-                          data.data.message || "Failed to fetch distances"
-                        );
-                      }
-
-                      console.log("Distance Data:", data.data);
-
-                      const sortedZipCodes = data.data.map((item) => item.zip);
-
-                      console.log("Sorted ZIP Codes:", sortedZipCodes);
-
-                      // Reorder nearbyLocationFinalArr based on sorted zip codes
-                      nearbyLocationFinalArr.sort((a, b) => {
-                        // Find the first matching ZIP from sortedZipCodes in each location's matchedZipcode array
-                        const indexA = sortedZipCodes.findIndex((zip) =>
-                          a.matchedZipcode.includes(zip)
-                        );
-                        const indexB = sortedZipCodes.findIndex((zip) =>
-                          b.matchedZipcode.includes(zip)
-                        );
-
-                        // If no match is found, set index to Infinity so unmatched locations go last
-                        return (
-                          (indexA === -1 ? Infinity : indexA) -
-                          (indexB === -1 ? Infinity : indexB)
-                        );
-                      });
-
-                      console.log(
-                        "Sorted nearby locations:",
-                        nearbyLocationFinalArr
-                      );
-
-                      // Now proceed with displaying the sorted locations
-                      document.getElementById("location-popup").style.display =
-                        "flex";
-                      popupInnerStatic.style.display = "none"; // Hide static content
-
-                      // Clear existing content before adding new locations
-                      popupContainer.innerHTML = "";
-
-                      // Add new content for each sorted location. The nav ZIP
-                      // lookup is capped to the single nearest location.
-                      const locationsToRender = isNavZipInput
-                        ? nearbyLocationFinalArr.slice(0, 1)
-                        : nearbyLocationFinalArr;
-
-                      locationsToRender.forEach((item) => {
-                        const locationDiv = document.createElement("div");
-                        locationDiv.classList.add("location-item");
-                        locationDiv.dataset.locationId = item.locationId;
-                        locationDiv.dataset.locationSlug = item.locationSlug;
-
-                        locationDiv.innerHTML = `
+            locationDiv.innerHTML = `
         <h3 class="brxe-heading heading-style-h2 locationitem_title">${item.placeTitle}</h3>
         <h3 class="brxe-heading text-size-regular locationitem_address">${item.placeAddress}</h3>
         <h3 class="brxe-heading text-size-regular locationitem_phone">${item.mobileNumber}</h3>
@@ -778,136 +579,93 @@ document.querySelectorAll(".find-location-btn").forEach(function (button) {
           <p style="display:none;" class="location_zipcode">${item.locationzipcode}</p>
         </div>
       `;
-                        popupContainer.appendChild(locationDiv);
-                        document.getElementById("get-estimate-popup").style.display = "none";
-                      });
-
-                      const estimateCustomPopup = document.getElementById(
-                        "estimate-popup-custom"
-                      );
-                      const locationPopup =
-                        document.getElementById("location-popup");
-
-                      const locationPopupCloseBtn = document.getElementById(
-                        "estimate-custom-popup-close"
-                      );
-
-                      locationPopupCloseBtn.addEventListener(
-                        "click",
-                        function () {
-                          estimateCustomPopup.style.display = "none";
-                        }
-                      );
-
-                      // Attach event listeners after populating locations
-                      document
-                        .querySelectorAll(".quote-btn-custom")
-                        .forEach((button) => {
-                          button.addEventListener("click", function (event) {
-                            const locationItem =
-                              event.target.closest(".location-item");
-
-                            if (locationItem) {
-                              const clickedItemObj = {
-                                placeTitle:
-                                  locationItem
-                                    .querySelector(".locationitem_title")
-                                    ?.textContent.trim() || null,
-                                placeAddress:
-                                  locationItem
-                                    .querySelector(".locationitem_address")
-                                    ?.textContent.trim() || null,
-                                mobileNumber:
-                                  locationItem
-                                    .querySelector(".locationitem_phone")
-                                    ?.textContent.trim() || null,
-                                websiteLink:
-                                  locationItem
-                                    .querySelector(".locationitem_link")
-                                    ?.getAttribute("href") || null,
-                                locationKey:
-                                  locationItem
-                                    .querySelector(".seletced_location_key")
-                                    ?.textContent.trim() || null,
-                                locationServiceminderKey:
-                                  locationItem
-                                    .querySelector(".seletced_location_sm_key")
-                                    ?.textContent.trim() || null,
-                                locationId: locationItem.dataset.locationId || null,
-                                locationSlug: locationItem.dataset.locationSlug || null,
-                                locationZipcode: inputZip || null,
-                              };
-
-                              console.log("clickedItemObj---", clickedItemObj);
-
-                              locationPopup.style.display = "none";
-
-                              populateGravityLocationFields(
-                                clickedItemObj.locationZipcode,
-                                {
-                                  id: clickedItemObj.locationId,
-                                  slug: clickedItemObj.locationSlug,
-                                }
-                              );
-
-                              // Open the Bricks estimate form popup (templateId
-                              // 4865) via an existing trigger, exactly like the
-                              // exact-match location button does. The old
-                              // estimate-popup-custom has no form, and its
-                              // tel-href-custom element was removed, which threw
-                              // "Cannot set properties of null (setting 'href')"
-                              // and left the fallback flow showing an empty popup.
-                              showGravityQuoteForms();
-                              document
-                                .getElementById("national-nav-quote")
-                                ?.click();
-                            }
-                          });
-                        });
-                    })
-                    .catch((error) => {
-                      //hide loader
-                      document.getElementById("loader-wrapper").style.display =
-                        "none";
-
-                      console.error(
-                        "Error fetching zip code distances:",
-                        error
-                      );
-                    });
-                } else {
-                  //hide loader
-                  document.getElementById("loader-wrapper").style.display =
-                    "none";
-
-                  alert(
-                    "Unfortunately we do not service your area at this time"
-                  );
-                }
-              } else {
-                //hide loader
-                document.getElementById("loader-wrapper").style.display =
-                  "none";
-
-                alert("No nearby ZIP codes found.");
-              }
-            } else {
-              //hide loader
-              document.getElementById("loader-wrapper").style.display = "none";
-
-              console.error("Error fetching ZIP codes:", data.data.message);
-              alert("Failed to fetch ZIP codes. Please try again.");
-            }
-          })
-          .catch((error) => {
-            //hide loader
-            document.getElementById("loader-wrapper").style.display = "none";
-
-            console.error("Network error:", error);
-            alert(
-              "Failed to fetch ZIP codes. Please check your network connection."
-            );
+            popupContainer.appendChild(locationDiv);
+            document.getElementById("get-estimate-popup").style.display = "none";
           });
+
+          const estimateCustomPopup = document.getElementById(
+            "estimate-popup-custom"
+          );
+          const locationPopup =
+            document.getElementById("location-popup");
+
+          const locationPopupCloseBtn = document.getElementById(
+            "estimate-custom-popup-close"
+          );
+
+          locationPopupCloseBtn.addEventListener(
+            "click",
+            function () {
+              estimateCustomPopup.style.display = "none";
+            }
+          );
+
+          // Attach event listeners after populating locations
+          document
+            .querySelectorAll(".quote-btn-custom")
+            .forEach((button) => {
+              button.addEventListener("click", function (event) {
+                const locationItem =
+                  event.target.closest(".location-item");
+
+                if (locationItem) {
+                  const clickedItemObj = {
+                    placeTitle:
+                      locationItem
+                        .querySelector(".locationitem_title")
+                        ?.textContent.trim() || null,
+                    placeAddress:
+                      locationItem
+                        .querySelector(".locationitem_address")
+                        ?.textContent.trim() || null,
+                    mobileNumber:
+                      locationItem
+                        .querySelector(".locationitem_phone")
+                        ?.textContent.trim() || null,
+                    websiteLink:
+                      locationItem
+                        .querySelector(".locationitem_link")
+                        ?.getAttribute("href") || null,
+                    locationKey:
+                      locationItem
+                        .querySelector(".seletced_location_key")
+                        ?.textContent.trim() || null,
+                    locationServiceminderKey:
+                      locationItem
+                        .querySelector(".seletced_location_sm_key")
+                        ?.textContent.trim() || null,
+                    locationId: locationItem.dataset.locationId || null,
+                    locationSlug: locationItem.dataset.locationSlug || null,
+                    locationZipcode: inputZip || null,
+                  };
+
+                  console.log("clickedItemObj---", clickedItemObj);
+
+                  locationPopup.style.display = "none";
+
+                  populateGravityLocationFields(
+                    clickedItemObj.locationZipcode,
+                    {
+                      id: clickedItemObj.locationId,
+                      slug: clickedItemObj.locationSlug,
+                    }
+                  );
+
+                  // Open the Bricks estimate form popup (templateId
+                  // 4865) via an existing trigger, exactly like the
+                  // exact-match location button does. The old
+                  // estimate-popup-custom has no form, and its
+                  // tel-href-custom element was removed, which threw
+                  // "Cannot set properties of null (setting 'href')"
+                  // and left the fallback flow showing an empty popup.
+                  showGravityQuoteForms();
+                  document
+                    .getElementById("national-nav-quote")
+                    ?.click();
+                }
+              });
+            });
+        });
       }
     }
   });
