@@ -138,8 +138,16 @@ document.addEventListener("DOMContentLoaded", function () {
 document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
   input.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
+      // Force Hotjar recording for this flow specifically, regardless of the
+      // general 1-in-100 sampling — the team wants full visibility into the
+      // zip/location lookup search.
+      if (window.koalaLoadHotjar) window.koalaLoadHotjar();
+
       var locationContainer = this.closest(".location-container");
       var inputZip = this.value.trim();
+      // The nav ZIP lookup should surface only the single nearest location,
+      // while other ZIP inputs keep showing the full ranked list.
+      var isNavZipInput = this.id === "my-zipcode-input-nav";
 
       if (inputZip === "") {
         document.getElementById("location-popup").style.display = "none";
@@ -353,8 +361,13 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
                         // Clear existing content before adding new locations
                         popupContainer.innerHTML = "";
 
-                        // Add new content for each sorted location
-                        nearbyLocationFinalArr.forEach((item) => {
+                        // Add new content for each sorted location. The nav ZIP
+                        // lookup is capped to the single nearest location.
+                        const locationsToRender = isNavZipInput
+                          ? nearbyLocationFinalArr.slice(0, 1)
+                          : nearbyLocationFinalArr;
+
+                        locationsToRender.forEach((item) => {
                           const locationDiv = document.createElement("div");
                           locationDiv.classList.add("location-item");
                           locationDiv.dataset.locationId = item.locationId;
@@ -444,7 +457,6 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
                                 );
 
                                 locationPopup.style.display = "none";
-                                estimateCustomPopup.style.display = "flex";
 
                                 populateGravityLocationFields(
                                   clickedItemObj.locationZipcode,
@@ -454,23 +466,17 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
                                   }
                                 );
 
-                                // document.getElementById("zip-custom").value =
-                                //   clickedItemObj.locationZipcode;
-                                // document.getElementById("key-custom").value =
-                                //   clickedItemObj.locationKey;
-                                // document.getElementById("key-custom-sm").value =
-                                //   clickedItemObj.locationServiceminderKey;
-                                // document.getElementById("url-custom").value =
-                                //   clickedItemObj.websiteLink;
-                                setPopupPhoneLink(
-                                  "est-phone-number-custom",
-                                  clickedItemObj.mobileNumber
-                                );
-                                document.getElementById(
-                                  "tel-href-custom"
-                                ).href = `tel:${clickedItemObj.mobileNumber}`;
-
+                                // Open the Bricks estimate form popup (templateId
+                                // 4865) via an existing trigger, exactly like the
+                                // exact-match location button does. The old
+                                // estimate-popup-custom has no form, and its
+                                // tel-href-custom element was removed, which threw
+                                // "Cannot set properties of null (setting 'href')"
+                                // and left the fallback flow showing an empty popup.
                                 showGravityQuoteForms();
+                                document
+                                  .getElementById("national-nav-quote")
+                                  ?.click();
                               }
                             });
                           });
@@ -528,9 +534,18 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
 
 document.querySelectorAll(".find-location-btn").forEach(function (button) {
   button.addEventListener("click", function () {
-    var inputZip = this.closest(".location-container")
-      .querySelector(".top-zipcode-input")
-      .value.trim();
+    // Force Hotjar recording for this flow specifically, regardless of the
+    // general 1-in-100 sampling — the team wants full visibility into the
+    // zip/location lookup search.
+    if (window.koalaLoadHotjar) window.koalaLoadHotjar();
+
+    var zipInputEl = this.closest(".location-container").querySelector(
+      ".top-zipcode-input"
+    );
+    var inputZip = zipInputEl.value.trim();
+    // The nav ZIP lookup should surface only the single nearest location,
+    // while other ZIP inputs keep showing the full ranked list.
+    var isNavZipInput = zipInputEl.id === "my-zipcode-input-nav";
 
     if (inputZip === "") {
       document.getElementById("location-popup").style.display = "none";
@@ -593,7 +608,7 @@ document.querySelectorAll(".find-location-btn").forEach(function (button) {
           // document.getElementById("url").value = locations.website;
           setPopupPhoneLink("est-phone-number", locations.phone);
           document.getElementById("tel-href").href = "tel:" + locations.phone;
-document.getElementById("get-estimate-popup").style.display = "none";
+          document.getElementById("get-estimate-popup").style.display = "none";
         } else {
           console.log("No direct zip match found.");
           const allLocations = data.data.locations;
@@ -735,8 +750,13 @@ document.getElementById("get-estimate-popup").style.display = "none";
                       // Clear existing content before adding new locations
                       popupContainer.innerHTML = "";
 
-                      // Add new content for each sorted location
-                      nearbyLocationFinalArr.forEach((item) => {
+                      // Add new content for each sorted location. The nav ZIP
+                      // lookup is capped to the single nearest location.
+                      const locationsToRender = isNavZipInput
+                        ? nearbyLocationFinalArr.slice(0, 1)
+                        : nearbyLocationFinalArr;
+
+                      locationsToRender.forEach((item) => {
                         const locationDiv = document.createElement("div");
                         locationDiv.classList.add("location-item");
                         locationDiv.dataset.locationId = item.locationId;
@@ -821,7 +841,6 @@ document.getElementById("get-estimate-popup").style.display = "none";
                               console.log("clickedItemObj---", clickedItemObj);
 
                               locationPopup.style.display = "none";
-                              estimateCustomPopup.style.display = "flex";
 
                               populateGravityLocationFields(
                                 clickedItemObj.locationZipcode,
@@ -831,23 +850,17 @@ document.getElementById("get-estimate-popup").style.display = "none";
                                 }
                               );
 
-                              // document.getElementById("zip-custom").value =
-                              //   clickedItemObj.locationZipcode;
-                              // document.getElementById("key-custom").value =
-                              //   clickedItemObj.locationKey;
-                              // document.getElementById("key-custom-sm").value =
-                              //   clickedItemObj.locationServiceminderKey;
-                              // document.getElementById("url-custom").value =
-                              //   clickedItemObj.websiteLink;
-                              setPopupPhoneLink(
-                                "est-phone-number-custom",
-                                clickedItemObj.mobileNumber
-                              );
-                              document.getElementById(
-                                "tel-href-custom"
-                              ).href = `tel:${clickedItemObj.mobileNumber}`;
-
+                              // Open the Bricks estimate form popup (templateId
+                              // 4865) via an existing trigger, exactly like the
+                              // exact-match location button does. The old
+                              // estimate-popup-custom has no form, and its
+                              // tel-href-custom element was removed, which threw
+                              // "Cannot set properties of null (setting 'href')"
+                              // and left the fallback flow showing an empty popup.
                               showGravityQuoteForms();
+                              document
+                                .getElementById("national-nav-quote")
+                                ?.click();
                             }
                           });
                         });

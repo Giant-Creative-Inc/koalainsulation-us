@@ -31,7 +31,10 @@ function koala_render_google_reviews($location_id = 0)
 /** Fill the shared Bricks review placeholder with location or corporate reviews. */
 function koala_render_bricks_google_review_placeholder($content, $post = null, $area = 'content')
 {
-    if (strpos($content, 'id="google-review-shortcode-wrapper"') === false) {
+    $has_google_placeholder = strpos($content, 'id="google-review-shortcode-wrapper"') !== false;
+    $has_legacy_corporate_placeholder = strpos($content, 'id="main-page-stories-widget"') !== false;
+
+    if (!$has_google_placeholder && !$has_legacy_corporate_placeholder) {
         return $content;
     }
 
@@ -48,9 +51,18 @@ function koala_render_bricks_google_review_placeholder($content, $post = null, $
         . '#main-page-widget,#main-page-stories-widget,#local-page-widget,#local-page-stories-widget{display:none!important}'
         . '</style>';
 
+    if ($has_google_placeholder) {
+        return preg_replace(
+            '/(<div id="google-review-shortcode-wrapper"[^>]*>)\s*<\/div>/',
+            $styles . '$1' . $widget . '</div>',
+            $content,
+            1
+        );
+    }
+
     return preg_replace(
-        '/(<div id="google-review-shortcode-wrapper"[^>]*>)\s*<\/div>/',
-        $styles . '$1' . $widget . '</div>',
+        '/<div id="main-page-stories-widget"/',
+        $styles . '<div id="google-review-shortcode-wrapper" class="brxe-div">' . $widget . '</div><div id="main-page-stories-widget"',
         $content,
         1
     );
@@ -426,6 +438,10 @@ function enqueue_custom_scripts()
     $homeowner_incentives_page = is_page('homeowner-incentives');
     $service_page = is_page('services');
     $single_service_page = is_singular('location-service');
+    // National (non-location) service singles, e.g. /services/commercial-insulation-services.
+    // These render the photo slider (Bricks template "Services single page"), so they
+    // need Swiper too — is_singular('location-service') above does NOT match them.
+    $single_service_national = is_singular('service');
     $location_page = is_page('locations');
     $single_location_page = is_singular('location');
     $single_location_service = is_singular('location-service');
@@ -433,18 +449,48 @@ function enqueue_custom_scripts()
     $why_reinsulate = ($post && $post->post_name === 'why-reinsulate');
 
      wp_enqueue_style(
-        'koala-custom-css', 
-        get_stylesheet_directory_uri() . '/assets/css/custom.css', 
-        array(), 
+        'koala-custom-css',
+        get_stylesheet_directory_uri() . '/assets/css/custom.css',
+        array(),
         filemtime(get_stylesheet_directory() . '/assets/css/custom.css') // Auto-updates version for cache busting
     );
 
-    if ($front_page || $single_location_page || $why_koala_page || $why_reinsulate || $single_service_page) {
+    // Swiper library + slider initialisers are only needed where custom slider
+    // markup renders: front page (services slider), single locations (partner
+    // slider), single location-service / why-koala / why-reinsulate (photo &
+    // before/after sliders). sliders.js was extracted from all-pages.js so the
+    // ~300 lines of Swiper init no longer ship on every page.
+    $needs_swiper = $front_page || $single_location_page || $why_koala_page || $why_reinsulate || $single_service_page || $single_service_national;
+    if ($needs_swiper) {
         wp_enqueue_script(
             'swiper-bundle',
             'https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js',
             array(),
             null,
+            true
+        );
+        $sliders_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/sliders.js');
+        wp_enqueue_script(
+            'koala-sliders',
+            get_template_directory_uri() . '/assets/js/custom/sliders.js',
+            array('jquery', 'swiper-bundle'),
+            $sliders_ver,
+            true
+        );
+    }
+
+    // Review-count integration (reviews.js) only needs to run where the
+    // #review-count target renders. Empirically that is single locations and
+    // landing pages; the script self-terminates when the target is absent, but
+    // gating keeps it off every other page. Extracted from all-pages.js.
+    $needs_reviews = $single_location_page || is_singular('landing-pages');
+    if ($needs_reviews) {
+        $reviews_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/reviews.js');
+        wp_enqueue_script(
+            'koala-reviews',
+            get_template_directory_uri() . '/assets/js/custom/reviews.js',
+            array(),
+            $reviews_ver,
             true
         );
     }
@@ -510,8 +556,26 @@ function enqueue_custom_scripts()
     $all_pages_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/all-pages.js');
     wp_enqueue_script('all-pages-js', get_template_directory_uri() . '/assets/js/custom/all-pages.js', array('jquery'), $all_pages_ver, true);
 
+    // popup.js: global Bricks popup helpers (?form= opener + CallRail re-swap for
+    // the Estimate popup #4865). The popup renders site-wide via the header, and
+    // both blocks self-guard, so this loads globally like all-pages.js. Extracted
+    // from all-pages.js; pure vanilla (no jQuery dependency).
+    $popup_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom/popup.js');
+    wp_enqueue_script('koala-popup', get_template_directory_uri() . '/assets/js/custom/popup.js', array(), $popup_ver, true);
+
     // custom-service-js handles the header ZIP lookup and estimate popup.
     $custom_service_ver = filemtime(get_stylesheet_directory() . '/assets/js/custom-service.js');
+    $is_corporate_page = !$single_location_page && !$single_location_service;
+    if ($is_corporate_page) {
+        $cross_border_path = get_template_directory() . '/assets/js/cross-border-location-switch.js';
+        $cross_border_version = file_exists($cross_border_path) ? filemtime($cross_border_path) : null;
+        wp_enqueue_script('koala-cross-border-location-switch', get_template_directory_uri() . '/assets/js/cross-border-location-switch.js', array(), $cross_border_version, true);
+        wp_enqueue_style('koala-cross-border-location-switch', get_template_directory_uri() . '/assets/css/cross-border-location-switch.css', array(), $cross_border_version);
+        wp_localize_script('koala-cross-border-location-switch', 'koalaCrossBorderLocation', [
+            'country' => 'US',
+        ]);
+    }
+
     wp_enqueue_script('custom-service-js', get_template_directory_uri() . '/assets/js/custom-service.js', array('jquery'), $custom_service_ver, true);
 
     $needs_service_scripts = $front_page || $location_page || $single_location_page || $single_service_page || $single_location_service;
@@ -2758,6 +2822,24 @@ function output_custom_or_default_gtm_head()
         window.koalaLocationBodyMarkup = '';
         window.koalaInteractionScriptsLoaded = false;
 
+        // Hotjar loader, exposed globally and idempotent so it can be called
+        // either from the general sampled path below, or forced to 100% for
+        // specific flows we want full session coverage on (e.g. the zip/
+        // location lookup search — see custom-service.js).
+        window.koalaHotjarLoaded = false;
+        window.koalaLoadHotjar = function() {
+            if (window.koalaHotjarLoaded) return;
+            window.koalaHotjarLoaded = true;
+            (function(h, o, t, j, a, r) {
+                h.hj = h.hj || function() { (h.hj.q = h.hj.q || []).push(arguments) };
+                h._hjSettings = { hjid: 6387685, hjsv: 6 };
+                a = o.getElementsByTagName('head')[0];
+                r = o.createElement('script'); r.async = 1;
+                r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
+                a.appendChild(r);
+            })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+        };
+
         // Insert arbitrary saved markup while recreating script elements so
         // they execute. External scripts retain document order.
         window.koalaInjectLocationMarkup = async function(markup, target) {
@@ -2831,14 +2913,7 @@ function output_custom_or_default_gtm_head()
 
             // --- 2. Load Hotjar (sampled: ~1 in 100 sessions) ---
             if (Math.random() < 0.01) {
-                (function(h, o, t, j, a, r) {
-                    h.hj = h.hj || function() { (h.hj.q = h.hj.q || []).push(arguments) };
-                    h._hjSettings = { hjid: 6387685, hjsv: 6 };
-                    a = o.getElementsByTagName('head')[0];
-                    r = o.createElement('script'); r.async = 1;
-                    r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
-                    a.appendChild(r);
-                })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+                window.koalaLoadHotjar();
             }
 
             // --- 3. Load national GTM ---
@@ -2882,6 +2957,194 @@ function output_custom_or_default_gtm_head()
     <?php
 }
 add_action('wp_head', 'output_custom_or_default_gtm_head', 1);
+
+// The header/footer nav (why-koala, why-reinsulate, homeowner-incentives, home,
+// FAQ, testimonials, terms, privacy) is a Bricks Builder template stored in the
+// DB, not a theme file — Bricks always renders it with the same static,
+// national-page hrefs. all-pages.js rewrites these to location-scoped URLs
+// client-side after fetching /wp-json/custom/v1/location-data/{slug}, but a
+// crawler reading the raw HTML only ever sees the national hrefs, which is bad
+// for location-page internal linking/SEO. This rewrites the same set of links
+// server-side, in the actual HTML response, using the same first-URL-segment
+// location lookup used elsewhere in this file — no JS required for crawlers.
+//
+// Removes a whole element (and its contents) from an HTML string by id,
+// tracking open/close tag depth so it correctly finds the *matching* closing
+// tag even when the element contains nested tags of the same name (e.g. an
+// <li> full of other <li>s) — a plain non-greedy regex would stop at the
+// first closing tag it finds, which is usually the wrong one and produces
+// broken HTML. Used to strip the national services dropdowns entirely on
+// location pages (display:none alone still leaves the content — and its
+// national URLs — readable in the raw HTML source).
+function koala_strip_element_by_id($html, $tag, $id)
+{
+    $open_pattern = '/<' . $tag . '\b[^>]*\bid=["\']' . preg_quote($id, '/') . '["\'][^>]*>/i';
+    if (!preg_match($open_pattern, $html, $m, PREG_OFFSET_CAPTURE)) {
+        return $html;
+    }
+
+    $start = $m[0][1];
+    $pos = $start + strlen($m[0][0]);
+    $depth = 1;
+    $tag_pattern = '/<(\/?)' . $tag . '\b[^>]*>/i';
+
+    while ($depth > 0 && preg_match($tag_pattern, $html, $tm, PREG_OFFSET_CAPTURE, $pos)) {
+        $is_close = $tm[1][0] === '/';
+        $pos = $tm[0][1] + strlen($tm[0][0]);
+        $depth += $is_close ? -1 : 1;
+    }
+
+    // Unbalanced tags — bail without touching the HTML rather than risk
+    // cutting it in the wrong place.
+    if ($depth !== 0) {
+        return $html;
+    }
+
+    return substr($html, 0, $start) . substr($html, $pos);
+}
+
+add_action('template_redirect', function () {
+    if (is_admin() || is_feed() || wp_doing_ajax() || defined('REST_REQUEST')) {
+        return;
+    }
+
+    $path          = trim(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+    $first_segment = sanitize_title(strtok($path, '/'));
+
+    if (!$first_segment) {
+        return;
+    }
+
+    $location_ids = get_posts([
+        'post_type'      => 'location',
+        'name'           => $first_segment,
+        'posts_per_page' => 1,
+        'no_found_rows'  => true,
+        'fields'         => 'ids',
+    ]);
+
+    if (!$location_ids) {
+        return;
+    }
+
+    $location_url = get_permalink($location_ids[0]);
+
+    if (!$location_url) {
+        return;
+    }
+
+    // why-koala, why-reinsulate, and homeowner-incentives are connected to a
+    // location via Post Object fields (related_wk_page / related_wr_page /
+    // related_ho_page — same fields get_location_data() reads for wkPage/
+    // wrPage/hoPage), not a fixed URL suffix. Read the actual field so this
+    // can't silently link to the wrong page if a location is configured
+    // differently; only fall back to the /{slug} pattern if the field is
+    // genuinely unset, so we never regress to a broken/empty link.
+    $koala_related_page_url = function ($meta_key) use ($location_ids) {
+        $related = get_post_meta($location_ids[0], $meta_key, true);
+        $related_id = is_array($related) ? reset($related) : $related;
+        return $related_id ? get_permalink($related_id) : false;
+    };
+
+    $why_koala_url    = $koala_related_page_url('related_wk_page') ?: ($location_url . '/why-koala');
+    $why_reinsulate_url = $koala_related_page_url('related_wr_page') ?: ($location_url . '/why-reinsulate');
+    $homeowner_url     = $koala_related_page_url('related_ho_page') ?: ($location_url . '/homeowner-incentives');
+
+    // The services dropdown (custom-service-ul) is an empty container that
+    // all-pages.js populates and manages the open/close + styling behavior
+    // for entirely on its own (Bricks-builder-scoped, not something we can
+    // safely replicate server-side — a prior attempt at rendering real <li>
+    // markup into it broke the dropdown's hover/stay-open behavior live).
+    // So we leave that element completely untouched and instead add a
+    // separate, visually-hidden set of the same links purely for crawlers —
+    // same SEO benefit (the real /{location}/services/{slug} URLs are
+    // discoverable in the raw HTML), zero risk to the interactive dropdown
+    // since we never touch its markup.
+    $services = [];
+    $service_ids = get_post_meta($location_ids[0], 'location_service', true);
+    if (is_array($service_ids)) {
+        foreach ($service_ids as $service_id) {
+            $title = get_post_meta($service_id, 'location_service_name', true);
+            $link  = get_permalink($service_id);
+            if ($title && $link) {
+                $services[] = ['title' => $title, 'link' => $link];
+            }
+        }
+    }
+
+    ob_start(function ($html) use ($location_url, $first_segment, $why_koala_url, $why_reinsulate_url, $homeowner_url, $services) {
+        $rewrites = [
+            'why-koala-link'         => $why_koala_url,
+            'why-koala-link-footer'  => $why_koala_url,
+            'why-reinsulate-link'        => $why_reinsulate_url,
+            'why-reinsulate-link-footer' => $why_reinsulate_url,
+            'homeowner-link'         => $homeowner_url,
+            'homeowner-link-footer'  => $homeowner_url,
+            'faq-nav-link'           => $location_url . '/faq',
+            'faq-ft-link'            => $location_url . '/faq',
+            'testimonials-nav-link'  => $location_url . '/testimonials',
+            'testimonials-ft-link'   => $location_url . '/testimonials',
+            'ft-terms-and-conditions' => $location_url . '/terms-and-conditions',
+            'ft-privacy-policy'      => $location_url . '/privacy-policy',
+            'custom-service'         => $location_url . '/services',
+            'ft-services'            => $location_url . '/services',
+        ];
+
+        // Matches all-pages.js: the "locations" directory page keeps the home
+        // link pointing at the national homepage rather than this location.
+        if ($first_segment !== 'locations') {
+            $rewrites['nav-home'] = $location_url;
+            $rewrites['ft-home']  = $location_url;
+        }
+
+        foreach ($rewrites as $element_id => $new_href) {
+            $html = preg_replace(
+                '/(id=["\']' . preg_quote($element_id, '/') . '["\'][^>]*?href=["\'])[^"\']*(["\'])/i',
+                '$1' . esc_attr($new_href) . '$2',
+                $html
+            );
+        }
+
+        if ($services) {
+            $links = '';
+            foreach ($services as $service) {
+                $links .= '<a href="' . esc_url($service['link']) . '">' . esc_html($service['title']) . '</a>';
+            }
+            // Visually hidden (standard WCAG "sr-only" pattern), not display:none —
+            // crawlers still read and follow these; real visitors never see them,
+            // since the actual interactive dropdown is untouched and still does
+            // its own thing via all-pages.js exactly as before.
+            $hidden_nav = '<nav aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">' . $links . '</nav>';
+
+            $html = preg_replace(
+                '/(<ul id=["\']custom-service-ul["\'][^>]*>\s*<!-- JavaScript will populate this list -->\s*<\/ul>)/i',
+                '$1' . $hidden_nav,
+                $html,
+                1
+            );
+
+            // The national dropdowns (main-nav-services in the header,
+            // main-ft-services in the footer) are visible by default and only
+            // get hidden by all-pages.js once it detects a location. display:
+            // none isn't enough — the national URLs would still be readable
+            // in the raw HTML source, which is exactly what we're trying to
+            // avoid. Remove both elements entirely instead.
+            $html = koala_strip_element_by_id($html, 'li', 'main-nav-services');
+            $html = koala_strip_element_by_id($html, 'div', 'main-ft-services');
+        }
+
+        return $html;
+    });
+// Priority 1: custom_location_service_template()/custom_location_blog_template()
+// (registered at the default priority 10) echo their entire page and call
+// exit() directly for /{location}/services/{service} and /{location}/blog/{post}
+// URLs. ob_start() must be registered before those run, or this hook never
+// gets a chance to buffer their output at all. This doesn't depend on
+// $wp_query/$post state (the location comes straight from the raw URL), so
+// running earlier than every other template_redirect hook is safe — PHP
+// still flushes an already-open output buffer on exit(), so our callback
+// runs regardless of what later hooks in the chain do.
+}, 1);
 
 add_action('wp_head', 'koala_output_location_schema', 2);
 function koala_output_location_schema()
@@ -3945,6 +4208,9 @@ function koala_defer_scripts($tag, $handle, $src) {
     // List of script handles from your audit to DEFER
     $defer_scripts = [
         'all-pages-js',
+        'koala-sliders',
+        'koala-reviews',
+        'koala-popup',
         'custom-service-js',
         'custom-map-init',
         'location-page',
