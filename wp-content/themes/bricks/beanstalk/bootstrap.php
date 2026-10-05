@@ -20,14 +20,16 @@ require_once __DIR__ . '/parts.php';
  * Determine whether the current request should use the Beanstalk template.
  */
 function koala_is_beanstalk_area_served_page(): bool {
-	if ( ! is_singular( 'resources-landing-pa' ) ) {
+	$post_id = get_queried_object_id();
+	if ( ! is_singular( 'resources-landing-pa' )
+		&& ( $post_id <= 0 || 'resources-landing-pa' !== get_post_type( $post_id ) ) ) {
 		return false;
 	}
 
-	$post_id = get_queried_object_id();
-
 	return $post_id > 0
-		&& has_term( 'areas-served', 'resources-page-type', $post_id );
+		&& has_term( 'areas-served', 'resources-page-type', $post_id )
+		&& function_exists( 'beanstalk_content_engine_is_city_page_enabled' )
+		&& beanstalk_content_engine_is_city_page_enabled( $post_id );
 }
 
 /**
