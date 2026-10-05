@@ -106,8 +106,43 @@ final class Bootstrap {
 	/** Register the migration command only when WordPress is running under WP-CLI. */
 	public function register_cli_commands(): void {
 		if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( 'WP_CLI' ) ) {
+			$this->register_cli_theme_provider();
 			\WP_CLI::add_command( 'beanstalk city-pages update', new CityPageCliCommand( $this->city_page_updater ) );
 		}
+	}
+
+	/**
+	 * Register an active-theme provider when WP-CLI does not load theme functions.
+	 *
+	 * Normal web requests receive this provider from the theme callback. WP-CLI
+	 * loads plugins without the active theme's functions.php, so the City Page
+	 * command must discover the same conventional Beanstalk directories itself.
+	 */
+	private function register_cli_theme_provider(): void {
+		$directory = wp_normalize_path( get_template_directory() . '/beanstalk' );
+		$patterns  = $directory . '/patterns';
+		$manifests = $directory . '/pattern-manifests';
+
+		if ( ! is_dir( $patterns ) || ! is_dir( $manifests ) ) {
+			return;
+		}
+
+		foreach ( $this->providers->all() as $provider ) {
+			if ( $provider['pattern_directory'] === $patterns && $provider['manifest_directory'] === $manifests ) {
+				return;
+			}
+		}
+
+		$this->providers->register(
+			array(
+				'id'                 => 'active-theme-cli',
+				'label'              => __( 'Active theme CLI provider', 'beanstalk-content-engine' ),
+				'source_type'        => 'parent-theme',
+				'pattern_directory'  => $patterns,
+				'manifest_directory' => $manifests,
+				'priority'           => 200,
+			)
+		);
 	}
 
 	/** Registers the fallback and invites active themes to register providers. */

@@ -56,5 +56,12 @@ namespace GiantCreative\BeanstalkContentEngine {
 		throw new \RuntimeException( 'The template must activate only after City Page context is applied.' );
 	}
 
+	$bootstrap = file_get_contents( dirname( __DIR__ ) . '/src/Bootstrap.php' );
+	$provider_position = strpos( $bootstrap, 'register_cli_theme_provider' );
+	$command_position  = strpos( $bootstrap, "add_command( 'beanstalk city-pages update'" );
+	if ( false === $provider_position || false === $command_position || $provider_position > $command_position ) {
+		throw new \RuntimeException( 'The active theme provider must be registered before the City Page CLI command runs.' );
+	}
+
 	echo "City Page import contract: PASS\n";
 }
