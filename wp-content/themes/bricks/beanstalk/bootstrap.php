@@ -79,6 +79,44 @@ function koala_beanstalk_restore_native_image_attributes( array $attributes, $at
 add_filter( 'wp_get_attachment_image_attributes', 'koala_beanstalk_restore_native_image_attributes', 20, 3 );
 
 /**
+ * Restore real image URLs in saved blocks while retaining native lazy loading.
+ *
+ * @param string    $html Rendered image block.
+ * @param array     $block Parsed block.
+ * @param bool|null $eligible Optional eligibility override for tests.
+ * @return string
+ */
+function koala_beanstalk_native_block_images( string $html, array $block, ?bool $eligible = null ): string {
+	if ( 'core/image' !== ( $block['blockName'] ?? '' ) ) {
+		return $html;
+	}
+	$eligible = null === $eligible ? koala_is_beanstalk_area_served_page() : $eligible;
+	if ( ! $eligible ) {
+		return $html;
+	}
+
+	$processor = new WP_HTML_Tag_Processor( $html );
+	while ( $processor->next_tag( 'IMG' ) ) {
+		foreach ( array( 'src', 'srcset', 'sizes' ) as $attribute ) {
+			$value = $processor->get_attribute( 'data-' . $attribute );
+			if ( is_string( $value ) && '' !== $value ) {
+				$processor->set_attribute( $attribute, $value );
+				$processor->remove_attribute( 'data-' . $attribute );
+			}
+		}
+		$processor->remove_class( 'bricks-lazy-hidden' );
+		$processor->remove_attribute( 'data-type' );
+		if ( null === $processor->get_attribute( 'loading' ) ) {
+			$processor->set_attribute( 'loading', 'lazy' );
+		}
+		$processor->set_attribute( 'decoding', 'async' );
+	}
+	return $processor->get_updated_html();
+}
+add_filter( 'render_block', 'koala_beanstalk_native_block_images', 100, 2 );
+
+
+/**
  * Route only matching Resources Landing Pages to Beanstalk.
  *
  * @param string $template Resolved template path.
