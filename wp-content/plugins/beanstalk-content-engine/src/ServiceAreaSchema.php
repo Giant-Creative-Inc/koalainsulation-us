@@ -92,7 +92,7 @@ final class ServiceAreaSchema {
 			'@type'      => 'WebPage',
 			'@id'        => $page_url . '#webpage',
 			'url'        => $page_url,
-			'name'       => get_the_title( $post_id ),
+			'name'       => html_entity_decode( wp_strip_all_tags( get_the_title( $post_id ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 			'mainEntity' => array( '@id' => $page_url . '#service' ),
 			'breadcrumb' => array( '@id' => $page_url . '#breadcrumb' ),
 		);
@@ -105,7 +105,7 @@ final class ServiceAreaSchema {
 			array(
 				'@type'     => 'HomeAndConstructionBusiness',
 				'@id'       => $business_url . '#business',
-				'name'      => get_the_title( $location_id ),
+				'name'      => html_entity_decode( wp_strip_all_tags( get_the_title( $location_id ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 				'url'       => $business_url,
 				'telephone' => (string) get_post_meta( $location_id, 'location_phone_number', true ),
 				'address'   => array(
@@ -130,13 +130,13 @@ final class ServiceAreaSchema {
 					array(
 						'@type'    => 'ListItem',
 						'position' => 2,
-						'name'     => get_the_title( $location_id ),
+						'name'     => html_entity_decode( wp_strip_all_tags( get_the_title( $location_id ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 						'item'     => $business_url,
 					),
 					array(
 						'@type'    => 'ListItem',
 						'position' => 3,
-						'name'     => get_the_title( $post_id ),
+						'name'     => html_entity_decode( wp_strip_all_tags( get_the_title( $post_id ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 						'item'     => $page_url,
 					),
 				),
