@@ -8,6 +8,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+ob_start( 'koala_beanstalk_lazy_page_images' );
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -30,3 +31,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 <?php wp_footer(); ?>
 </body>
 </html>
+
+<?php ob_end_flush(); ?>

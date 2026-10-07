@@ -213,14 +213,22 @@ function koala_beanstalk_get_location_context(): array {
 		return $contexts[ $page_id ];
 	}
 
-	$location_name = (string) get_post_meta( $location->ID, 'location_name', true );
-	$location_name = $location_name ? $location_name : get_the_title( $location->ID );
-	$display_name  = (string) get_post_meta( $location->ID, 'location_display_name', true );
-	$state         = (string) get_post_meta( $location->ID, 'location_state', true );
-	$state_data    = koala_beanstalk_normalize_state( $state );
-	$phone         = (string) get_post_meta( $location->ID, 'location_phone_number', true );
-	$reviews       = get_post_meta( $location->ID, 'location_reviews', true );
-	$location_url  = (string) get_permalink( $location->ID );
+	$location_name       = (string) get_post_meta( $location->ID, 'location_name', true );
+	$location_name       = $location_name ? $location_name : get_the_title( $location->ID );
+	$display_name        = (string) get_post_meta( $location->ID, 'location_display_name', true );
+	$state               = (string) get_post_meta( $location->ID, 'location_state', true );
+	$state_data          = koala_beanstalk_normalize_state( $state );
+	$location_state_data = $state_data;
+	$city_values         = json_decode( (string) get_post_meta( $page_id, '_beanstalk_structured_data_values', true ), true );
+	if ( is_array( $city_values ) ) {
+		$city_state = koala_beanstalk_normalize_state( (string) ( $city_values['state_abbreviation'] ?? $city_values['state_name'] ?? '' ) );
+		if ( '' !== $city_state['abbreviation'] ) {
+			$state_data = $city_state;
+		}
+	}
+	$phone        = (string) get_post_meta( $location->ID, 'location_phone_number', true );
+	$reviews      = get_post_meta( $location->ID, 'location_reviews', true );
+	$location_url = (string) get_permalink( $location->ID );
 
 	$service_area_name    = $page_id ? get_the_title( $page_id ) : '';
 	$contexts[ $page_id ] = array(
@@ -229,6 +237,7 @@ function koala_beanstalk_get_location_context(): array {
 		'location_name'           => $location_name,
 		'display_name'            => $display_name ? $display_name : $location_name,
 		'service_area_name'       => koala_beanstalk_normalize_service_area_name( $service_area_name, $state_data['abbreviation'] ),
+		'location_state_name'     => $location_state_data['name'],
 		'state_name'              => $state_data['name'],
 		'state_abbreviation'      => $state_data['abbreviation'],
 		'phone'                   => $phone,
@@ -350,7 +359,7 @@ function koala_beanstalk_get_navigation_data(): array {
 		'location'  => $location,
 		'base'      => $base_url,
 		'name'      => $location_name,
-		'state'     => $context['state_name'],
+		'state'     => $context['location_state_name'] ?? $context['state_name'],
 		'phone'     => $context['phone'],
 		'address'   => $context['address'],
 		'services'  => $services,

@@ -115,6 +115,35 @@ function koala_beanstalk_native_block_images( string $html, array $block, ?bool 
 }
 add_filter( 'render_block', 'koala_beanstalk_native_block_images', 100, 2 );
 
+/**
+ * Preserve native image lazy loading on Beanstalk pages when WP Rocket is active.
+ *
+ * @param bool $enabled WP Rocket image lazy-loading setting.
+ * @return bool
+ */
+function koala_beanstalk_disable_rocket_image_lazyload( bool $enabled ): bool {
+	return koala_is_beanstalk_area_served_page() ? false : $enabled;
+}
+add_filter( 'do_rocket_lazyload', 'koala_beanstalk_disable_rocket_image_lazyload', 100 );
+
+/**
+ * Apply native lazy loading to every server-rendered City Page image.
+ *
+ * Includes shared chrome and third-party review markup outside core image blocks.
+ * Called only by the dedicated Beanstalk template's output buffer.
+ *
+ * @param string $html Complete City Page markup.
+ * @return string
+ */
+function koala_beanstalk_lazy_page_images( string $html ): string {
+	$processor = new WP_HTML_Tag_Processor( $html );
+	while ( $processor->next_tag( 'IMG' ) ) {
+		$processor->set_attribute( 'loading', 'lazy' );
+		$processor->remove_attribute( 'fetchpriority' );
+	}
+	return $processor->get_updated_html();
+}
+
 
 /**
  * Route only matching Resources Landing Pages to Beanstalk.
