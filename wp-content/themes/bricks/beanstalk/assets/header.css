@@ -79,6 +79,7 @@ body.beanstalk-page { margin: 0; padding-top: var(--beanstalk-header-height, 170
 
 @media (min-width: 992px) {
 	.beanstalk-header__menu > .beanstalk-header__dropdown:last-child > .beanstalk-header__submenu { left: auto; right: 0; }
+	.beanstalk-header__submenu { max-height: calc(100dvh - var(--beanstalk-header-height, 170px) - 48px); overflow-y: auto; overscroll-behavior-y: contain; }
 }
 
 @media (max-width: 991px) {
