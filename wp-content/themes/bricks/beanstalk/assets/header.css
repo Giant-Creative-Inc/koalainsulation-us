@@ -77,6 +77,10 @@ body.beanstalk-page { margin: 0; padding-top: var(--beanstalk-header-height, 170
 .beanstalk-header__dropdown.is-open > .beanstalk-header__submenu { opacity: 1; visibility: visible; transform: none; }
 .beanstalk-header__toggle, .beanstalk-header__close, .beanstalk-header__mobile-phone { display: none; }
 
+@media (min-width: 992px) {
+	.beanstalk-header__menu > .beanstalk-header__dropdown:last-child > .beanstalk-header__submenu { left: auto; right: 0; }
+}
+
 @media (max-width: 991px) {
 	body.beanstalk-page { padding-top: var(--beanstalk-header-height, 138px); }
 	body.beanstalk-menu-open { overflow: hidden; }
