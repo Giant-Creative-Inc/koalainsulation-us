@@ -89,7 +89,7 @@
 
 @media (max-width: 767px) {
 	.beanstalk-page .koala-city-testimonials {
-		padding: 48px 16px;
+		padding: 48px 16px 0;
 		overflow-x: clip;
 	}
 
@@ -105,6 +105,7 @@
 		width: calc(100vw - 32px);
 		max-width: calc(100vw - 32px);
 		margin-inline: 0;
+		margin-bottom: 0;
 	}
 
 	.beanstalk-page .koala-city-testimonials__eyebrow {

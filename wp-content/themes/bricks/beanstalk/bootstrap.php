@@ -624,7 +624,7 @@ function koala_beanstalk_preload_heading_font(): void {
 		return;
 	}
 
-	$url = content_url( '/uploads/fonts/0e906f7812e74c80074fecaa9d86c59c/alegreya-sans--v28-normal-700.woff2' );
+	$url = content_url( '/uploads/fonts/0e906f7812e74c80074fecaa9d86c59c/alegreya-sans--v26-normal-700.woff2' );
 	echo '<link rel="preload" as="font" type="font/woff2" href="' . esc_url( $url ) . '" crossorigin>' . "\n";
 }
 add_action( 'wp_head', 'koala_beanstalk_preload_heading_font', 1 );

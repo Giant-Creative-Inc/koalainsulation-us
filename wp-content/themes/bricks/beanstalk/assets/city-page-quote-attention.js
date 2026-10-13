@@ -1,6 +1,23 @@
 ( function () {
 	'use strict';
 
+	document.querySelectorAll( '.koala-city-faq__items' ).forEach( function ( group, index ) {
+		var items = group.querySelectorAll( '.koala-city-faq__item' );
+		items.forEach( function ( item ) {
+			item.setAttribute( 'name', 'koala-city-faq-' + index );
+			item.addEventListener( 'toggle', function () {
+				if ( ! item.open ) {
+					return;
+				}
+				items.forEach( function ( other ) {
+					if ( other !== item ) {
+						other.open = false;
+					}
+				} );
+			} );
+		} );
+	} );
+
 	var form = document.getElementById( 'city-page-quote' );
 	var quoteLinks = document.querySelectorAll( '.koala-city-page__quote-cta[href="#city-page-quote"]' );
 	var observer = null;

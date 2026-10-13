@@ -278,7 +278,7 @@
 
 @media (max-width: 767px) {
 	.koala-city-page .koala-city-why-koala__content {
-		padding: 48px 16px;
+		padding: 0 16px;
 	}
 
 	.koala-city-page .koala-city-why-koala__content > .wp-block-group__inner-container {
@@ -307,6 +307,7 @@
 	.koala-city-page .koala-city-why-koala__benefits {
 		order: 3;
 		padding-top: 0;
+		padding-bottom: 0;
 	}
 
 	.koala-city-page .koala-city-why-koala__features {

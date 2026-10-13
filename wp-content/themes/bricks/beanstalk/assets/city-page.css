@@ -149,7 +149,7 @@
 
 	.koala-city-page .koala-city-residential-services__title-block > .wp-block-group__inner-container {
 		align-items: flex-start;
-		gap: 8px;
+		gap: 0;
 		text-align: left;
 	}
 
@@ -166,7 +166,7 @@
 	.koala-city-page .koala-city-residential-services__grid > .wp-block-group__inner-container,
 	.koala-city-page .koala-city-residential-services__items--many {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 24px;
+		gap: 12px;
 	}
 
 	.koala-city-page .koala-city-residential-services__card {
@@ -405,11 +405,11 @@
 	}
 
 	.koala-city-page .koala-city-commercial-services__copy > .wp-block-group__inner-container {
-		gap: 32px;
+		gap: 24px;
 	}
 
 	.koala-city-page .koala-city-commercial-services__title-block > .wp-block-group__inner-container {
-		gap: 8px;
+		gap: 0;
 	}
 
 	.koala-city-page .koala-city-commercial-services__title-block::after {
@@ -428,7 +428,7 @@
 	}
 
 	.koala-city-page .koala-city-commercial-services__description {
-		color: #908e8c;
+		color: #4d545c;
 		font-size: 14px;
 		line-height: 22px;
 	}
@@ -446,7 +446,7 @@
 	}
 
 	.koala-city-page .koala-city-commercial-services__benefit-description {
-		color: #908e8c;
+		color: #4d545c;
 		font-size: 13px;
 	}
 
@@ -471,7 +471,7 @@
 	}
 
 	.koala-city-page .koala-city-commercial-services__caption {
-		width: auto;
+		width: 100%;
 		padding: 8px 12px;
 		font-size: 14px;
 	}
@@ -762,7 +762,7 @@
 
 @media (max-width: 767px) {
 	.koala-city-page .koala-city-why-koala__content {
-		padding: 48px 16px;
+		padding: 0 16px;
 	}
 
 	.koala-city-page .koala-city-why-koala__content > .wp-block-group__inner-container {
@@ -791,6 +791,7 @@
 	.koala-city-page .koala-city-why-koala__benefits {
 		order: 3;
 		padding-top: 0;
+		padding-bottom: 0;
 	}
 
 	.koala-city-page .koala-city-why-koala__features {
@@ -941,7 +942,7 @@
 
 @media (max-width: 767px) {
 	.beanstalk-page .koala-city-testimonials {
-		padding: 48px 16px;
+		padding: 48px 16px 0;
 		overflow-x: clip;
 	}
 
@@ -957,6 +958,7 @@
 		width: calc(100vw - 32px);
 		max-width: calc(100vw - 32px);
 		margin-inline: 0;
+		margin-bottom: 0;
 	}
 
 	.beanstalk-page .koala-city-testimonials__eyebrow {
@@ -1160,7 +1162,7 @@
 
 .koala-city-page .koala-city-faq__answer {
 	padding-top: 16px;
-	color: #908e8c;
+	color: #4d545c;
 	font-family: "Filson Pro", sans-serif;
 	font-size: 18px;
 	font-weight: 400;
@@ -1196,7 +1198,7 @@
 
 	.koala-city-page .koala-city-faq__introduction {
 		order: 2;
-		color: #908e8c;
+		color: #4d545c;
 		font-size: 14px;
 		line-height: 22px;
 	}
@@ -1226,7 +1228,7 @@
 	}
 
 	.koala-city-page .koala-city-faq__heading {
-		margin-top: 8px;
+		margin-top: 0;
 		font-size: 32px;
 		font-weight: 700;
 		line-height: normal;
@@ -1234,6 +1236,7 @@
 
 	.koala-city-page .koala-city-faq__item {
 		padding: 12px 0 16px;
+		margin-bottom: 0;
 		border-bottom-color: rgb(0 0 0 / 10%);
 	}
 
@@ -1248,6 +1251,17 @@
 		font-size: 13px;
 		line-height: 20px;
 	}
+}
+
+.koala-city-page .koala-city-faq__item[open] .koala-city-faq__answer {
+	animation: koala-city-faq-reveal .2s ease-out;
+}
+@keyframes koala-city-faq-reveal {
+	from { opacity: 0; transform: translateY(-4px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.koala-city-page .koala-city-faq__item[open] .koala-city-faq__answer { animation: none; }
 }
 
 /* Source: city-page-final-cta.css */

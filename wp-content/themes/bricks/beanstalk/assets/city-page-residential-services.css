@@ -146,7 +146,7 @@
 
 	.koala-city-page .koala-city-residential-services__title-block > .wp-block-group__inner-container {
 		align-items: flex-start;
-		gap: 8px;
+		gap: 0;
 		text-align: left;
 	}
 
@@ -163,7 +163,7 @@
 	.koala-city-page .koala-city-residential-services__grid > .wp-block-group__inner-container,
 	.koala-city-page .koala-city-residential-services__items--many {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 24px;
+		gap: 12px;
 	}
 
 	.koala-city-page .koala-city-residential-services__card {

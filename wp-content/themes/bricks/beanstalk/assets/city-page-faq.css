@@ -138,7 +138,7 @@
 
 .koala-city-page .koala-city-faq__answer {
 	padding-top: 16px;
-	color: #908e8c;
+	color: #4d545c;
 	font-family: "Filson Pro", sans-serif;
 	font-size: 18px;
 	font-weight: 400;
@@ -174,7 +174,7 @@
 
 	.koala-city-page .koala-city-faq__introduction {
 		order: 2;
-		color: #908e8c;
+		color: #4d545c;
 		font-size: 14px;
 		line-height: 22px;
 	}
@@ -204,7 +204,7 @@
 	}
 
 	.koala-city-page .koala-city-faq__heading {
-		margin-top: 8px;
+		margin-top: 0;
 		font-size: 32px;
 		font-weight: 700;
 		line-height: normal;
@@ -212,6 +212,7 @@
 
 	.koala-city-page .koala-city-faq__item {
 		padding: 12px 0 16px;
+		margin-bottom: 0;
 		border-bottom-color: rgb(0 0 0 / 10%);
 	}
 
@@ -226,4 +227,15 @@
 		font-size: 13px;
 		line-height: 20px;
 	}
+}
+
+.koala-city-page .koala-city-faq__item[open] .koala-city-faq__answer {
+	animation: koala-city-faq-reveal .2s ease-out;
+}
+@keyframes koala-city-faq-reveal {
+	from { opacity: 0; transform: translateY(-4px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.koala-city-page .koala-city-faq__item[open] .koala-city-faq__answer { animation: none; }
 }

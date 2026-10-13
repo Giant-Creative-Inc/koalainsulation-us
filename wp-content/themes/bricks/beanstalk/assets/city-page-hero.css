@@ -3,7 +3,7 @@
 	font-style: normal;
 	font-weight: 700;
 	font-display: swap;
-	src: url("/wp-content/uploads/fonts/0e906f7812e74c80074fecaa9d86c59c/alegreya-sans--v28-normal-700.woff2") format("woff2");
+	src: url("/wp-content/uploads/fonts/0e906f7812e74c80074fecaa9d86c59c/alegreya-sans--v26-normal-700.woff2") format("woff2");
 }
 
 .koala-city-page {
@@ -80,7 +80,7 @@
 	.koala-city-hero__content { min-height: 0; padding: 48px 20px; }
 	.koala-city-hero__content > .wp-block-group__inner-container { grid-template-columns: 1fr; }
 	.koala-city-hero__content::after { display: none; }
-	.koala-city-hero__copy > .wp-block-group__inner-container { gap: 32px; }
+	.koala-city-hero__copy > .wp-block-group__inner-container { gap: 24px; }
 	.koala-city-hero__heading { font-size: clamp(48px, 13vw, 64px); }
 	.koala-city-hero__introduction { font-size: 18px; line-height: 28px; }
 	.koala-city-hero__form { max-width: 560px; }
@@ -99,4 +99,10 @@
 @media (prefers-reduced-motion: reduce) {
 	.koala-city-hero *, .koala-city-hero *::before, .koala-city-hero *::after { scroll-behavior: auto; transition-duration: .01ms; animation-duration: .01ms; animation-iteration-count: 1; }
 	.koala-city-page .koala-city-hero__form.is-quote-attention { animation: none; }
+}
+
+.koala-city-page #city-page-quote { scroll-margin-top: calc(var(--beanstalk-header-height, 170px) + 16px); }
+.admin-bar .koala-city-page #city-page-quote { scroll-margin-top: calc(var(--beanstalk-header-height, 170px) + 48px); }
+@media (max-width: 782px) {
+	.admin-bar .koala-city-page #city-page-quote { scroll-margin-top: calc(var(--beanstalk-header-height, 170px) + 62px); }
 }

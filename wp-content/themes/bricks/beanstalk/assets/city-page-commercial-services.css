@@ -213,11 +213,11 @@
 	}
 
 	.koala-city-page .koala-city-commercial-services__copy > .wp-block-group__inner-container {
-		gap: 32px;
+		gap: 24px;
 	}
 
 	.koala-city-page .koala-city-commercial-services__title-block > .wp-block-group__inner-container {
-		gap: 8px;
+		gap: 0;
 	}
 
 	.koala-city-page .koala-city-commercial-services__title-block::after {
@@ -236,7 +236,7 @@
 	}
 
 	.koala-city-page .koala-city-commercial-services__description {
-		color: #908e8c;
+		color: #4d545c;
 		font-size: 14px;
 		line-height: 22px;
 	}
@@ -254,7 +254,7 @@
 	}
 
 	.koala-city-page .koala-city-commercial-services__benefit-description {
-		color: #908e8c;
+		color: #4d545c;
 		font-size: 13px;
 	}
 
@@ -279,7 +279,7 @@
 	}
 
 	.koala-city-page .koala-city-commercial-services__caption {
-		width: auto;
+		width: 100%;
 		padding: 8px 12px;
 		font-size: 14px;
 	}
