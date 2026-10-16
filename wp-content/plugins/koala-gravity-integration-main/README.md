@@ -237,13 +237,13 @@ composer lint:fix   # auto-fixes what phpcbf can safely fix, then re-run lint
 ```
 
 
-## ZIP routing priority (0.8.1)
+## ZIP routing priority (0.8.2)
 
-When there is no exact owner, routing first checks the submission-page office. If the submitted ZIP centre is within 60 straight-line miles of that office's saved coordinates, the page office wins even if another franchise is closer. Coordinates use `location_latitude` and `location_logitude` (with `location_longitude` as a fallback). The ZIP centre comes from zipcodeapi.com's `info.json` endpoint and is cached for 30 days. Missing office coordinates or an unavailable coordinate lookup skip page preference and continue to the nearest-owned-ZIP check.
+When there is no exact owner, the page location gets priority if **any code it owns** is within 60 straight-line miles of the submitted code. Office coordinates are not used. One cached radius request provides both page-location qualification and the nearest-owner fallback.
 
-If the page office does not qualify, the plugin uses the existing 60-mile radius lookup to choose the closest owned ZIP and its franchise. This also runs for submissions without a page location. No qualifying franchise means unmatched/parking-lot routing. Radius responses remain cached for 30 days. Exact ownership always wins before distance checks. The public location search retains its existing nearest-owned-ZIP behavior.
+If the page location does not qualify, the plugin uses the existing 60-mile radius lookup to choose the closest owned ZIP and its franchise. This also runs for submissions without a page location. No qualifying franchise means unmatched/parking-lot routing. Radius responses remain cached for 30 days. Exact ownership always wins before distance checks. The public location search retains its existing nearest-owned-ZIP behavior.
 
-Entry routing reasons distinguish exact ownership, page-office radius priority, and nearest-owned-ZIP fallback. Delivery retries reuse a saved destination; previously successful entries are not automatically rerouted by this update. Google Sheet destination selection is unchanged for submissions with a page location.
+Entry routing reasons distinguish exact ownership, page-location owned-code priority, and nearest-owned-ZIP fallback. Delivery retries reuse a saved destination; previously successful entries are not automatically rerouted by this update. Google Sheet destination selection is unchanged for submissions with a page location.
 
 
 ## Automated tests
@@ -257,7 +257,7 @@ composer test:attribution     # JavaScript attribution tests; requires Node.js
 composer test:all             # Routing and attribution suites
 ```
 
-The routing suite uses in-memory WordPress/Gravity Forms stubs and mocked HTTP responses. It covers exact and shared ZIP ownership, page-office preference, the inclusive 60-mile boundary, nearest-owned-ZIP fallback, no-page background jobs, parking-lot delivery and missing credentials, coordinate validation/caching, API failures/rate limits, duplicate-delivery prevention, public search and Canadian lookups. It does not submit real leads or contact a CRM.
+The routing suite uses in-memory WordPress/Gravity Forms stubs and mocked HTTP responses. It covers exact and shared ZIP ownership, page-location owned-code preference, the inclusive 60-mile boundary, nearest-owned-ZIP fallback, no-page background jobs, parking-lot delivery and missing credentials, radius caching, API failures/rate limits, duplicate-delivery prevention, public search and Canadian lookups. It does not submit real leads or contact a CRM.
 
 On this workstation the default Homebrew Node 25 cannot start because its simdjson library is missing. Use `PATH=/opt/homebrew/opt/node@22/bin:$PATH composer test:all` with the installed Node 22 runtime.
 

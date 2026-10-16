@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KGI_VERSION', '0.8.1' );
+define( 'KGI_VERSION', '0.8.2' );
 define( 'KGI_PLUGIN_FILE', dirname( __DIR__ ) . '/koala-gravity-integration.php' );
 define( 'KGI_PLUGIN_DIR', plugin_dir_path( KGI_PLUGIN_FILE ) );
 define( 'KGI_PLUGIN_BASENAME', plugin_basename( KGI_PLUGIN_FILE ) );

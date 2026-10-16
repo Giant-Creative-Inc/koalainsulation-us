@@ -132,7 +132,7 @@ function kgi_get_zip_lookup_error_label( string $error_type ): string {
 function kgi_describe_zip_routing_status( string $status ): string {
 	$descriptions = array(
 		'exact_owner'          => __( 'Matched exact ZIP owner', 'koala-gravity-integration' ),
-		'page_radius'          => __( 'Kept page office within radius', 'koala-gravity-integration' ),
+		'page_radius'          => __( 'Kept page location: owned code within radius', 'koala-gravity-integration' ),
 		'nearest_owned_zip'    => __( 'Matched nearest owned ZIP within radius', 'koala-gravity-integration' ),
 		'original_location'    => __( 'Kept the page location', 'koala-gravity-integration' ),
 		'reassigned'           => __( 'Reassigned by ZIP/postal code', 'koala-gravity-integration' ),

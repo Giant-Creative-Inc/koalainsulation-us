@@ -520,84 +520,32 @@ kgi_test_assert_same(
 	'An out-of-range ZIP must record "no_location_in_range".'
 );
 
-// Page-office preference must beat a closer owned ZIP, including the boundary.
-foreach ( array( 0.0, 60.0, 60.01 ) as $distance ) {
-	kgi_test_reset();
-	$GLOBALS['kgi_test_fields'][70001] = array( 'location_latitude' => 0, 'location_logitude' => rad2deg( $distance / 3958.7613 ) );
-	kgi_test_queue_response( 200, array( 'lat' => 0, 'lng' => 0 ) );
-	if ( $distance > 60 ) {
-		kgi_test_queue_response( 200, kgi_test_us_radius_body() );
+// Prefer any owned code of the original location, even when another is closer.
+foreach ( array( 'us', 'ca' ) as $country ) {
+	foreach ( array( 33.0, 60.0, 60.01 ) as $distance ) {
+		kgi_test_reset( $country );
+		$page_id = 'ca' === $country ? 20180 : 70001;
+		$near_id = 'ca' === $country ? 20181 : 48215;
+		$code = 'ca' === $country ? 'l4z 1t9' : '89052';
+		$body = 'ca' === $country
+			? array( 'postal_codes' => array( 'L7L 4X9', 'M1V 3S2' ), 'distances' => array( 3.0, $distance ) )
+			: array( 'zip_codes' => array( array( 'zip_code' => '89012', 'distance' => 3.0 ), array( 'zip_code' => '89074', 'distance' => $distance ) ) );
+		kgi_test_queue_response( 200, $body );
+		$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => $code ), get_post( $page_id ), 5800 );
+		kgi_test_assert_same( $distance <= 60 ? $page_id : $near_id, $routed->ID ?? null, 'Page location must win when any owned code is within 60 miles, regardless of office coordinates.' );
+		kgi_test_assert_same( $distance <= 60 ? 'page_radius' : 'nearest_owned_zip', gform_get_meta( 5800, 'kgi_zip_routing_status' ), 'Routing reason must reflect owned-code preference.' );
+		kgi_test_assert_same( 1, count( $GLOBALS['kgi_test_requests'] ), 'Routing must make only one radius request and no coordinate request.' );
+		$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => $code ), get_post( $page_id ), 5801 );
+		kgi_test_assert_same( 1, count( $GLOBALS['kgi_test_requests'] ), 'Repeated routing must reuse cached radius data.' );
 	}
-	$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89052' ), get_post( 70001 ), 5800 );
-	kgi_test_assert_same( $distance <= 60 ? 70001 : 48215, $routed->ID ?? null, 'Page office must win within 60 miles, otherwise nearest owned ZIP wins.' );
-	kgi_test_assert_same( $distance <= 60 ? 'page_radius' : 'nearest_owned_zip', gform_get_meta( 5800, 'kgi_zip_routing_status' ), 'Routing must record the decision reason.' );
+	kgi_test_reset( $country );
+	$owned = 'ca' === $country ? 'l7l 4x9' : '89012';
+	$owner = 'ca' === $country ? 20181 : 48215;
+	$page = 'ca' === $country ? 20180 : 70001;
+	$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => $owned ), get_post( $page ), 5802 );
+	kgi_test_assert_same( $owner, $routed->ID ?? null, 'Exact ownership must still override the page location.' );
+	kgi_test_assert_same( 0, count( $GLOBALS['kgi_test_requests'] ), 'Exact owners must require no API request.' );
 }
-
-kgi_test_reset();
-kgi_test_queue_response( 200, kgi_test_us_radius_body() );
-try {
-	$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89052' ), null, 5801 );
-	kgi_test_assert_same( 48215, $routed->ID ?? null, 'No-page submissions must use the nearest owned ZIP.' );
-} catch ( TypeError $error ) {
-	kgi_test_assert_same( 'nullable page location', 'required page location', 'Resolver must accept submissions without a page location.' );
-}
-
-// Coordinate cache and exact ownership must avoid unnecessary requests.
-kgi_test_reset();
-$GLOBALS['kgi_test_fields'][70001] = array( 'location_latitude' => 0, 'location_longitude' => 0 );
-kgi_test_queue_response( 200, array( 'lat' => 0, 'lng' => 0 ) );
-foreach ( array( 5802, 5803 ) as $entry_id ) {
-	$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89052' ), get_post( 70001 ), $entry_id );
-	kgi_test_assert_same( 70001, $routed->ID ?? null, 'Coordinate cache must retain page-office priority.' );
-}
-kgi_test_assert_same( 1, count( $GLOBALS['kgi_test_requests'] ), 'Repeated office checks must reuse ZIP coordinates.' );
-$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89123' ), get_post( 70001 ), 5804 );
-kgi_test_assert_same( 48215, $routed->ID ?? null, 'Exact ownership must override an in-range page office.' );
-kgi_test_assert_same( 'exact_owner', gform_get_meta( 5804, 'kgi_zip_routing_status' ), 'Exact ownership must be recorded.' );
-kgi_test_assert_same( 1, count( $GLOBALS['kgi_test_requests'] ), 'Exact ownership must not fetch coordinates.' );
-
-// Coordinate-provider failure must still allow the owned-ZIP fallback.
-kgi_test_reset();
-$GLOBALS['kgi_test_fields'][70001] = array( 'location_latitude' => 0, 'location_longitude' => 0 );
-kgi_test_queue_response( 503, '{}' );
-kgi_test_queue_response( 200, kgi_test_us_radius_body() );
-$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89052' ), get_post( 70001 ), 5805 );
-kgi_test_assert_same( 48215, $routed->ID ?? null, 'Failed coordinate lookup must allow nearest-owned-ZIP fallback.' );
-kgi_test_assert_same( 1, count( $GLOBALS['kgi_test_errors'] ), 'Coordinate failure must be logged.' );
-
-// Bad office/ZIP coordinates must never grant page priority.
-foreach ( array(
-	array( 'office' => array( 'location_latitude' => 91, 'location_longitude' => 0 ), 'point' => null ),
-	array( 'office' => array( 'location_latitude' => 0, 'location_longitude' => 181 ), 'point' => null ),
-	array( 'office' => array( 'location_latitude' => 0, 'location_longitude' => 0 ), 'point' => array( 'lat' => 91, 'lng' => 0 ) ),
-	array( 'office' => array( 'location_latitude' => 0, 'location_longitude' => 0 ), 'point' => array( 'lat' => 'bad', 'lng' => 0 ) ),
-) as $fixture ) {
-	kgi_test_reset();
-	$GLOBALS['kgi_test_fields'][70001] = $fixture['office'];
-	if ( null !== $fixture['point'] ) {
-		kgi_test_queue_response( 200, $fixture['point'] );
-	}
-	kgi_test_queue_response( 200, kgi_test_us_radius_body() );
-	$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89052' ), get_post( 70001 ), 5810 );
-	kgi_test_assert_same( 48215, $routed->ID ?? null, 'Invalid coordinates must fall through to nearest owned ZIP.' );
-}
-
-kgi_test_reset();
-$GLOBALS['kgi_test_fields'][70001] = array( 'location_latitude' => 0, 'location_longitude' => 0 );
-kgi_test_queue_response( 429, '{}' );
-$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89052' ), get_post( 70001 ), 5811 );
-kgi_test_assert_same( null, $routed, 'Provider rate limit must fall back to unmatched routing.' );
-kgi_test_assert_same( 1, count( $GLOBALS['kgi_test_requests'] ), 'Coordinate rate limit must also pause radius requests.' );
-kgi_test_assert_same( 'lookup_failed_rate_limited', gform_get_meta( 5811, 'kgi_zip_routing_status' ), 'Rate limit reason must be retained.' );
-
-// Duplicate exact ownership keeps the page owner; no-page exact ownership works.
-kgi_test_reset();
-$GLOBALS['kgi_test_transients'][ KGI_LOCATION_ZIP_INDEX_TRANSIENT ]['89123'] = array( 48215, 70001 );
-$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89123' ), get_post( 70001 ), 5812 );
-kgi_test_assert_same( 70001, $routed->ID ?? null, 'Shared ZIP must prefer the page when it is an exact owner.' );
-$routed = kgi_resolve_location_for_entry_zip( array( 'form_id' => 13, '6' => '89074' ), null, 5813 );
-kgi_test_assert_same( 70001, $routed->ID ?? null, 'No-page exact ZIP must route to its owner.' );
-kgi_test_assert_same( 0, count( $GLOBALS['kgi_test_requests'] ), 'Exact ownership must bypass all API calls.' );
 
 // Exercise the real background job, with all outbound delivery mocked.
 class GFAPI {
