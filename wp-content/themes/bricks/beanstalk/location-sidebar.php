@@ -18,12 +18,14 @@ function koala_beanstalk_location_environment_enabled(): bool {
 }
 
 /**
- * Determine whether this Local location request opted into the sidebar preview.
+ * Use native locations by default on Local, with opt-in previews on staging.
  */
 function koala_beanstalk_sidebar_preview(): bool {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only Local preview switch.
 	$requested = isset( $_GET['koala_beanstalk_sidebar'] ) && '1' === $_GET['koala_beanstalk_sidebar'];
-	return $requested
+	$local     = 'koalainsulation.local' === wp_parse_url( home_url(), PHP_URL_HOST );
+	$activated = ! $local && ! $requested && koala_beanstalk_location_environment_enabled() && (bool) get_option( 'koala_beanstalk_locations_enabled', false );
+	return ( $local || $requested || $activated )
 	&& koala_beanstalk_location_environment_enabled()
 	&& is_singular( 'location' )
 	&& ! ( function_exists( 'bricks_is_builder' ) && bricks_is_builder() )

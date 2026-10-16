@@ -889,3 +889,5 @@ require_once __DIR__ . '/location-performance.php';
 require_once __DIR__ . '/location-lazy-widgets.php';
 
 require_once __DIR__ . '/location-estimate-demand.php';
+
+require_once __DIR__ . '/location-media.php';

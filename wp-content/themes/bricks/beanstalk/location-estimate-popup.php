@@ -18,7 +18,7 @@ function koala_beanstalk_render_location_estimate_popup(): string {
 	$phone = (string) get_post_meta( $id, 'location_phone_number', true );
 	$form  = koala_beanstalk_estimate_is_submission() ? gravity_form( 13, false, false, false, null, true, 0, false ) : '<p role="status">Loading quote form…</p>';
 	return '<dialog id="koala-location-estimate" class="koala-location-estimate" aria-labelledby="koala-location-estimate-title" data-form-endpoint="' . esc_url( rest_url( 'koala-beanstalk/v1/estimate/' . $id ) ) . '" data-location-id="' . esc_attr( (string) $id ) . '" data-location-slug="' . esc_attr( get_post_field( 'post_name', $id ) ) . '" data-page-url="' . esc_url( get_permalink( $id ) ) . '">'
-	. '<div class="koala-location-estimate__header"><img data-popup-image-src="' . esc_url( get_template_directory_uri() . '/beanstalk/assets/location-estimate-popup/koala.webp' ) . '" alt="" width="100" height="100"></div>'
+	. '<div class="koala-location-estimate__header"><img data-popup-image-src="' . esc_url( koala_beanstalk_location_media_urls( get_template_directory_uri() . '/beanstalk/assets/location-estimate-popup/koala.webp' ) ) . '" alt="" width="100" height="100"></div>'
 	. '<h2 id="koala-location-estimate-title" class="screen-reader-text">Get a FREE Quote</h2>'
 	. '<button type="button" class="koala-location-estimate__close" aria-label="Close quote form" data-estimate-close>&times;</button>'
 	. ( $phone ? '<a class="koala-location-estimate__phone" href="tel:' . esc_attr( preg_replace( '/[^+0-9]/', '', $phone ) ) . '"><span aria-hidden="true">&#9742;</span> ' . esc_html( $phone ) . '</a>' : '' )
