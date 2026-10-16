@@ -1,0 +1,10 @@
+.koala-location-estimate{box-sizing:border-box;position:fixed;inset:0;margin:auto;padding:0;width:min(768px,calc(100% - 32px));max-width:768px;max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;border:0;border-radius:8px;background:#fff;color:#042e53;font-family:"Filson Pro",sans-serif;box-shadow:0 12px 60px #0003}
+.koala-location-estimate::backdrop{background:rgba(0,0,0,.35)}
+.koala-location-estimate__header{display:flex;justify-content:center;height:100px;background:linear-gradient(90deg,#8bc34a,#81d4fa);clip-path:ellipse(60% 90% at 50% 10%)}
+.koala-location-estimate__header img{display:block;width:100px;height:100px;object-fit:contain;transform:translate(-5%,1%)}
+.koala-location-estimate__close{position:absolute;right:12px;top:10px;display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:0;background:transparent;color:#042e53;font:400 26px/1 sans-serif;cursor:pointer}
+.koala-location-estimate__phone{display:flex;align-items:center;justify-content:center;gap:6px;width:fit-content;margin:10px auto 0;padding:12px 16px;border:1px solid #afd56c;border-radius:10px;background:#042e53;color:#afd56c;font:700 18px/24px "Filson Pro",sans-serif;text-decoration:none}
+
+.koala-location-estimate__form{padding:40px 32px;min-height:120px}
+.koala-location-estimate__form [role=status]{font-size:16px;line-height:24px}
+@media(max-width:767px){.koala-location-estimate{width:calc(100% - 24px);max-height:calc(100dvh - 24px)}.koala-location-estimate__header,.koala-location-estimate__header img{height:80px}.koala-location-estimate__header img{width:80px}.koala-location-estimate__form{padding:24px 16px}.koala-location-estimate__phone{font-size:16px}}

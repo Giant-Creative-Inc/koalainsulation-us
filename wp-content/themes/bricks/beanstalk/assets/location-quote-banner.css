@@ -1,0 +1,17 @@
+@font-face{font-family:"Alegreya Sans";font-style:normal;font-weight:400;font-display:swap;src:url("location-quote-banner/alegreya-sans-regular.woff2") format("woff2")}
+.koala-location-quote-banner{box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:96px 64px;background:#042e53 url("location-quote-banner/background.webp") center/cover no-repeat;color:#fff}
+.koala-location-quote-banner__content{display:flex;flex-direction:column;align-items:center;gap:48px;width:100%;max-width:1148px;margin:0 auto}
+.koala-location-quote-banner__text{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:1056px;text-align:center}
+.koala-location-quote-banner .koala-location-quote-banner__eyebrow{font-family:"Alegreya Sans",sans-serif;font-size:24px;font-weight:400;line-height:normal;color:#afd56c;margin:0}
+.koala-location-content .koala-location-quote-banner h2,.editor-styles-wrapper .koala-location-quote-banner h2{font-family:"Alegreya Sans",sans-serif;font-size:36px;font-weight:700;line-height:46px;color:white;margin:0}
+.koala-location-quote-banner .koala-location-hero__quote{background:#afd56c;border-color:#afd56c;color:#042e53;padding:10px 30px}
+.koala-location-quote-banner>.wp-block-group__inner-container,.koala-location-quote-banner__content>.wp-block-group__inner-container,.koala-location-quote-banner__text>.wp-block-group__inner-container{display:contents}
+@media(max-width:991px){
+.koala-location-quote-banner{padding:48px 20px}
+.koala-location-quote-banner__content,.koala-location-quote-banner__text{align-items:flex-start;text-align:left}
+.koala-location-content .koala-location-quote-banner h2,.editor-styles-wrapper .koala-location-quote-banner h2{font-size:40px;line-height:46px}
+.koala-location-quote-banner .koala-location-hero__quote{font-size:20px;padding:14px 30px}
+}
+@media(max-width:359px){.koala-location-quote-banner .koala-location-hero__quote{font-size:17px;padding-inline:20px}}
+
+.koala-location-quote-banner .koala-location-hero__quote:hover{background:transparent!important;color:#fff!important;border-color:#fff!important}

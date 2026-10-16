@@ -1,0 +1,317 @@
+{
+  "source": "https://koalainsulation.local",
+  "media": [
+    {
+      "source_id": 48161,
+      "file": "2025/02/1M0A2622-copy-scaled-1.webp",
+      "url": "https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2025/02/1M0A2622-copy-scaled-1.webp/w=2560",
+      "title": "1M0A2622-copy-scaled"
+    },
+    {
+      "source_id": 48162,
+      "file": "2025/02/Frame-11.webp",
+      "url": "https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2025/02/Frame-11.webp/w=9999",
+      "title": "Frame-11"
+    },
+    {
+      "source_id": 8367,
+      "file": "2024/10/Frame-1321317057-1.svg",
+      "url": "https://koalainsulation.local/wp-content/uploads/2024/10/Frame-1321317057-1.svg",
+      "title": "Frame 1321317057"
+    }
+  ],
+  "forms": [
+    {
+      "id": 12,
+      "title": "Location Contact Form",
+      "fields": [
+        {
+          "id": 1,
+          "type": "text",
+          "label": "First Name"
+        },
+        {
+          "id": 3,
+          "type": "text",
+          "label": "Last Name"
+        },
+        {
+          "id": 4,
+          "type": "email",
+          "label": "Email Address"
+        },
+        {
+          "id": 5,
+          "type": "phone",
+          "label": "Phone Number"
+        },
+        {
+          "id": 6,
+          "type": "text",
+          "label": "ZIP Code"
+        },
+        {
+          "id": 9,
+          "type": "consent",
+          "label": "Marketing Email Consent"
+        },
+        {
+          "id": 10,
+          "type": "consent",
+          "label": "SMS Marketing Consent"
+        },
+        {
+          "id": 33,
+          "type": "consent",
+          "label": "SMS Consent"
+        },
+        {
+          "id": 11,
+          "type": "hidden",
+          "label": "HandL ( utm_source )"
+        },
+        {
+          "id": 12,
+          "type": "hidden",
+          "label": "HandL ( utm_medium )"
+        },
+        {
+          "id": 13,
+          "type": "hidden",
+          "label": "HandL ( utm_campaign )"
+        },
+        {
+          "id": 14,
+          "type": "hidden",
+          "label": "HandL ( utm_term )"
+        },
+        {
+          "id": 15,
+          "type": "hidden",
+          "label": "HandL ( utm_content )"
+        },
+        {
+          "id": 20,
+          "type": "hidden",
+          "label": "HandL ( gclid )"
+        },
+        {
+          "id": 17,
+          "type": "hidden",
+          "label": "location_slug"
+        },
+        {
+          "id": 18,
+          "type": "hidden",
+          "label": "location_id"
+        },
+        {
+          "id": 19,
+          "type": "hidden",
+          "label": "page_url"
+        },
+        {
+          "id": 22,
+          "type": "hidden",
+          "label": "gclid"
+        },
+        {
+          "id": 32,
+          "type": "hidden",
+          "label": "gbraid"
+        },
+        {
+          "id": 31,
+          "type": "hidden",
+          "label": "wbraid"
+        },
+        {
+          "id": 30,
+          "type": "hidden",
+          "label": "fbclid"
+        },
+        {
+          "id": 29,
+          "type": "hidden",
+          "label": "msclkid"
+        },
+        {
+          "id": 28,
+          "type": "hidden",
+          "label": "landing_page"
+        },
+        {
+          "id": 27,
+          "type": "hidden",
+          "label": "referrer"
+        },
+        {
+          "id": 26,
+          "type": "hidden",
+          "label": "form_timestamp"
+        },
+        {
+          "id": 25,
+          "type": "hidden",
+          "label": "service"
+        },
+        {
+          "id": 24,
+          "type": "hidden",
+          "label": "cta_text"
+        },
+        {
+          "id": 23,
+          "type": "hidden",
+          "label": "form_id"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Location Contact Form - Popup",
+      "fields": [
+        {
+          "id": 1,
+          "type": "text",
+          "label": "First Name"
+        },
+        {
+          "id": 3,
+          "type": "text",
+          "label": "Last Name"
+        },
+        {
+          "id": 5,
+          "type": "phone",
+          "label": "Phone Number"
+        },
+        {
+          "id": 6,
+          "type": "text",
+          "label": "ZIP Code"
+        },
+        {
+          "id": 4,
+          "type": "email",
+          "label": "Email Address"
+        },
+        {
+          "id": 9,
+          "type": "consent",
+          "label": "Marketing Email Consent"
+        },
+        {
+          "id": 10,
+          "type": "consent",
+          "label": "SMS Marketing Consent"
+        },
+        {
+          "id": 33,
+          "type": "consent",
+          "label": "SMS Consent"
+        },
+        {
+          "id": 11,
+          "type": "hidden",
+          "label": "HandL ( utm_source )"
+        },
+        {
+          "id": 12,
+          "type": "hidden",
+          "label": "HandL ( utm_medium )"
+        },
+        {
+          "id": 13,
+          "type": "hidden",
+          "label": "HandL ( utm_campaign )"
+        },
+        {
+          "id": 14,
+          "type": "hidden",
+          "label": "HandL ( utm_term )"
+        },
+        {
+          "id": 15,
+          "type": "hidden",
+          "label": "HandL ( utm_content )"
+        },
+        {
+          "id": 20,
+          "type": "hidden",
+          "label": "HandL ( gclid )"
+        },
+        {
+          "id": 17,
+          "type": "hidden",
+          "label": "location_slug"
+        },
+        {
+          "id": 18,
+          "type": "hidden",
+          "label": "location_id"
+        },
+        {
+          "id": 19,
+          "type": "hidden",
+          "label": "page_url"
+        },
+        {
+          "id": 22,
+          "type": "hidden",
+          "label": "gclid"
+        },
+        {
+          "id": 32,
+          "type": "hidden",
+          "label": "gbraid"
+        },
+        {
+          "id": 31,
+          "type": "hidden",
+          "label": "wbraid"
+        },
+        {
+          "id": 30,
+          "type": "hidden",
+          "label": "fbclid"
+        },
+        {
+          "id": 29,
+          "type": "hidden",
+          "label": "msclkid"
+        },
+        {
+          "id": 28,
+          "type": "hidden",
+          "label": "landing_page"
+        },
+        {
+          "id": 27,
+          "type": "hidden",
+          "label": "referrer"
+        },
+        {
+          "id": 26,
+          "type": "hidden",
+          "label": "form_timestamp"
+        },
+        {
+          "id": 25,
+          "type": "hidden",
+          "label": "service"
+        },
+        {
+          "id": 24,
+          "type": "hidden",
+          "label": "cta_text"
+        },
+        {
+          "id": 23,
+          "type": "hidden",
+          "label": "form_id"
+        }
+      ]
+    }
+  ]
+}

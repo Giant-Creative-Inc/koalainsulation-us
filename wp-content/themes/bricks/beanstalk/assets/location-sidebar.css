@@ -1,0 +1,39 @@
+/* Location sidebar: isolated from City Page and legacy form styles. */
+body:has([data-location-sidebar]){--koala-sidebar-width:350px}
+.koala-location-sidebar{font-family:"Filson pro",sans-serif;color:#042e53}
+.koala-location-sidebar__panel{box-sizing:border-box;position:fixed;inset:0 0 0 auto;width:var(--koala-sidebar-width);height:100dvh;overflow-y:auto;background:#f7fafd;z-index:10002;overscroll-behavior:contain;border:1px solid #042e53}
+.koala-location-sidebar__heading{box-sizing:border-box;min-height:0;padding:15px 20px;background:#afd56c;display:flex;align-items:center}
+.koala-location-sidebar__heading h2{font-family:system-ui,sans-serif;font-weight:700;font-size:19.5px;line-height:27.3px;margin:0;color:#042e53}
+.koala-location-sidebar__form{padding:38px 20px 20px}
+.koala-location-sidebar__form .gform_wrapper{margin:0!important}
+.koala-location-sidebar__form .gform_fields{display:flex!important;flex-direction:column;gap:10px!important}
+.koala-location-sidebar__form .gfield{margin:0!important;padding:0!important;width:100%!important}
+.koala-location-sidebar__form input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]),.koala-location-sidebar__form select{box-sizing:border-box!important;width:100%!important;min-height:42px!important;height:42px!important;border:1px solid #424a51!important;border-radius:1000px!important;padding:8px 16px!important;background:#f7fafd!important;color:#042e53!important;font-family:Montserrat,sans-serif!important;font-size:16px!important}
+.koala-location-sidebar__form input::placeholder{color:#4d545c;opacity:1}
+.koala-location-sidebar__form .gfield_label{font-size:14px;color:#042e53}
+.koala-location-sidebar__form .gfield_consent_label,.koala-location-sidebar__form .gfield_description{font-size:11px!important;line-height:1.8!important;color:#4d545c}
+.koala-location-sidebar__form .gform_footer{padding:0!important;margin-top:24px!important}
+.koala-location-sidebar__form input[type=submit],.koala-location-sidebar__form button[type=submit]{box-sizing:border-box;width:100%!important;min-height:52px!important;border:2px solid #afd56c!important;box-shadow:none!important;border-radius:1000px!important;background:#afd56c!important;color:#042e53!important;font-family:Montserrat,sans-serif!important;font-weight:700!important;font-size:16px!important;cursor:pointer}
+.koala-location-sidebar button:focus-visible,.koala-location-sidebar input:focus-visible{outline:3px solid #042e53;outline-offset:3px}
+.koala-location-sidebar__trigger,.koala-location-sidebar__close{display:none}
+@media(min-width:1230px){body:has([data-location-sidebar]) #brx-header,body:has([data-location-sidebar]) #brx-content,body:has([data-location-sidebar]) #brx-footer{width:calc(100% - var(--koala-sidebar-width));max-width:calc(100% - var(--koala-sidebar-width))}}
+@media(max-width:1229px){
+body:has([data-location-sidebar]){padding-bottom:60px}
+.koala-location-sidebar__panel{width:min(var(--koala-sidebar-width),100%);transform:translateX(100%);transition:transform .25s ease;visibility:hidden}
+.koala-location-sidebar.is-open .koala-location-sidebar__panel{transform:none;visibility:visible}
+.koala-location-sidebar__trigger{display:block;position:fixed;inset:auto 0 0;width:100%;min-height:60px;background:#afd56c;color:#042e53;border:0;font-size:20px;font-weight:700;z-index:10001;cursor:pointer}
+.koala-location-sidebar__close{display:block;position:absolute;top:8px;right:8px;width:36px;height:36px;border:0;border-radius:50%;background:white;color:#042e53;font-size:28px;cursor:pointer}
+body.koala-sidebar-open{overflow:hidden}
+}
+@media(prefers-reduced-motion:reduce){.koala-location-sidebar__panel{transition:none}}
+
+.koala-location-sidebar__form input[type=submit]:hover,.koala-location-sidebar__form button[type=submit]:hover{background:transparent!important;color:#042e53!important;border-color:#042e53!important}
+
+.koala-location-sidebar .koala-location-sidebar__form .gform_footer input[type=submit],.koala-location-sidebar .koala-location-sidebar__form .gform_footer button[type=submit]{border:2px solid #afd56c!important;box-shadow:none!important}
+.koala-location-sidebar .koala-location-sidebar__form .gform_footer input[type=submit]:hover,.koala-location-sidebar .koala-location-sidebar__form .gform_footer button[type=submit]:hover{background:transparent!important;color:#042e53!important;border-color:#042e53!important}
+
+.koala-location-sidebar__trigger:hover{background:transparent!important;color:#042e53!important;border-color:#042e53!important;border-style:solid;border-width:2px}
+
+.koala-location-sidebar__form input[type=submit],.koala-location-sidebar__form button[type=submit]{transition:background-color .2s ease,color .2s ease,border-color .2s ease,transform .2s ease}
+@media(hover:hover) and (pointer:fine){.koala-location-sidebar__form input[type=submit]:hover,.koala-location-sidebar__form button[type=submit]:hover{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){.koala-location-sidebar__form input[type=submit],.koala-location-sidebar__form button[type=submit]{transition:none!important;transform:none!important}}
