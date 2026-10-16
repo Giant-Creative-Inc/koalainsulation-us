@@ -17,6 +17,13 @@
             "phpcs --standard=WordPress-Extra includes/ koala-gravity-integration.php",
             "phpcs --standard=WordPress-Docs includes/ koala-gravity-integration.php"
         ],
-        "lint:fix": "phpcbf --standard=WordPress includes/ koala-gravity-integration.php"
+        "lint:fix": "phpcbf --standard=WordPress includes/ koala-gravity-integration.php",
+        "test": "@test:routing",
+        "test:routing": "php tests/zip-radius-regression.php",
+        "test:attribution": "node tests/attribution.test.js",
+        "test:all": [
+            "@test:routing",
+            "@test:attribution"
+        ]
     }
 }

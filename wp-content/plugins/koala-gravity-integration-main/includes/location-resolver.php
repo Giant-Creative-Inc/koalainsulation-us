@@ -235,10 +235,11 @@ function kgi_refresh_location_zip_index( $post_id ): void {
  * Resolution order:
  *   1. Exact owner of the submitted ZIP (the form's original location is
  *      preferred when it is among duplicate owners). No API request.
- *   2. When no location owns the ZIP, the nearest owning location within the
+ *   2. For an unowned ZIP, the page office within the configured radius.
+ *   3. Otherwise, the nearest owning location within the
  *      configured radius, from at most one cached zipcodeapi.com request. See
  *      kgi_lookup_nearby_locations().
- *   3. No location. The background job then sends the lead to unmatched lead
+ *   4. No location. The background job then sends the lead to unmatched lead
  *      routing so Koala can route it manually.
  *
  * When no location is returned, `kgi_zip_routing_status` records why
@@ -252,12 +253,12 @@ function kgi_refresh_location_zip_index( $post_id ): void {
  * @since 0.8.0 Uses a single zipcodeapi.com request. Failed lookups go to
  *              unmatched routing with the reason recorded.
  *
- * @param mixed[] $entry             Gravity Forms entry array.
- * @param WP_Post $original_location Location originally resolved from the form.
- * @param int     $entry_id          Gravity Forms entry ID for diagnostics.
+ * @param mixed[]      $entry             Gravity Forms entry array.
+ * @param WP_Post|null $original_location Location originally resolved from the form, if any.
+ * @param int          $entry_id          Gravity Forms entry ID for diagnostics.
  * @return WP_Post|null Location to use for the n8n location payload, or null.
  */
-function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_location, int $entry_id = 0 ): ?WP_Post {
+function kgi_resolve_location_for_entry_zip( array $entry, ?WP_Post $original_location, int $entry_id = 0 ): ?WP_Post {
 	$form_id      = (int) ( $entry['form_id'] ?? 0 );
 	$field_map    = kgi_get_field_map_for_form( $form_id );
 	$zip_field_id = $field_map['zip'] ?? '';
@@ -270,18 +271,21 @@ function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_loc
 	$owners = kgi_get_location_zip_index()[ $zip_code ] ?? array();
 
 	if ( ! empty( $owners ) ) {
+		if ( $entry_id > 0 ) {
+			gform_update_meta( $entry_id, 'kgi_zip_routing_status', 'exact_owner' );
+		}
 		if ( count( $owners ) > 1 ) {
 			kgi_log(
 				'Duplicate ZIP/postal-code ownership found. Original location is preferred when applicable.',
 				array(
 					'entry_id'           => $entry_id,
-					'original_location'  => $original_location->ID,
+					'original_location'  => ( $original_location->ID ?? 0 ),
 					'owner_location_ids' => $owners,
 				)
 			);
 		}
 
-		if ( in_array( $original_location->ID, $owners, true ) ) {
+		if ( in_array( ( $original_location->ID ?? 0 ), $owners, true ) ) {
 			return $original_location;
 		}
 
@@ -292,12 +296,22 @@ function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_loc
 		}
 	}
 
+	if ( $original_location && kgi_page_office_in_radius( $zip_code, $original_location, $entry_id ) ) {
+		if ( $entry_id > 0 ) {
+			gform_update_meta( $entry_id, 'kgi_zip_routing_status', 'page_radius' );
+		}
+		return $original_location;
+	}
+
 	$lookup = kgi_lookup_nearby_locations( $zip_code, 'form', $entry_id );
 
 	if ( ! empty( $lookup['locations'] ) ) {
 		$nearest = get_post( (int) $lookup['locations'][0]['location_id'] );
 
 		if ( $nearest instanceof WP_Post && kgi_get_location_post_type() === $nearest->post_type ) {
+			if ( $entry_id > 0 ) {
+				gform_update_meta( $entry_id, 'kgi_zip_routing_status', 'nearest_owned_zip' );
+			}
 			return $nearest;
 		}
 	}
@@ -312,19 +326,93 @@ function kgi_resolve_location_for_entry_zip( array $entry, WP_Post $original_loc
 
 	if ( $entry_id > 0 ) {
 		gform_update_meta( $entry_id, 'kgi_zip_routing_status', $reason );
-		gform_update_meta( $entry_id, 'kgi_original_location_id', $original_location->ID );
+		gform_update_meta( $entry_id, 'kgi_original_location_id', ( $original_location->ID ?? 0 ) );
 	}
 
 	kgi_log(
 		'ZIP/postal code could not be routed. Lead goes to unmatched routing.',
 		array(
 			'entry_id'             => $entry_id,
-			'original_location_id' => $original_location->ID,
+			'original_location_id' => ( $original_location->ID ?? 0 ),
 			'reason'               => $reason,
 		)
 	);
 
 	return null;
+}
+
+/**
+ * Checks distance from the submitted ZIP centre to the page office.
+ *
+ * Missing office coordinates or unavailable ZIP information cannot establish
+ * priority; the caller continues with the existing nearest-owned-ZIP lookup.
+ * ZIP coordinates are cached separately from radius results for 30 days.
+ *
+ * @param string  $code     Submitted ZIP/postal code.
+ * @param WP_Post $office   Submission-page office.
+ * @param int     $entry_id Entry for lookup diagnostics.
+ * @return bool Whether the office is within the configured radius.
+ */
+function kgi_page_office_in_radius( string $code, WP_Post $office, int $entry_id ): bool {
+	$lat = get_field( 'location_latitude', $office->ID );
+	$lng = get_field( 'location_logitude', $office->ID );
+	if ( ! is_numeric( $lng ) ) {
+		$lng = get_field( 'location_longitude', $office->ID );
+	}
+	if ( ! is_numeric( $lat ) || ! is_numeric( $lng ) || abs( (float) $lat ) > 90 || abs( (float) $lng ) > 180 ) {
+		kgi_log(
+			'Page-office radius check skipped: missing or invalid coordinates.',
+			array(
+				'entry_id'    => $entry_id,
+				'location_id' => $office->ID,
+			)
+		);
+		return false;
+	}
+	$request = kgi_zip_api_request_parts( $code );
+	if ( null === $request ) {
+		return false;
+	}
+	$cache_key = 'kgi_zipcoord_' . md5( $request['country'] . '_' . $request['code'] );
+	$point     = get_transient( $cache_key );
+	if ( ! is_array( $point ) ) {
+		$key = kgi_get_zipcodeapi_key();
+		if ( '' === $key || false !== get_transient( KGI_ZIPCODEAPI_COOLDOWN_TRANSIENT ) ) {
+			return false;
+		}
+		$url      = kgi_zipcodeapi_base_url( $request['country'], $key ) . '/info.json/' . rawurlencode( kgi_format_code_for_radius( $request['code'], $request['country'] ) ) . '/degrees';
+		$response = kgi_zipcodeapi_get( $url );
+		if ( isset( $response['error_type'] ) ) {
+			if ( 'rate_limited' === $response['error_type'] ) {
+				set_transient( KGI_ZIPCODEAPI_COOLDOWN_TRANSIENT, 1, HOUR_IN_SECONDS - ( time() % HOUR_IN_SECONDS ) + MINUTE_IN_SECONDS );
+			}
+			kgi_record_zip_lookup_error(
+				array(
+					'source'      => 'form',
+					'code'        => $code,
+					'entry_id'    => $entry_id,
+					'error_type'  => $response['error_type'],
+					'http_status' => $response['http_status'] ?? 0,
+					'message'     => $response['message'] ?? '',
+				)
+			);
+			return false;
+		}
+		$point = $response['body'];
+		if ( ! isset( $point['lat'], $point['lng'] ) || ! is_numeric( $point['lat'] ) || ! is_numeric( $point['lng'] ) || abs( (float) $point['lat'] ) > 90 || abs( (float) $point['lng'] ) > 180 ) {
+			return false;
+		}
+		$point = array(
+			'lat' => (float) $point['lat'],
+			'lng' => (float) $point['lng'],
+		);
+		set_transient( $cache_key, $point, KGI_ZIP_RADIUS_CACHE_TTL );
+	}
+	$lat_delta = deg2rad( (float) $point['lat'] - (float) $lat );
+	$lng_delta = deg2rad( (float) $point['lng'] - (float) $lng );
+	$haversine = sin( $lat_delta / 2 ) ** 2 + cos( deg2rad( (float) $lat ) ) * cos( deg2rad( (float) $point['lat'] ) ) * sin( $lng_delta / 2 ) ** 2;
+	$distance  = 3958.7613 * 2 * asin( sqrt( min( 1.0, max( 0.0, $haversine ) ) ) );
+	return $distance <= kgi_get_zip_fallback_radius() + 0.000000001;
 }
 
 /**

@@ -235,3 +235,30 @@ composer install   # first time only, installs phpcs + WPCS into vendor/
 composer lint       # checks all three rulesets
 composer lint:fix   # auto-fixes what phpcbf can safely fix, then re-run lint
 ```
+
+
+## ZIP routing priority (0.8.1)
+
+When there is no exact owner, routing first checks the submission-page office. If the submitted ZIP centre is within 60 straight-line miles of that office's saved coordinates, the page office wins even if another franchise is closer. Coordinates use `location_latitude` and `location_logitude` (with `location_longitude` as a fallback). The ZIP centre comes from zipcodeapi.com's `info.json` endpoint and is cached for 30 days. Missing office coordinates or an unavailable coordinate lookup skip page preference and continue to the nearest-owned-ZIP check.
+
+If the page office does not qualify, the plugin uses the existing 60-mile radius lookup to choose the closest owned ZIP and its franchise. This also runs for submissions without a page location. No qualifying franchise means unmatched/parking-lot routing. Radius responses remain cached for 30 days. Exact ownership always wins before distance checks. The public location search retains its existing nearest-owned-ZIP behavior.
+
+Entry routing reasons distinguish exact ownership, page-office radius priority, and nearest-owned-ZIP fallback. Delivery retries reuse a saved destination; previously successful entries are not automatically rerouted by this update. Google Sheet destination selection is unchanged for submissions with a page location.
+
+
+## Automated tests
+
+Run from the plugin source folder:
+
+```bash
+composer test                 # PHP routing regression suite
+composer lint                 # WordPress, WordPress-Extra and WordPress-Docs
+composer test:attribution     # JavaScript attribution tests; requires Node.js
+composer test:all             # Routing and attribution suites
+```
+
+The routing suite uses in-memory WordPress/Gravity Forms stubs and mocked HTTP responses. It covers exact and shared ZIP ownership, page-office preference, the inclusive 60-mile boundary, nearest-owned-ZIP fallback, no-page background jobs, parking-lot delivery and missing credentials, coordinate validation/caching, API failures/rate limits, duplicate-delivery prevention, public search and Canadian lookups. It does not submit real leads or contact a CRM.
+
+On this workstation the default Homebrew Node 25 cannot start because its simdjson library is missing. Use `PATH=/opt/homebrew/opt/node@22/bin:$PATH composer test:all` with the installed Node 22 runtime.
+
+Known separate test failure: the existing attribution test expects cached values to be overwritten, while the existing JavaScript preserves non-empty values. `composer test:attribution` and `composer test:all` fail that assertion; routing tests and PHP lint pass. This routing update does not change attribution behavior.
