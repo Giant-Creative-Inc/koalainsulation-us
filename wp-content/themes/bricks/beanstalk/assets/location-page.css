@@ -1,0 +1,12 @@
+/* Native location shell. Section-specific styles are added as sections migrate. */
+body.koala-beanstalk-location{margin:0;background:#fff;color:#042e53;font-family:"Filson Pro",sans-serif}
+.koala-beanstalk-location *{box-sizing:border-box}
+.koala-location-content{min-height:260px;padding:0}
+.koala-location-content h1{font-family:"Alegreya Sans",sans-serif;font-size:clamp(32px,4vw,56px);line-height:1.15;margin:0 0 24px}
+@media(min-width:1230px){.koala-location-layout,.koala-beanstalk-location .beanstalk-header{width:calc(100% - var(--koala-sidebar-width,350px))}}
+
+/* Match the menu's centered 1440px outer container and its inner gutters. */
+.koala-beanstalk-location{--koala-content-max-width:1440px;--koala-content-gutter:40px}
+.koala-beanstalk-location .beanstalk-header__inner{max-width:var(--koala-content-max-width);padding-inline:var(--koala-content-gutter)}
+.koala-location-content :is(.koala-location-hero,.koala-location-partners,.koala-location-services,.koala-location-overview,.koala-location-quote-banner,.koala-location-feature,.koala-location-energy,.koala-location-financing,.koala-location-lower,.koala-location-final-cta,.koala-location-promo,.koala-location-reviews){padding-inline:max(var(--koala-content-gutter),calc((100% - var(--koala-content-max-width))/2 + var(--koala-content-gutter)))}
+@media(max-width:991px){.koala-beanstalk-location{--koala-content-gutter:20px}}

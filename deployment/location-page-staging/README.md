@@ -1,0 +1,13 @@
+# Koala staging preparation
+
+This package transfers the rebuilt Traverse City pilot only. It does not replace the database, ACF data, forms, entries, feeds, header/footer parts, or other locations. The manifest includes reference copies of four existing block records for review; only Traverse City is selected by the importer.
+
+1. Back up staging database and files using the hosting backup system.
+2. Deploy the production Beanstalk module and the reviewed parent functions.php changes. Include assets, patterns, generated critical/deferred CSS, fonts and WebP files. Exclude vendor, tests, tools, composer files and testing configuration. Do not overwrite a differing parent functions.php blindly.
+3. Configure staging with `define('WP_ENVIRONMENT_TYPE', 'staging');` in wp-config.php before the stop-editing line (or the equivalent existing environment variable). Never set this on production.
+4. Put this package outside the public web root. From the staging WordPress root, run `wp eval-file /absolute/path/to/package/migrate.php` for preflight. Use the actual package path. It validates Gravity Forms 12/13 field identity and the three static attachment paths. Any mismatch blocks all database writes.
+5. Review preflight, then run the same command with `apply` appended. This saves a previous-content backup to the path printed by the command and verifies persisted readback. Keep that backup securely with the hosting backup.
+6. Purge staging page/CDN caches. Visit `/traverse-city?koala_beanstalk_sidebar=1`. Normal location URLs still use Bricks. Test sidebar inputs, popup open/close/reopen and validation, mobile accordions, video lightboxes, dynamic phone/reviews/NAP, header/footer and absence of Bricks frontend assets. Confirm the popup endpoint and stylesheet are requested only on first open. Do not submit real leads during QA.
+7. Check staging HTML for Local URLs; check media and outbound links. Verify map API domain restrictions for the staging hostname. Confirm tracking policy on staging and repeat Lighthouse while logged out. The Local Nginx cache rule does not configure the hosting server/CDN; request equivalent static-asset caching there separately.
+
+No push, deployment, staging database write, or hosting configuration change has been performed by preparing this package. Existing staging ACF values and integrations are authoritative; compare them during QA rather than copying Local metadata wholesale. Newly registered patterns require no separate database import. If customized global parts differ, review the manifest against staging before a separate targeted transfer.

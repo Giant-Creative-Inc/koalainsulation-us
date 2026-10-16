@@ -1,0 +1,347 @@
+{
+  "source": "https://koalainsulation.local",
+  "records": [
+    {
+      "id": 88181,
+      "type": "beanstalk-part",
+      "slug": "header",
+      "content": "<!-- wp:beanstalk/header /-->",
+      "local_urls": 0
+    },
+    {
+      "id": 88182,
+      "type": "beanstalk-part",
+      "slug": "footer",
+      "content": "<!-- wp:beanstalk/footer /-->",
+      "local_urls": 0
+    },
+    {
+      "id": 4923,
+      "type": "location",
+      "slug": "traverse-city",
+      "content": "<!-- wp:group {\"tagName\":\"section\",\"metadata\":{\"name\":\"koala-location-hero\"},\"className\":\"koala-location-hero\"} -->\n<section class=\"wp-block-group koala-location-hero\">\n<!-- wp:group {\"className\":\"koala-location-hero__copy\"} -->\n<div class=\"wp-block-group koala-location-hero__copy\">\n<!-- wp:heading {\"level\":1,\"metadata\":{\"name\":\"koala-location-hero-heading\"}} --><h1 class=\"wp-block-heading\">Traverse City Insulation Installation Experts</h1><!-- /wp:heading -->\n<!-- wp:paragraph {\"metadata\":{\"name\":\"koala-location-hero-introduction\"},\"className\":\"koala-location-hero__introduction\"} --><p class=\"koala-location-hero__introduction\">Achieve superior energy efficiency and home comfort with professional insulation installation in Traverse City. Koala Insulation of Traverse City offers reliable insulation services and quality products that provide measurable benefits for your thermal performance.</p><!-- /wp:paragraph -->\n<!-- wp:koala/location-hero-quote {\"label\":\"Get a FREE Quote\"} /-->\n</div>\n<!-- /wp:group -->\n<!-- wp:koala/location-hero-media {\"imageId\":0,\"provider\":\"\",\"videoId\":\"\",\"privacyHash\":\"\",\"posterId\":0} /-->\n<!-- wp:koala/location-hero-reviews {\"heading\":\"\"} /-->\n</section>\n<!-- /wp:group -->\n\n<!-- wp:group {\"tagName\":\"section\",\"metadata\":{\"name\":\"koala-location-quote-banner\"},\"className\":\"koala-location-quote-banner\"} -->\n<section class=\"wp-block-group koala-location-quote-banner\">\n<!-- wp:group {\"className\":\"koala-location-quote-banner__content\"} -->\n<div class=\"wp-block-group koala-location-quote-banner__content\">\n<!-- wp:group {\"className\":\"koala-location-quote-banner__text\"} -->\n<div class=\"wp-block-group koala-location-quote-banner__text\">\n<!-- wp:paragraph {\"className\":\"koala-location-quote-banner__eyebrow\"} -->\n<p class=\"koala-location-quote-banner__eyebrow\">Get a Quote</p>\n<!-- /wp:paragraph -->\n<!-- wp:heading {\"className\":\"koala-location-quote-banner__heading\"} -->\n<h2 class=\"wp-block-heading koala-location-quote-banner__heading\">Ready to start your insulation project? <mark style=\"background-color:rgba(0, 0, 0, 0);color:#afd56c\" class=\"has-inline-color\">Get a FREE quote</mark> from your local Koala Insulation team today.</h2>\n<!-- /wp:heading -->\n</div>\n<!-- /wp:group -->\n<!-- wp:koala/location-hero-quote {\"label\":\"Get a FREE Quote\"} /-->\n</div>\n<!-- /wp:group -->\n</section>\n<!-- /wp:group -->\n\n<!-- wp:group {\"className\":\"koala-location-feature koala-location-benefits\",\"metadata\":{\"name\":\"koala-location-benefits\"},\"tagName\":\"section\"} -->\n<section class=\"wp-block-group koala-location-feature koala-location-benefits\">\n<!-- wp:group {\"className\":\"koala-location-feature__heading\"} -->\n<div class=\"wp-block-group koala-location-feature__heading\">\n<!-- wp:heading {\"level\":2} -->\n<h2 class=\"wp-block-heading\"><span class=\"koala-location-feature__lead\">We\u2019ll make your space more</span> <mark style=\"background-color:rgba(0, 0, 0, 0);color:#8bc34a\" class=\"has-inline-color\">Comfortable</mark></h2>\n<!-- /wp:heading -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__leaf\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__leaf\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/1901.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n\n</div>\n<!-- /wp:group -->\n<!-- wp:group {\"className\":\"koala-location-feature__images\"} -->\n<div class=\"wp-block-group koala-location-feature__images\">\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/48156.webp\" alt=\"Professional insulation installation service for residential or commercial property improvement.\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/1982.webp\" alt=\"Professional insulation installation service for residential or commercial property improvement.\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/1567.webp\" alt=\"Professional insulation installation service for residential or commercial property improvement.\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/287.webp\" alt=\"Professional insulation installation service for residential or commercial property improvement.\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/2335.webp\" alt=\"Professional insulation installation service for residential or commercial property improvement.\"/></figure>\n<!-- /wp:image -->\n\n</div>\n<!-- /wp:group -->\n<!-- wp:group {\"className\":\"koala-location-feature__items\"} -->\n<div class=\"wp-block-group koala-location-feature__items\">\n<!-- wp:details {\"showContent\":true,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\" open><summary>Lower Energy Bills</summary><!-- wp:paragraph -->\n<p>Insulation can lower energy bills substantially. The US Department of Energy estimates that 56% of the energy used in a home goes to heating and cooling. Let us give you reduced monthly costs!</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n<!-- wp:details {\"showContent\":false,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\"><summary>Protect Your Family from Mold, Allergens, and Fire</summary><!-- wp:paragraph -->\n<p>Insulation, Air Sealing, and Crawlspace Encapsulations create a moisture barrier, keeping moisture, mold, allergens, and pests out of your home. The lack of proper insulation can also be a fire hazard. Enjoy your home stress free by knowing that you and your family are protected!</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n<!-- wp:details {\"showContent\":false,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\"><summary>Affordable R-Value</summary><!-- wp:paragraph -->\n<p>Blown-in Insulation is very cost effective and allows you to get better comfort and lower monthly costs at an affordable price point. Blown In insulation is a no brainer as a homeowner. Let us help you save on the upfront costs!</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n<!-- wp:details {\"showContent\":false,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\"><summary>Reduced Carbon Footprint</summary><!-- wp:paragraph -->\n<p>By reducing energy waste, you&#x27;re helping the environment. Let us help you do your part for a brighter tomorrow!</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n<!-- wp:details {\"showContent\":false,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\"><summary>Pays For Itself Over Time</summary><!-- wp:paragraph -->\n<p>By saving on your electricity bill each month, your insulation upgrade will pay for itself over time and you\u2019ll save money for years to come . Let us give you a return on your investment!</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n\n</div>\n<!-- /wp:group -->\n\n</section>\n<!-- /wp:group -->\n\n<!-- wp:group {\"className\":\"koala-location-energy\",\"metadata\":{\"name\":\"koala-location-energy\"},\"tagName\":\"section\"} -->\n<section class=\"wp-block-group koala-location-energy\">\n<!-- wp:group {\"className\":\"koala-location-energy__copy\"} -->\n<div class=\"wp-block-group koala-location-energy__copy\">\n<!-- wp:heading {\"level\":2} -->\n<h2 class=\"wp-block-heading\">Energy Efficiency</h2>\n<!-- /wp:heading -->\n<!-- wp:paragraph -->\n<p>Proper insulation increases your home&#x27;s efficiency, reduces energy loss out of the roof and floors, and lowers monthly energy costs.</p>\n<!-- /wp:paragraph -->\n<!-- wp:buttons -->\n<div class=\"wp-block-buttons\"><!-- wp:button {\"className\":\"koala-location-energy__learn\"} -->\n<div class=\"wp-block-button koala-location-energy__learn\"><a class=\"wp-block-button__link wp-element-button\" href=\"/homeowner-incentives\">Learn More about your potential savings</a></div>\n<!-- /wp:button --></div>\n<!-- /wp:buttons -->\n<!-- wp:koala/location-hero-quote {\"label\":\"Get a FREE Quote\"} /-->\n\n</div>\n<!-- /wp:group -->\n<!-- wp:group {\"className\":\"koala-location-energy__graphic\"} -->\n<div class=\"wp-block-group koala-location-energy__graphic\">\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-energy__layer\"} -->\n<figure class=\"wp-block-image size-full koala-location-energy__layer\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/22942.webp\" alt=\"Insulation improves home energy efficiency\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-energy__layer\"} -->\n<figure class=\"wp-block-image size-full koala-location-energy__layer\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/5369.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-energy__layer\"} -->\n<figure class=\"wp-block-image size-full koala-location-energy__layer\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/47811.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-energy__layer\"} -->\n<figure class=\"wp-block-image size-full koala-location-energy__layer\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/5371.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-energy__layer\"} -->\n<figure class=\"wp-block-image size-full koala-location-energy__layer\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/22945.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-energy__layer\"} -->\n<figure class=\"wp-block-image size-full koala-location-energy__layer\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/5379.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-energy__layer\"} -->\n<figure class=\"wp-block-image size-full koala-location-energy__layer\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/5380.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-energy__layer\"} -->\n<figure class=\"wp-block-image size-full koala-location-energy__layer\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/5381.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n\n</div>\n<!-- /wp:group -->\n\n</section>\n<!-- /wp:group -->\n\n<!-- wp:group {\"className\":\"koala-location-feature koala-location-expect\",\"metadata\":{\"name\":\"koala-location-expect\"},\"tagName\":\"section\"} -->\n<section class=\"wp-block-group koala-location-feature koala-location-expect\">\n<!-- wp:group {\"className\":\"koala-location-feature__heading\"} -->\n<div class=\"wp-block-group koala-location-feature__heading\">\n<!-- wp:heading {\"level\":2} -->\n<h2 class=\"wp-block-heading\"><span class=\"koala-location-feature__lead\">What to Expect</span> <mark style=\"background-color:rgba(0, 0, 0, 0);color:#8bc34a\" class=\"has-inline-color\">In 5 Easy</mark> Steps</h2>\n<!-- /wp:heading -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__leaf\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__leaf\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/1901.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n\n</div>\n<!-- /wp:group -->\n<!-- wp:group {\"className\":\"koala-location-feature__images\"} -->\n<div class=\"wp-block-group koala-location-feature__images\">\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/48160.webp\" alt=\"Professional insulation installation service for residential or commercial property improvement.\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/9779.webp\" alt=\"Professional insulation installation team from Koala Insulation providing residential or commercial services.\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/9780.webp\" alt=\"Professional insulation services client smiling while reviewing a service brochure for home energy efficiency improvements.\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/9576.webp\" alt=\"Professional insulation installation service for residential or commercial property improvement.\"/></figure>\n<!-- /wp:image -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-location-feature__photo\"} -->\n<figure class=\"wp-block-image size-full koala-location-feature__photo\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-features/9255.webp\" alt=\"Professional home insulation services to improve energy efficiency and boost property value.\"/></figure>\n<!-- /wp:image -->\n\n</div>\n<!-- /wp:group -->\n<!-- wp:group {\"className\":\"koala-location-feature__items\"} -->\n<div class=\"wp-block-group koala-location-feature__items\">\n<!-- wp:details {\"showContent\":true,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\" open><summary>Schedule Your Free Evaluation</summary><!-- wp:paragraph -->\n<p>Contact your nearest Koala Insulation Location, recognized as the #1 trusted insulation expert nationwide. We will discuss your needs and schedule an appointment to provide a free evaluation.</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n<!-- wp:details {\"showContent\":false,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\"><summary>Home Efficiency Assessment &amp; Estimate</summary><!-- wp:paragraph -->\n<p>One of our friendly insulation experts will perform a thorough home efficiency assessment. Your insulation expert will then review the assessment findings, the science behind these findings, and why any changes are needed. Lastly, your insulation expert will provide the best option that fits your home efficiency needs and your budget.</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n<!-- wp:details {\"showContent\":false,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\"><summary>Schedule Your Insulation Service</summary><!-- wp:paragraph -->\n<p>We will schedule your insulation service for the soonest availability that fits your schedule because we understand that your home insulation is a priority!</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n<!-- wp:details {\"showContent\":false,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\"><summary>Installation</summary><!-- wp:paragraph -->\n<p>Our team of highly skilled insulation technicians will install your premium insulation solution in as little as two hours. We treat your home like our own and take time to leave it cleaner than it was before.</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n<!-- wp:details {\"showContent\":false,\"className\":\"koala-location-feature__item\"} -->\n<details class=\"wp-block-details koala-location-feature__item\"><summary>Enjoy Your Comfortable &amp; Efficient Home</summary><!-- wp:paragraph -->\n<p>Enjoy a more efficient home with lower energy bills and improved comfort year-round. Enjoy your improved home stress free knowing that Koala Insulation stands behind their work! Reach out to your Koala Insulation team anytime for support.</p>\n<!-- /wp:paragraph -->\n</details>\n<!-- /wp:details -->\n\n</div>\n<!-- /wp:group -->\n\n</section>\n<!-- /wp:group -->\n\n<!-- wp:group {\"tagName\":\"section\",\"metadata\":{\"name\":\"koala-location-financing\"},\"className\":\"koala-location-financing\"} -->\n<section class=\"wp-block-group koala-location-financing\">\n<!-- wp:group {\"className\":\"koala-location-financing__content\"} -->\n<div class=\"wp-block-group koala-location-financing__content\">\n<!-- wp:paragraph {\"className\":\"koala-location-financing__eyebrow\"} -->\n<p class=\"koala-location-financing__eyebrow\">Financing</p>\n<!-- /wp:paragraph -->\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Flexible Financing Options Available\u2014 <mark style=\"background-color:rgba(0, 0, 0, 0);color:#afd56c\" class=\"has-inline-color\">See If You Prequalify</mark> for Your Insulation Project!<sup><a href=\"#footnote\">1</a></sup></h2>\n<!-- /wp:heading -->\n<!-- wp:buttons {\"className\":\"koala-location-financing__apply\"} -->\n<div class=\"wp-block-buttons koala-location-financing__apply\"><!-- wp:button -->\n<div class=\"wp-block-button\"><a class=\"wp-block-button__link wp-element-button\" href=\"#location-financing\">Apply Now</a></div>\n<!-- /wp:button --></div>\n<!-- /wp:buttons -->\n</div>\n<!-- /wp:group -->\n</section>\n<!-- /wp:group -->\n\n<!-- wp:group {\"metadata\":{\"name\":\"koala-location-reviews\"}} -->\n<div class=\"wp-block-group\"><!-- wp:koala/location-community {\"section\":\"reviews\"} /--></div>\n<!-- /wp:group -->\n\n<!-- wp:group {\"metadata\":{\"name\":\"koala-location-communities\"}} -->\n<div class=\"wp-block-group\"><!-- wp:koala/location-community {\"section\":\"communities\"} /--></div>\n<!-- /wp:group -->\n\n<!-- wp:group {\"metadata\":{\"name\":\"koala-location-nap\"}} -->\n<div class=\"wp-block-group\"><!-- wp:koala/location-community {\"section\":\"nap\"} /--></div>\n<!-- /wp:group -->\n\n<!-- wp:group {\"metadata\":{\"name\":\"koala-location-offers\"}} -->\n<div class=\"wp-block-group\"><!-- wp:koala/location-community {\"section\":\"offers\"} /--></div>\n<!-- /wp:group -->\n\n<!-- wp:group {\"tagName\":\"section\",\"metadata\":{\"name\":\"koala-location-education\"},\"className\":\"koala-location-lower koala-location-education\"} -->\n<section class=\"wp-block-group koala-location-lower koala-location-education\">\n<!-- wp:group -->\n<div class=\"wp-block-group\"><!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Insulation Education</h2>\n<!-- /wp:heading -->\n<!-- wp:paragraph -->\n<p>Learn why insulation is critical to your home\u2019s energy efficiency and your family\u2019s comfort.</p>\n<!-- /wp:paragraph -->\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li><a href=\"https://www.energy.gov/sites/prod/files/2013/11/f5/insulation_guide.pdf\">U.S. Department of Energy Insulation Guide</a></li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li><a href=\"https://insulationinstitute.org/news-industry-issues/news-and-industry-issues/press-release/\">Insulation Institute Resources</a></li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li><a href=\"https://www.insulate.org/homeowners-frequently-asked-questions/\">Homeowner Insulation FAQs</a></li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list --></div>\n<!-- /wp:group -->\n<!-- wp:buttons -->\n<div class=\"wp-block-buttons\"><!-- wp:button -->\n<div class=\"wp-block-button\"><a class=\"wp-block-button__link wp-element-button\" href=\"/blog/\">Learn More</a></div>\n<!-- /wp:button --></div>\n<!-- /wp:buttons --></section>\n<!-- /wp:group -->\n\n<!-- wp:group {\"tagName\":\"section\",\"metadata\":{\"name\":\"koala-location-final-cta\"},\"className\":\"koala-city-final-cta koala-location-final-cta\"} -->\n<section class=\"wp-block-group koala-city-final-cta koala-location-final-cta\">\n<!-- wp:group {\"className\":\"koala-city-final-cta__content\",\"layout\":{\"type\":\"default\"}} -->\n<div class=\"wp-block-group koala-city-final-cta__content\">\n<!-- wp:heading {\"className\":\"koala-city-final-cta__heading\"} -->\n<h2 class=\"wp-block-heading koala-city-final-cta__heading\">Get a quote</h2>\n<!-- /wp:heading -->\n<!-- wp:paragraph {\"className\":\"koala-city-final-cta__supporting-copy\"} -->\n<p class=\"koala-city-final-cta__supporting-copy\">Ready to start your insulation project? Get a free quote from your local Koala Insulation team today.</p>\n<!-- /wp:paragraph -->\n<!-- wp:koala/location-hero-quote {\"label\":\"Get a FREE Quote\"} /-->\n</div>\n<!-- /wp:group -->\n<!-- wp:image {\"sizeSlug\":\"full\",\"linkDestination\":\"none\",\"className\":\"koala-city-final-cta__decoration\"} -->\n<figure class=\"wp-block-image size-full koala-city-final-cta__decoration\"><img src=\"http://koalainsulation.local/wp-content/themes/bricks/beanstalk/assets/location-final-cta/decoration.webp\" alt=\"\"/></figure>\n<!-- /wp:image -->\n</section>\n<!-- /wp:group -->\n",
+      "local_urls": 21
+    },
+    {
+      "id": 4806,
+      "type": "location",
+      "slug": "sw-chicago",
+      "content": "<!-- wp:paragraph -->\r\n<p>Experience comfort and efficiency in your home with top quality insulation solutions. Our team of insulation experts are here to help you increase your efficiency and save money</p>\r\n<!-- /wp:paragraph -->",
+      "local_urls": 0
+    }
+  ],
+  "media": [
+    {
+      "source_id": 48161,
+      "file": "2025/02/1M0A2622-copy-scaled-1.webp",
+      "url": "https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2025/02/1M0A2622-copy-scaled-1.webp/w=2560",
+      "title": "1M0A2622-copy-scaled"
+    },
+    {
+      "source_id": 48162,
+      "file": "2025/02/Frame-11.webp",
+      "url": "https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2025/02/Frame-11.webp/w=9999",
+      "title": "Frame-11"
+    },
+    {
+      "source_id": 8367,
+      "file": "2024/10/Frame-1321317057-1.svg",
+      "url": "https://koalainsulation.local/wp-content/uploads/2024/10/Frame-1321317057-1.svg",
+      "title": "Frame 1321317057"
+    }
+  ],
+  "forms": [
+    {
+      "id": 12,
+      "title": "Location Contact Form",
+      "fields": [
+        {
+          "id": 1,
+          "type": "text",
+          "label": "First Name"
+        },
+        {
+          "id": 3,
+          "type": "text",
+          "label": "Last Name"
+        },
+        {
+          "id": 4,
+          "type": "email",
+          "label": "Email Address"
+        },
+        {
+          "id": 5,
+          "type": "phone",
+          "label": "Phone Number"
+        },
+        {
+          "id": 6,
+          "type": "text",
+          "label": "ZIP Code"
+        },
+        {
+          "id": 9,
+          "type": "consent",
+          "label": "Marketing Email Consent"
+        },
+        {
+          "id": 10,
+          "type": "consent",
+          "label": "SMS Marketing Consent"
+        },
+        {
+          "id": 33,
+          "type": "consent",
+          "label": "SMS Consent"
+        },
+        {
+          "id": 11,
+          "type": "hidden",
+          "label": "HandL ( utm_source )"
+        },
+        {
+          "id": 12,
+          "type": "hidden",
+          "label": "HandL ( utm_medium )"
+        },
+        {
+          "id": 13,
+          "type": "hidden",
+          "label": "HandL ( utm_campaign )"
+        },
+        {
+          "id": 14,
+          "type": "hidden",
+          "label": "HandL ( utm_term )"
+        },
+        {
+          "id": 15,
+          "type": "hidden",
+          "label": "HandL ( utm_content )"
+        },
+        {
+          "id": 20,
+          "type": "hidden",
+          "label": "HandL ( gclid )"
+        },
+        {
+          "id": 17,
+          "type": "hidden",
+          "label": "location_slug"
+        },
+        {
+          "id": 18,
+          "type": "hidden",
+          "label": "location_id"
+        },
+        {
+          "id": 19,
+          "type": "hidden",
+          "label": "page_url"
+        },
+        {
+          "id": 22,
+          "type": "hidden",
+          "label": "gclid"
+        },
+        {
+          "id": 32,
+          "type": "hidden",
+          "label": "gbraid"
+        },
+        {
+          "id": 31,
+          "type": "hidden",
+          "label": "wbraid"
+        },
+        {
+          "id": 30,
+          "type": "hidden",
+          "label": "fbclid"
+        },
+        {
+          "id": 29,
+          "type": "hidden",
+          "label": "msclkid"
+        },
+        {
+          "id": 28,
+          "type": "hidden",
+          "label": "landing_page"
+        },
+        {
+          "id": 27,
+          "type": "hidden",
+          "label": "referrer"
+        },
+        {
+          "id": 26,
+          "type": "hidden",
+          "label": "form_timestamp"
+        },
+        {
+          "id": 25,
+          "type": "hidden",
+          "label": "service"
+        },
+        {
+          "id": 24,
+          "type": "hidden",
+          "label": "cta_text"
+        },
+        {
+          "id": 23,
+          "type": "hidden",
+          "label": "form_id"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Location Contact Form - Popup",
+      "fields": [
+        {
+          "id": 1,
+          "type": "text",
+          "label": "First Name"
+        },
+        {
+          "id": 3,
+          "type": "text",
+          "label": "Last Name"
+        },
+        {
+          "id": 5,
+          "type": "phone",
+          "label": "Phone Number"
+        },
+        {
+          "id": 6,
+          "type": "text",
+          "label": "ZIP Code"
+        },
+        {
+          "id": 4,
+          "type": "email",
+          "label": "Email Address"
+        },
+        {
+          "id": 9,
+          "type": "consent",
+          "label": "Marketing Email Consent"
+        },
+        {
+          "id": 10,
+          "type": "consent",
+          "label": "SMS Marketing Consent"
+        },
+        {
+          "id": 33,
+          "type": "consent",
+          "label": "SMS Consent"
+        },
+        {
+          "id": 11,
+          "type": "hidden",
+          "label": "HandL ( utm_source )"
+        },
+        {
+          "id": 12,
+          "type": "hidden",
+          "label": "HandL ( utm_medium )"
+        },
+        {
+          "id": 13,
+          "type": "hidden",
+          "label": "HandL ( utm_campaign )"
+        },
+        {
+          "id": 14,
+          "type": "hidden",
+          "label": "HandL ( utm_term )"
+        },
+        {
+          "id": 15,
+          "type": "hidden",
+          "label": "HandL ( utm_content )"
+        },
+        {
+          "id": 20,
+          "type": "hidden",
+          "label": "HandL ( gclid )"
+        },
+        {
+          "id": 17,
+          "type": "hidden",
+          "label": "location_slug"
+        },
+        {
+          "id": 18,
+          "type": "hidden",
+          "label": "location_id"
+        },
+        {
+          "id": 19,
+          "type": "hidden",
+          "label": "page_url"
+        },
+        {
+          "id": 22,
+          "type": "hidden",
+          "label": "gclid"
+        },
+        {
+          "id": 32,
+          "type": "hidden",
+          "label": "gbraid"
+        },
+        {
+          "id": 31,
+          "type": "hidden",
+          "label": "wbraid"
+        },
+        {
+          "id": 30,
+          "type": "hidden",
+          "label": "fbclid"
+        },
+        {
+          "id": 29,
+          "type": "hidden",
+          "label": "msclkid"
+        },
+        {
+          "id": 28,
+          "type": "hidden",
+          "label": "landing_page"
+        },
+        {
+          "id": 27,
+          "type": "hidden",
+          "label": "referrer"
+        },
+        {
+          "id": 26,
+          "type": "hidden",
+          "label": "form_timestamp"
+        },
+        {
+          "id": 25,
+          "type": "hidden",
+          "label": "service"
+        },
+        {
+          "id": 24,
+          "type": "hidden",
+          "label": "cta_text"
+        },
+        {
+          "id": 23,
+          "type": "hidden",
+          "label": "form_id"
+        }
+      ]
+    }
+  ]
+}

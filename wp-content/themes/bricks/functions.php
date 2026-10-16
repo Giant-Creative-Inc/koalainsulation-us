@@ -2801,13 +2801,11 @@ function output_custom_or_default_gtm_head()
         };
 
         // --- Delay GTM, reCAPTCHA and Hotjar until user interaction ---
-        var scriptsLoaded = false;
-
-        async function loadThirdPartyScripts() {
-            if (scriptsLoaded) return;
-            scriptsLoaded = true;
-            window.koalaInteractionScriptsLoaded = true;
-
+        // One GTM promise shared by deferred native pages and interaction loading.
+        var gtmLoadPromise;
+        window.koalaLoadLocationGtm = function () {
+            if (gtmLoadPromise) return gtmLoadPromise;
+            gtmLoadPromise = (async function () {
             await window.koalaInjectLocationMarkup(
                 window.koalaLocationHeadMarkup,
                 document.head
@@ -2816,6 +2814,30 @@ function output_custom_or_default_gtm_head()
                 window.koalaLocationBodyMarkup,
                 document.body
             );
+
+            // --- 3. Load national GTM ---
+            if (!document.querySelector('script[src*="id=GTM-KSNRRFL8"]')) {
+                (function(w, d, s, l, i) {
+                    w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+                    var f = d.getElementsByTagName(s)[0],
+                        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+                    j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+                    f.parentNode.insertBefore(j, f);
+                })(window, document, 'script', 'dataLayer', 'GTM-KSNRRFL8');
+            }
+
+            })();
+            return gtmLoadPromise;
+        };
+
+        var scriptsLoaded = false;
+
+        async function loadThirdPartyScripts() {
+            if (scriptsLoaded) return;
+            scriptsLoaded = true;
+            window.koalaInteractionScriptsLoaded = true;
+
+            await window.koalaLoadLocationGtm();
 
             (function doLoad() {
 
@@ -2828,17 +2850,6 @@ function output_custom_or_default_gtm_head()
             // --- 2. Load Hotjar (sampled: ~1 in 100 sessions) ---
             if (Math.random() < 0.01) {
                 window.koalaLoadHotjar();
-            }
-
-            // --- 3. Load national GTM ---
-            if (!document.querySelector('script[src*="id=GTM-KSNRRFL8"]')) {
-                (function(w, d, s, l, i) {
-                    w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-                    var f = d.getElementsByTagName(s)[0],
-                        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
-                    j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-                    f.parentNode.insertBefore(j, f);
-                })(window, document, 'script', 'dataLayer', 'GTM-KSNRRFL8');
             }
 
             })();

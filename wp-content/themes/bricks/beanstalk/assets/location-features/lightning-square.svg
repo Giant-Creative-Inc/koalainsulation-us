@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="29" height="29" viewBox="0 0 29 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="lightning-square">
+<path id="Icon" d="M21.75 3.625H7.25C5.24797 3.625 3.625 5.24797 3.625 7.25V21.75C3.625 23.752 5.24797 25.375 7.25 25.375H21.75C23.752 25.375 25.375 23.752 25.375 21.75V7.25C25.375 5.24797 23.752 3.625 21.75 3.625Z" stroke="#042E53" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="lightning-detail" d="M16.3125 8.45833L10.875 15.1042H14.5L12.6875 20.5417L18.125 13.8958H14.5L16.3125 8.45833Z" stroke="#042E53" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

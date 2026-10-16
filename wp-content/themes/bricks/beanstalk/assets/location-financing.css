@@ -1,0 +1,13 @@
+.koala-location-financing{box-sizing:border-box;padding:96px 64px;background:#042e53 url("location-quote-banner/background.webp") center/cover no-repeat;color:white}
+.koala-location-financing__content{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:1056px;margin:auto;text-align:center}
+.koala-location-financing .wp-block-group__inner-container{display:contents}
+.koala-location-financing__eyebrow{margin:0;color:#afd56c;font:400 24px/1.2 "Alegreya Sans",sans-serif}
+.koala-location-content .koala-location-financing h2,.editor-styles-wrapper .koala-location-financing h2{margin:0;color:white;font:700 36px/46px "Alegreya Sans",sans-serif}
+.koala-location-financing sup{font-size:60%;line-height:0;vertical-align:super}
+.koala-location-financing sup a{color:white;text-decoration:underline}
+.koala-location-financing__apply{margin:36px 0 0}
+.koala-location-financing .wp-block-button__link{box-sizing:border-box;display:inline-flex;justify-content:center;align-items:center;padding:10px 30px;border:2px solid white;border-radius:1000px;background:transparent;color:white;font:700 18px/36px Montserrat,sans-serif;text-decoration:none;cursor:pointer;transition:background-color .2s,color .2s,transform .2s}
+.koala-location-financing .wp-block-button__link:hover{background:white;color:#042e53;transform:translateY(-2px)}
+.koala-location-financing a:focus-visible{outline:2px solid #afd56c;outline-offset:5px}
+@media(max-width:991px){.koala-location-financing{padding:48px 20px}.koala-location-financing__content{align-items:flex-start;text-align:left}.koala-location-content .koala-location-financing h2,.editor-styles-wrapper .koala-location-financing h2{font-size:40px;line-height:46px}.koala-location-financing .wp-block-button__link{font-size:20px;padding:14px 30px}}
+@media(prefers-reduced-motion:reduce){.koala-location-financing .wp-block-button__link{transition:none;transform:none}}
