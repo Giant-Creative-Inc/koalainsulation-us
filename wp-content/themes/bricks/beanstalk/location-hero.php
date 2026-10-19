@@ -337,7 +337,7 @@ function koala_beanstalk_location_hero_extras( string $html, array $block ): str
 	if ( ! has_block( 'koala/location-partners', get_post_field( 'post_content', get_the_ID() ) ) ) {
 		$html .= koala_beanstalk_render_location_partners();
 	}
-	if ( ! has_block( 'koala/location-services', get_post_field( 'post_content', get_the_ID() ) ) ) {
+	if ( ! has_block( 'koala/location-services', get_post_field( 'post_content', get_the_ID() ) ) && ! has_block( 'koala/location-services-section', get_post_field( 'post_content', get_the_ID() ) ) ) {
 		$html .= koala_beanstalk_render_location_services();
 	}
 	if ( ! has_block( 'koala/location-overview', get_post_field( 'post_content', get_the_ID() ) ) ) {

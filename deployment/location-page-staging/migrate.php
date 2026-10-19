@@ -43,7 +43,7 @@ foreach($posts as $post){
   // Fresh per-location ACF-backed hero. Template fallback renders the remaining sections.
   // Original content and Bricks metadata remain recoverable; never copy pilot copy to other locations.
   $content=koala_beanstalk_location_hero_content($post->ID);
-  $content.="\n<!-- wp:koala/location-partners /-->\n<!-- wp:koala/location-services /-->\n<!-- wp:koala/location-overview /-->\n";
+  $content.="\n<!-- wp:koala/location-partners /-->\n<!-- wp:koala/location-services-section /-->\n<!-- wp:koala/location-overview /-->\n";
   $content.=koala_beanstalk_location_quote_banner_content();
   foreach(['benefits','energy','expect'] as $name)$content.=koala_beanstalk_location_feature_content($name);
   $content.=koala_beanstalk_location_financing_content();
