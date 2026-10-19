@@ -26,9 +26,19 @@ function koala_beanstalk_location_lazy_widget_script( string $tag, string $handl
 	if ( ! isset( $groups[ $handle ] ) ) {
 		return $tag;
 	}
-	$tag = preg_replace( '/\stype=([\'"])[^\'"]*\1/i', '', $tag );
-	$tag = preg_replace( '/\ssrc=/i', ' data-widget-src=', $tag, 1 );
-	return str_replace( '<script', '<script type="text/plain" data-location-widget="' . $groups[ $handle ] . '"', $tag );
+	return preg_replace_callback(
+		'/<script\b[^>]*>/i',
+		static function ( array $matches ) use ( $groups, $handle ): string {
+			$script = $matches[0];
+			if ( ! preg_match( '/\ssrc\s*=/i', $script ) ) {
+				return $script;
+			}
+			$script = preg_replace( '/\stype=([\'"])[^\'"]*\1/i', '', $script );
+			$script = preg_replace( '/\ssrc\s*=/i', ' data-widget-src=', $script, 1 );
+			return preg_replace( '/^<script/i', '<script type="text/plain" data-location-widget="' . $groups[ $handle ] . '"', $script );
+		},
+		$tag
+	);
 }
 add_filter( 'script_loader_tag', 'koala_beanstalk_location_lazy_widget_script', 100, 2 );
 
