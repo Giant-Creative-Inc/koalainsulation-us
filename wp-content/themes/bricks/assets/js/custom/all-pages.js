@@ -1893,14 +1893,10 @@ $(document).ready(function () {
             var zip = $("#zipcode-input").val().trim();
             if (zip) {
               const zipCode = zip;
-              const radius = 60;
-              const apiKey =
-                "KscuTRFvJFCvE0IoDIp1XMtJqYOb3zAGqQuQLr2fouXcaCyHlBcKshJihTn4iBII";
 
               var locations = document.querySelectorAll(".info_content");
               var matchedZips = [];
               var matchedAdditionalZips = [];
-              const matchedZipcodesArr = [];
 
               locations.forEach(function (location) {
                 // Get the main ZIP code and trim it
@@ -1945,167 +1941,23 @@ $(document).ready(function () {
                   "No direct matches found. Fetching nearby ZIP codes..."
                 );
 
-                // Make the API request for nearby ZIP codes
-                fetch(koalaData.ajax_url, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                  },
-                  body: new URLSearchParams({
-                    action: "get_zip_codes_in_radius",
-                    // nonce: "e9a11921b7",
-                    zip_code: zipCode,
-                    radius: radius,
-                    api_key: apiKey,
-                  }),
-                })
-                  .then((response) => response.json())
-                  .then((data) => {
-                    if (data.success) {
-                      console.log(
-                        "ZIP codes within the radius:",
-                        data.data.response
-                      );
+                // One cached server lookup (Koala Gravity Integration) finds the
+                // nearest owned ZIP codes; no zipcodeapi.com key is used in the browser.
+                koalaFindNearbyLocations(zipCode).then(function (result) {
+                  //hide loader
+                  document.getElementById("loader-wrapper").style.display = "none";
 
-                      if (
-                        data.data.response.zip_codes &&
-                        data.data.response.zip_codes.length > 0
-                      ) {
-                        // Extract nearby ZIP codes
-                        const nearbyZips = data.data.response.zip_codes.map(
-                          (item) => item.zip_code
-                        );
-                        console.log("Nearby ZIP Codes: hi", nearbyZips);
+                  if (!result.locations.length) {
+                    alert(result.message);
+                    return;
+                  }
 
-                        // Check if any nearby ZIP code matches the locations
-                        locations.forEach(function (location) {
-                          var zipcode = location
-                            .querySelector(".zipcode")
-                            .textContent.trim();
-                          var additionalZipcodes = location
-                            .querySelector(".additional-zipcodes")
-                            .textContent.trim()
-                            .replace(/"/g, "") // Remove quotes around zipcodes
-                            .split(/s*,s*/); // Split by commas and optional spaces
-
-                          // Trim any extra spaces from each zipcode in the array
-                          additionalZipcodes = additionalZipcodes.map((zip) =>
-                            zip.trim()
-                          );
-
-                          // Combine primary and additional ZIP codes
-                          const allZips = [zipcode, ...additionalZipcodes];
-
-                          // Find matching ZIP codes
-                          const matchingZips = allZips.filter((zip) =>
-                            nearbyZips.includes(zip)
-                          );
-
-                          if (matchingZips.length > 0) {
-                            matchedZipcodesArr.push(...matchingZips); // Add all matching ZIP codes
-                            matchedZips.push(zipcode); // Add only the primary ZIP code of the location
-                          }
-
-                          console.log(
-                            "All matching ZIP Codes:",
-                            matchedZipcodesArr
-                          );
-                          console.log(
-                            "Primary ZIP Codes of matching locations:",
-                            matchedZips
-                          );
-                        });
-
-                        if (matchedZipcodesArr.length > 0) {
-                          console.log(
-                            "Matches found for nearby ZIP codes:",
-                            matchedZipcodesArr
-                          );
-                          fetch(
-                            koalaData.ajax_url, {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/x-www-form-urlencoded",
-                            },
-                            body: new URLSearchParams({
-                              action: "get_zip_codes_distance_in_miles",
-                              input_zip: zip,
-                              nearby_zips: JSON.stringify(matchedZipcodesArr), // Send as JSON string
-                            }),
-                          }
-                          )
-                            .then((response) => response.json())
-                            .then((data) => {
-                              //hide loader
-                              document.getElementById(
-                                "loader-wrapper"
-                              ).style.display = "none";
-
-                              if (!data.success) {
-                                throw new Error(
-                                  data.data.message || "Failed to fetch distances"
-                                );
-                              }
-
-                              console.log("Distance Data:", data.data);
-
-                              // Extract zip codes in the sorted order
-                              const sortedZipCodes = data.data.map(
-                                (item) => item.zip
-                              );
-
-                              console.log("Sorted nearby zips:", sortedZipCodes[0]);
-                              let closestZip = sortedZipCodes[0];
-
-                              searchByZipCodeAndCreateMarker(
-                                matchedZips,
-                                closestZip
-                              ); // Pass array to the function
-                            })
-                            .catch((error) => {
-                              //hide loader
-                              document.getElementById(
-                                "loader-wrapper"
-                              ).style.display = "none";
-
-                              console.error(
-                                "Error fetching zip code distances:",
-                                error
-                              );
-                            });
-                        } else {
-                          //hide loader
-                          document.getElementById("loader-wrapper").style.display =
-                            "none";
-
-                          alert(
-                            "Unfortunately we do not service your area at this time"
-                          );
-                        }
-                      } else {
-                        //hide loader
-                        document.getElementById("loader-wrapper").style.display =
-                          "none";
-                        alert("No nearby ZIP codes found.");
-                      }
-                    } else {
-                      //hide loader
-                      document.getElementById("loader-wrapper").style.display =
-                        "none";
-                      console.error("Error fetching ZIP codes:", data.data.message);
-                      alert("Failed to fetch ZIP codes. Please try again.");
-                    }
-                  })
-                  .catch((error) => {
-                    //hide loader
-                    document.getElementById("loader-wrapper").style.display =
-                      "none";
-
-                    console.error("Network error:", error);
-                    alert(
-                      "Failed to fetch ZIP codes. Please check your network connection."
-                    );
-                  });
+                  // Main ZIPs of the nearby locations, and the closest owned ZIP.
+                  searchByZipCodeAndCreateMarker(
+                    result.locations.map((location) => location.locationzipcode),
+                    result.locations[0].matchedZipcode[0]
+                  );
+                });
               }
             } else {
               alert("Please enter a ZIP code.");
@@ -2120,14 +1972,10 @@ $(document).ready(function () {
               var zip = $("#zipcode-input").val().trim();
               if (zip) {
                 const zipCode = zip;
-                const radius = 60;
-                const apiKey =
-                  "KscuTRFvJFCvE0IoDIp1XMtJqYOb3zAGqQuQLr2fouXcaCyHlBcKshJihTn4iBII";
 
                 var locations = document.querySelectorAll(".info_content");
                 var matchedZips = [];
                 var matchedAdditionalZips = [];
-                var matchedZipcodesArr = [];
 
                 locations.forEach(function (location) {
                   // Get the main ZIP code and trim it
@@ -2174,174 +2022,23 @@ $(document).ready(function () {
                     "No direct matches found. Fetching nearby ZIP codes..."
                   );
 
-                  // Make the API request for nearby ZIP codes
-                  fetch(koalaData.ajax_url, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: new URLSearchParams({
-                      action: "get_zip_codes_in_radius",
-                      // nonce: "e9a11921b7",
-                      zip_code: zipCode,
-                      radius: radius,
-                      api_key: apiKey,
-                    }),
-                  })
-                    .then((response) => response.json())
-                    .then((data) => {
-                      if (data.success) {
-                        console.log(
-                          "ZIP codes within the radius:",
-                          data.data.response
-                        );
+                  // One cached server lookup (Koala Gravity Integration) finds the
+                  // nearest owned ZIP codes; no zipcodeapi.com key is used in the browser.
+                  koalaFindNearbyLocations(zipCode).then(function (result) {
+                    //hide loader
+                    document.getElementById("loader-wrapper").style.display = "none";
 
-                        if (
-                          data.data.response.zip_codes &&
-                          data.data.response.zip_codes.length > 0
-                        ) {
-                          // Extract nearby ZIP codes
-                          const nearbyZips = data.data.response.zip_codes.map(
-                            (item) => item.zip_code
-                          );
-                          console.log("Nearby ZIP Codes:", nearbyZips);
+                    if (!result.locations.length) {
+                      alert(result.message);
+                      return;
+                    }
 
-                          // Check if any nearby ZIP code matches the locations
-                          locations.forEach(function (location) {
-                            var zipcode = location
-                              .querySelector(".zipcode")
-                              .textContent.trim();
-                            var additionalZipcodes = location
-                              .querySelector(".additional-zipcodes")
-                              .textContent.trim()
-                              .replace(/"/g, "") // Remove quotes around zipcodes
-                              .split(/s*,s*/); // Split by commas and optional spaces
-
-                            // Trim any extra spaces from each zipcode in the array
-                            additionalZipcodes = additionalZipcodes.map((zip) =>
-                              zip.trim()
-                            );
-
-                            // Combine primary and additional ZIP codes
-                            const allZips = [zipcode, ...additionalZipcodes];
-
-                            // Find matching ZIP codes
-                            const matchingZips = allZips.filter((zip) =>
-                              nearbyZips.includes(zip)
-                            );
-
-                            if (matchingZips.length > 0) {
-                              matchedZipcodesArr.push(...matchingZips); // Add all matching ZIP codes
-                              matchedZips.push(zipcode); // Add only the primary ZIP code of the location
-                            }
-
-                            console.log(
-                              "All matching ZIP Codes:",
-                              matchedZipcodesArr
-                            );
-                            console.log(
-                              "Primary ZIP Codes of matching locations:",
-                              matchedZips
-                            );
-                          });
-
-                          if (matchedZipcodesArr.length > 0) {
-                            console.log(
-                              "Matches found for nearby ZIP codes:",
-                              matchedZipcodesArr
-                            );
-                            fetch(
-                              koalaData.ajax_url, {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/x-www-form-urlencoded",
-                              },
-                              body: new URLSearchParams({
-                                action: "get_zip_codes_distance_in_miles",
-                                input_zip: zip,
-                                nearby_zips: JSON.stringify(matchedZipcodesArr), // Send as JSON string
-                              }),
-                            }
-                            )
-                              .then((response) => response.json())
-                              .then((data) => {
-                                //hide loader
-                                document.getElementById(
-                                  "loader-wrapper"
-                                ).style.display = "none";
-
-                                if (!data.success) {
-                                  throw new Error(
-                                    data.data.message || "Failed to fetch distances"
-                                  );
-                                }
-
-                                console.log("Distance Data:", data.data);
-
-                                // Extract zip codes in the sorted order
-                                const sortedZipCodes = data.data.map(
-                                  (item) => item.zip
-                                );
-
-                                console.log(
-                                  "Sorted nearby zips:",
-                                  sortedZipCodes[0]
-                                );
-                                let closestZip = sortedZipCodes[0];
-
-                                searchByZipCodeAndCreateMarker(
-                                  matchedZips,
-                                  closestZip
-                                ); // Pass array to the function
-                              })
-                              .catch((error) => {
-                                //hide loader
-                                document.getElementById(
-                                  "loader-wrapper"
-                                ).style.display = "none";
-
-                                console.error(
-                                  "Error fetching zip code distances:",
-                                  error
-                                );
-                              });
-                          } else {
-                            //hide loader
-                            document.getElementById(
-                              "loader-wrapper"
-                            ).style.display = "none";
-
-                            alert(
-                              "Unfortunately we do not service your area at this time"
-                            );
-                          }
-                        } else {
-                          //hide loader
-                          document.getElementById("loader-wrapper").style.display =
-                            "none";
-                          alert("No nearby ZIP codes found.");
-                        }
-                      } else {
-                        //hide loader
-                        document.getElementById("loader-wrapper").style.display =
-                          "none";
-                        console.error(
-                          "Error fetching ZIP codes:",
-                          data.data.message
-                        );
-                        alert("Failed to fetch ZIP codes. Please try again.");
-                      }
-                    })
-                    .catch((error) => {
-                      //hide loader
-                      document.getElementById("loader-wrapper").style.display =
-                        "none";
-
-                      console.error("Network error:", error);
-                      alert(
-                        "Failed to fetch ZIP codes. Please check your network connection."
-                      );
-                    });
+                    // Main ZIPs of the nearby locations, and the closest owned ZIP.
+                    searchByZipCodeAndCreateMarker(
+                      result.locations.map((location) => location.locationzipcode),
+                      result.locations[0].matchedZipcode[0]
+                    );
+                  });
                 }
               } else {
                 alert("Please enter a ZIP code.");
