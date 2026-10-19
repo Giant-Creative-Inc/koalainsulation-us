@@ -103,7 +103,7 @@ function koala_beanstalk_render_location_services(): string {
 function koala_beanstalk_register_location_services(): void {
 	wp_register_script( 'koala-location-services-editor', get_template_directory_uri() . '/beanstalk/assets/location-services-editor.js', array( 'wp-blocks', 'wp-element', 'wp-components', 'wp-server-side-render' ), (string) filemtime( __DIR__ . '/assets/location-services-editor.js' ), true );
 	register_block_type(
-		'koala/location-services',
+		'koala/location-services-section',
 		array(
 			'api_version'     => 3,
 			'render_callback' => 'koala_beanstalk_render_location_services',
@@ -112,13 +112,26 @@ function koala_beanstalk_register_location_services(): void {
 		)
 	);
 	register_block_pattern(
-		'koala/location-services',
+		'koala/location-services-section',
 		array(
 			'title'      => 'Koala Location Services and Who We Are',
 			'categories' => array( 'featured' ),
 			'postTypes'  => array( 'location' ),
-			'content'    => '<!-- wp:koala/location-services /-->',
+			'content'    => '<!-- wp:koala/location-services-section /-->',
 		)
 	);
 }
 add_action( 'init', 'koala_beanstalk_register_location_services' );
+
+/** Route migrated legacy service blocks without changing city-page service cards.
+ *
+ * @param array $block Parsed block data.
+ * @return array
+ */
+function koala_beanstalk_location_services_block_data( array $block ): array {
+	if ( 'koala/location-services' === ( $block['blockName'] ?? '' ) && 'location' === get_post_type() ) {
+		$block['blockName'] = 'koala/location-services-section';
+	}
+	return $block;
+}
+add_filter( 'render_block_data', 'koala_beanstalk_location_services_block_data' );
