@@ -119,11 +119,14 @@ function koala_beanstalk_render_location_community( array $attributes, string $c
  * @return string
  */
 function koala_beanstalk_location_display_hours( string $hours ): string {
-	if ( ! preg_match( '/^\s*([01]?\d|2[0-3]):([0-5]\d)\s*[-–—]\s*([01]?\d|2[0-3]):([0-5]\d)\s*$/u', $hours, $parts ) ) {
+	if ( ! preg_match( '/^\s*([01]?\d|2[0-3]):([0-5]\d)\s*[-–—]\s*([01]?\d|2[0-4]):([0-5]\d)\s*$/u', $hours, $parts ) || ( '24' === $parts[3] && '00' !== $parts[4] ) ) {
 		return $hours;
 	}
+	if ( 0 === (int) $parts[1] && '00' === $parts[2] && '24' === $parts[3] ) {
+		return 'Open 24 hours';
+	}
 	$start = (int) $parts[1];
-	$end   = (int) $parts[3];
+	$end   = (int) $parts[3] % 24;
 	return sprintf( '%d:%s %s–%d:%s %s', $start % 12 ? $start % 12 : 12, $parts[2], $start < 12 ? 'AM' : 'PM', $end % 12 ? $end % 12 : 12, $parts[4], $end < 12 ? 'AM' : 'PM' );
 }
 
