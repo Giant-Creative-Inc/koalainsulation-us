@@ -23,7 +23,9 @@
         "test:attribution": "node tests/attribution.test.js",
         "test:all": [
             "@test:routing",
-            "@test:attribution"
-        ]
+            "@test:attribution",
+            "@test:assets"
+        ],
+        "test:assets": "php tests/form-assets-regression.php"
     }
 }

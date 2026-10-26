@@ -49,10 +49,11 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  function loadNiceJobAfterInteraction(script) {
-    // Review widgets are now rendered by Google Reviews. Keep the legacy
-    // markup inert while Bricks templates are migrated on staging.
-    return;
+  function loadNiceJobAfterInteraction(script, locationNiceJobId) {
+    // Only the current location response may authorize loading the SDK.
+    if (!locationNiceJobId || !String(locationNiceJobId).trim()) {
+      return;
+    }
 
     if (
       niceJobScriptQueued ||
@@ -355,7 +356,8 @@ document.addEventListener("DOMContentLoaded", function () {
           document.getElementById("loc-phone-number2").innerHTML = "";
         }
 
-        if (data.nicejobId) {
+        const locationNiceJobId = data.nicejobId ? String(data.nicejobId).trim() : "";
+        if (locationNiceJobId) {
           if (googleReviewWrap && localPageWidget && localPageStoriesWidget) {
             googleReviewWrap.style.display = "none";
             googleReviewWrap.style.visibility = "hidden";
@@ -365,13 +367,13 @@ document.addEventListener("DOMContentLoaded", function () {
             localPageStoriesWidget.style.visibility = "visible";
           }
 
-          sessionStorage.setItem("location_nicejob_id", data.nicejobId);
+          sessionStorage.setItem("location_nicejob_id", locationNiceJobId);
 
           if (!document.querySelector('script[src*="cdn.nicejob.co"]')) {
             const script = document.createElement("script");
-            script.src = "https://cdn.nicejob.co/js/sdk.min.js?id=" + data.nicejobId;
+            script.src = "https://cdn.nicejob.co/js/sdk.min.js?id=" + encodeURIComponent(locationNiceJobId);
             script.async = true; // Ensure the script loads asynchronously
-            loadNiceJobAfterInteraction(script);
+            loadNiceJobAfterInteraction(script, locationNiceJobId);
             script.onload = function () {
               console.log("NiceJob SDK loaded successfully.");
             };
@@ -401,7 +403,7 @@ document.addEventListener("DOMContentLoaded", function () {
         //   sessionStorage.setItem("location_sm_key", "");
         // }
 
-        if (data.grShortcode) {
+        if (data.grShortcode && !locationNiceJobId) {
           if (googleReviewWrap && localPageWidget && localPageStoriesWidget) {
             googleReviewWrap.style.display = "flex";
             googleReviewWrap.style.visibility = "visible";
@@ -413,71 +415,12 @@ document.addEventListener("DOMContentLoaded", function () {
           sessionStorage.setItem("google_review_shortcode", "");
         }
 
-        if (data.nicejobId === "" && data.grShortcode === "") {
-          const localWidgets = document.querySelectorAll(".nicejob-stories-widget");
-          localWidgets.forEach((widget) => {
-            widget.remove();
-            console.log(".nicejob-stories-widget removed before loading NiceJob SDK");
+        if (!locationNiceJobId) {
+          [localPageWidget, localPageStoriesWidget,
+            document.getElementById("main-page-widget"),
+            document.getElementById("main-page-stories-widget")].forEach((widget) => {
+            if (widget) widget.style.display = "none";
           });
-          const elementMainWidget =
-            document.getElementById("main-page-widget");
-          const elementMainStoriesWidget = document.getElementById(
-            "main-page-stories-widget"
-          );
-          if (elementMainWidget) {
-            elementMainWidget.style.display = "block";
-            elementMainWidget.style.visibility = "visible";
-          }
-          if (elementMainStoriesWidget) {
-            elementMainStoriesWidget.style.display = "block";
-            elementMainStoriesWidget.style.visibility = "visible";
-          }
-
-          if (!document.querySelector('script[src*="cdn.nicejob.co"]')) {
-          const script = document.createElement("script");
-          script.src =
-            "https://cdn.nicejob.co/js/sdk.min.js?id=5343641076236288";
-          script.async = true; // Ensure the script loads asynchronously
-          loadNiceJobAfterInteraction(script);
-
-          script.onload = function () {
-            console.log("NiceJob SDK loaded successfully.");
-            // No need to manually call NiceJob.showRecommendation(), let SDK handle it
-             const schemaObserver = new MutationObserver((mutations, observer) => {
-  let removed = false;
-
-  const ldSchemas = document.querySelectorAll('script[type="application/ld+json"]');
-  ldSchemas.forEach((scriptTag) => {
-    try {
-      const json = JSON.parse(scriptTag.innerText);
-      if (json['@type'] === 'Review') {
-        if (scriptTag.parentNode) {
-          scriptTag.parentNode.removeChild(scriptTag); // more reliable than .remove()
-          console.log('Removed NiceJob review schema.');
-          removed = true;
-        }
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
-  });
-
-  if (removed) {
-    observer.disconnect(); // Stop after first actual removal
-  }
-});
-
-schemaObserver.observe(document.documentElement, {
-  childList: true,
-  subtree: true
-});
-
-          };
-
-          script.onerror = function () {
-            console.error("Failed to load NiceJob SDK.");
-          };
-          } // end duplicate guard
         }
 
         if (data.fbLink) {
@@ -967,50 +910,7 @@ schemaObserver.observe(document.documentElement, {
         }
       })
       .catch((error) => {
-        if (!document.querySelector('script[src*="cdn.nicejob.co"]')) {
-        const script = document.createElement("script");
-        script.src =
-          "https://cdn.nicejob.co/js/sdk.min.js?id=5343641076236288";
-        script.async = true; // Ensure the script loads asynchronously
-        loadNiceJobAfterInteraction(script);
 
-        script.onload = function () {
-          console.log("NiceJob SDK loaded successfully.");
-          const schemaObserver = new MutationObserver((mutations, observer) => {
-  let removed = false;
-
-  const ldSchemas = document.querySelectorAll('script[type="application/ld+json"]');
-  ldSchemas.forEach((scriptTag) => {
-    try {
-      const json = JSON.parse(scriptTag.innerText);
-      if (json['@type'] === 'Review') {
-        if (scriptTag.parentNode) {
-          scriptTag.parentNode.removeChild(scriptTag); // more reliable than .remove()
-          console.log('Removed NiceJob review schema.');
-          removed = true;
-        }
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
-  });
-
-  if (removed) {
-    observer.disconnect(); // Stop after first actual removal
-  }
-});
-
-schemaObserver.observe(document.documentElement, {
-  childList: true,
-  subtree: true
-});
-          // No need to manually call NiceJob.showRecommendation(), let SDK handle it
-        };
-
-        script.onerror = function () {
-          console.error("Failed to load NiceJob SDK.");
-        };
-        } // end duplicate guard
 
         console.error("Error fetching location data:", error);
         sessionStorage.setItem("location_info", "false");
@@ -1137,49 +1037,7 @@ schemaObserver.observe(document.documentElement, {
     usFooter.style.display = "flex";
     usFooter.style.visibility = "visible";
 
-    if (!document.querySelector('script[src*="cdn.nicejob.co"]')) {
-    const script = document.createElement("script");
-    script.src = "https://cdn.nicejob.co/js/sdk.min.js?id=5343641076236288";
-    script.async = true; // Ensure the script loads asynchronously
-    loadNiceJobAfterInteraction(script);
 
-    script.onload = function () {
-      console.log("NiceJob SDK loaded successfully.");
-      const schemaObserver = new MutationObserver((mutations, observer) => {
-  let removed = false;
-
-  const ldSchemas = document.querySelectorAll('script[type="application/ld+json"]');
-  ldSchemas.forEach((scriptTag) => {
-    try {
-      const json = JSON.parse(scriptTag.innerText);
-      if (json['@type'] === 'Review') {
-        if (scriptTag.parentNode) {
-          scriptTag.parentNode.removeChild(scriptTag); // more reliable than .remove()
-          console.log('Removed NiceJob review schema.');
-          removed = true;
-        }
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
-  });
-
-  if (removed) {
-    observer.disconnect(); // Stop after first actual removal
-  }
-});
-
-schemaObserver.observe(document.documentElement, {
-  childList: true,
-  subtree: true
-});
-      // No need to manually call NiceJob.showRecommendation(), let SDK handle it
-    };
-
-    script.onerror = function () {
-      console.error("Failed to load NiceJob SDK.");
-    };
-    } // end duplicate guard
 
     if (usSlider) {
       usSlider.style.display = "flex";

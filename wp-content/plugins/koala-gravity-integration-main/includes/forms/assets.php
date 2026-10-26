@@ -86,7 +86,7 @@ const KGI_DATALAYER_FIELD_MAP_KEYS = array(
  * out the first form's, leaving the client-side phone mask and ZIP
  * formatter working for only whichever form's hook happened to fire last.
  * So instead of localizing data for just the `$form` that triggered this
- * particular call, every call rebuilds and localizes the *complete* map for
+ * particular call, the first call builds and localizes the *complete* map for
  * every form this plugin manages — reading from options directly rather
  * than the `$form` argument — so the result is identical and correct
  * regardless of which form triggered it or how many times this runs.
@@ -96,6 +96,8 @@ const KGI_DATALAYER_FIELD_MAP_KEYS = array(
  * @param mixed[] $form Gravity Forms form array for the form that triggered this enqueue. Unused — kept for hook signature compatibility.
  */
 function kgi_enqueue_quote_form_assets( array $form = array() ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	static $config_localized = false;
+
 	wp_enqueue_style(
 		'kgi-quote-form',
 		plugins_url( 'assets/css/quote-form.css', KGI_PLUGIN_FILE ),
@@ -110,6 +112,11 @@ function kgi_enqueue_quote_form_assets( array $form = array() ): void { // phpcs
 		KGI_VERSION,
 		true
 	);
+
+	// Gravity Forms may enqueue the same form repeatedly (including popups).
+	if ( $config_localized ) {
+		return;
+	}
 
 	$form_ids           = kgi_get_all_quote_form_ids();
 	$zip_field_ids      = array();
@@ -155,7 +162,7 @@ function kgi_enqueue_quote_form_assets( array $form = array() ): void { // phpcs
 		}
 	}
 
-	wp_localize_script(
+	$config_localized = wp_localize_script(
 		'kgi-form-validation',
 		'kgiData',
 		array(
