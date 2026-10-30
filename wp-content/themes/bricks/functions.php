@@ -6,6 +6,9 @@ if (!defined('ABSPATH'))
 // resources landing pages. All other requests continue through Bricks.
 require_once __DIR__ . '/beanstalk/bootstrap.php';
 
+// Dynamic JSON-LD for removal pages rendered by the shared ACF template.
+require_once __DIR__ . '/includes/koala-removal-schema.php';
+
 /** Resolve a location Google Reviews shortcode, then the site corporate feed. */
 function koala_get_google_review_shortcode($location_id = 0)
 {
