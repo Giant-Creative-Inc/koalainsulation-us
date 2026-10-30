@@ -54,6 +54,7 @@ final class CityPageEditorPreview {
 			'_beanstalk_structured_data_profile' => 'koala/service-area',
 			'_beanstalk_structured_data_values' => wp_json_encode( array_intersect_key( $row, array_flip( array( 'service_area_name', 'state_name', 'state_abbreviation', 'service_type' ) ) ) ),
 		);
+		$meta = array_merge( $meta, CityPageUpdater::seo_values( $row ) );
 		$token = wp_generate_uuid4();
 		$snapshot = array( 'post_id' => $id, 'title' => $title, 'content' => $row['_editor_post_content'], 'meta' => $meta );
 		$key = 'beanstalk_city_preview_' . get_current_user_id() . '_' . $token;

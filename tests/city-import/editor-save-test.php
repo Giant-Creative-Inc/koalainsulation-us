@@ -8,6 +8,8 @@ function wp_unslash($v){return $v;}
 function get_post($id){return $GLOBALS['post'];}
 function get_post_meta(...$args){return '';}
 function get_current_user_id(){return 1;}
+function wp_slash($v){return $v;}
+function update_post_meta($id,$key,$value){$GLOBALS['seo_meta'][$key]=$value;}
 function set_transient($key,$error,...$args){$GLOBALS['error']=$error;}
 function sanitize_title($title){return strtolower(str_replace(' ','-',$title));}
 function wp_update_post($values,...$args){foreach($values as $key=>$value){if($key!=='ID')$GLOBALS['post']->$key=$value;}return $values['ID'];}
@@ -15,6 +17,9 @@ $GLOBALS['post']=(object)['ID'=>101,'post_type'=>'resources-landing-pa','post_st
 $_POST=['acf'=>$posted+['field_beanstalk_city_enabled'=>1]];
 $editor->save(101);
 if(empty($GLOBALS['generated'])||!empty($GLOBALS['error'])||$GLOBALS['post']->post_name!=='editor-test-city')throw new RuntimeException('First editor draft save must assign a slug before generating content.');
+$GLOBALS['seo_meta']['_yoast_wpseo_title']='Stale Yoast panel title';
+$editor->save_seo(101);
+if(($GLOBALS['seo_meta']['_yoast_wpseo_title']??null)!==$fields['meta_title'])throw new RuntimeException('City SEO fields must win after the Yoast panel saves.');
 $GLOBALS['generated']=false;$GLOBALS['can_edit']=false;
 $editor->save(101);
 if($GLOBALS['generated'])throw new RuntimeException('Unauthorized saves cannot regenerate city content.');
