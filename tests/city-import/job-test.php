@@ -30,7 +30,7 @@ check(count(array_filter($updater->calls))===1,'unpreviewed row cannot apply');
 $GLOBALS['matches']=[];
 $job=$service->create([$row,$row]);
 $service->preview($job);
-check($job['results'][0]['status']==='validated' && str_contains($job['results'][0]['detail'],'create new draft'),'preview labels new drafts');
+check($job['results'][0]['status']==='validated' && str_contains($job['results'][0]['detail'],'create and publish new page'),'preview labels new drafts');
 check($job['results'][1]['status']==='error','duplicate new slug rejected');
 $service->apply($job,[0]);
 check($job['results'][0]['status']==='created','missing page is created on apply');
