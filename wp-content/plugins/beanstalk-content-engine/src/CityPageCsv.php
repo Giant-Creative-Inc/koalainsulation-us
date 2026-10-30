@@ -58,9 +58,10 @@ final class CityPageCsv {
 				return new WP_Error( 'csv_required', 'Missing required value: ' . $key );
 			}
 		}
-		$slug = trim( $row['slug'] );
-		if ( sanitize_title( $slug ) !== $slug ) {
-			return new WP_Error( 'csv_slug', 'Use the exact existing page slug.' );
+		$slug = sanitize_title( trim( $row['slug'] ) );
+		$row['slug'] = $slug;
+		if ( '' === $slug ) {
+			return new WP_Error( 'csv_slug', 'The city slug is empty after sanitization.' );
 		}
 		$location = trim( $row['related_location_id'] );
 		if ( ! filter_var( $location, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) ) ) {

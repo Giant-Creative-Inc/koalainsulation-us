@@ -116,7 +116,7 @@ final class CityPageAdminImport {
 		set_transient( $key, $job, 2 * HOUR_IN_SECONDS );
 		$items = array();
 		foreach ( $job['results'] as $i => $result ) {
-			$items[] = array_merge( $result, array( 'index' => $i, 'row' => $job['rows'][ $i ]['__csv_row'] ?? $i + 2, 'title' => $job['rows'][ $i ]['title'], 'slug' => $job['rows'][ $i ]['slug'] ) );
+			$items[] = array_merge( $result, array( 'index' => $i, 'row' => $job['rows'][ $i ]['__csv_row'] ?? $i + 2, 'title' => $job['rows'][ $i ]['title'], 'slug' => $job['prepared'][ $i ]['slug'] ?? sanitize_title( $job['rows'][ $i ]['slug'] ) ) );
 		}
 		return array( 'job' => $job['id'], 'cursor' => $job['cursor'], 'total' => count( $job['rows'] ), 'items' => $items );
 	}

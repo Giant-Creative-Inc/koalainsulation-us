@@ -6,7 +6,7 @@ class WP_Error {
 }
 function __( $s, $domain = '' ) { return $s; }
 function is_wp_error($v) { return $v instanceof WP_Error; }
-function sanitize_title($v) { return strtolower(trim($v)); }
+function sanitize_title($v) { return strtolower(preg_replace('/\s+/','-',trim($v))); }
 function sanitize_text_field($v) { return strip_tags($v); }
 function wp_json_encode($v) { return json_encode($v); }
 function get_posts($args) { return $args['post_type']==='location' ? [(object)['ID'=>5,'post_name'=>'southeast-denver']] : $GLOBALS['matches']; }
@@ -31,6 +31,9 @@ check($result['testimonials_fallback_link_label']==='Read more reviews','missing
 $GLOBALS['matches'][]=(object)['ID'=>11,'post_name'=>'ho-ho-kus-nj'];
 check(is_wp_error(CityPageCsv::normalize($row)),'ambiguous slug rejected');
 $GLOBALS['matches']=[];
+$spaced=$row; $spaced['slug']='denham springs-la';
+$normalized=CityPageCsv::normalize($spaced);
+check(!is_wp_error($normalized) && $normalized['slug']==='denham-springs-la','spaces normalized before creating or matching pages');
 $new=CityPageCsv::normalize($row);
 check(!is_wp_error($new) && $new['post_id']===0 && $new['_import_action']==='create','missing page prepared for draft creation');
 $GLOBALS['matches']=[(object)['ID'=>10,'post_name'=>'ho-ho-kus-nj']];
