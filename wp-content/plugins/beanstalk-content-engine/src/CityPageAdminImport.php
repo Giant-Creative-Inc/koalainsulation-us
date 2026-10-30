@@ -38,7 +38,7 @@ final class CityPageAdminImport {
 			<p><a href="<?php echo esc_url( $url ); ?>">Download CSV template</a> · Maximum 2,000 rows / 10 MB. Rows with all city identity fields blank are skipped. Preview does not change pages. Back up the database before applying a batch.</p>
 			<form id="city-import-upload"><input type="file" name="csv" accept=".csv,text/csv" required aria-label="City pages CSV"><button class="button button-primary">Upload and preview</button></form>
 			<p id="city-import-status" role="status" aria-live="polite"></p>
-			<p><button class="button" id="city-import-preview" type="button" disabled>Continue preview</button> <button class="button" id="city-import-select" type="button" disabled>Select all valid rows</button> <button class="button button-primary" id="city-import-apply" type="button" disabled>Apply selected rows</button> <button class="button" id="city-import-report" type="button" disabled>Download results CSV</button></p>
+			<p><button class="button" id="city-import-revalidate" type="button" disabled>Revalidate uploaded CSV</button> <button class="button" id="city-import-preview" type="button" disabled>Continue preview</button> <button class="button" id="city-import-select" type="button" disabled>Select all valid rows</button> <button class="button button-primary" id="city-import-apply" type="button" disabled>Apply selected rows</button> <button class="button" id="city-import-report" type="button" disabled>Download results CSV</button></p>
 			<table class="widefat striped"><thead><tr><th>Select</th><th>Row</th><th>City</th><th>Slug</th><th>Result</th><th>Details</th></tr></thead><tbody id="city-import-results"></tbody></table>
 		</div>
 		<?php
@@ -99,7 +99,15 @@ final class CityPageAdminImport {
 			if ( ! is_array( $job ) || ( 'resume' !== $operation && ! hash_equals( $job['id'], $id ) ) ) {
 				return new \WP_Error( 'csv_expired', 'This preview expired or was replaced. Upload the CSV again.' );
 			}
-			if ( 'preview' === $operation ) {
+			if ( 'revalidate' === $operation ) {
+				foreach ( $job['results'] as $result ) {
+					if ( in_array( $result['status'], array( 'updated', 'created', 'interrupted' ), true ) ) {
+						return new \WP_Error( 'csv_already_applied', 'Download the results before starting another import. Completed or interrupted writes cannot be reset.' );
+					}
+				}
+				$job = $this->service->create( $job['rows'] );
+				$job['id'] = wp_generate_uuid4();
+			} elseif ( 'preview' === $operation ) {
 				$this->service->preview( $job );
 			} elseif ( 'apply' === $operation ) {
 				$selected = isset( $_POST['selected'] ) && is_array( $_POST['selected'] ) ? array_map( 'intval', $_POST['selected'] ) : array();

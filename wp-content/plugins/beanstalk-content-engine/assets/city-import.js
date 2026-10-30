@@ -7,6 +7,7 @@
  const body = root.querySelector('tbody'), apply = root.querySelector('#city-import-apply');
  const select = root.querySelector('#city-import-select'), report = root.querySelector('#city-import-report');
  const preview = root.querySelector('#city-import-preview');
+ const revalidate = root.querySelector('#city-import-revalidate');
  let job = '', items = [], busy = false, remaining = false;
  const checked = new Set();
  function controls(value) {
@@ -15,6 +16,7 @@
   apply.disabled = value || remaining || !items.some(item => item.status === 'validated');
   select.disabled = apply.disabled;
   preview.disabled = value || !remaining;
+  revalidate.disabled = value || !job || items.some(i => ['updated','created','interrupted'].includes(i.status));
   report.disabled = value || !items.length;
  }
  function render(data) {
@@ -64,6 +66,12 @@
    status.textContent = `Preview complete: ${items.filter(i => i.status === 'validated').length} valid, ${items.filter(i => i.status === 'error').length} errors. Select rows to update or create as drafts. No pages have changed.`;
   });
  });
+ revalidate.addEventListener('click', () => run(async () => {
+  checked.clear();
+  let data = await request('revalidate');
+  while (data.cursor < data.total) { status.textContent = `Validating ${data.cursor} of ${data.total} saved rows…`; data = await request('preview'); }
+  status.textContent = `Preview refreshed: ${items.filter(i => i.status === 'validated').length} valid, ${items.filter(i => i.status === 'error').length} errors. No pages have changed.`;
+ }));
  preview.addEventListener('click', () => run(async () => {
   let data = await request('preview');
   while (data.cursor < data.total) { status.textContent = `Validating ${data.cursor} of ${data.total} rows…`; data = await request('preview'); }
@@ -96,6 +104,6 @@
   const data = new FormData(); data.set('action','beanstalk_city_import'); data.set('nonce',beanstalkCityImport.nonce); data.set('operation','resume');
   const response = await fetch(beanstalkCityImport.url,{method:'POST',body:data,credentials:'same-origin'});
   const result = await response.json();
-  if (result.success) { render(result.data); status.textContent = 'Saved results restored. Upload again to start a new preview.'; }
+  if (result.success) { render(result.data); status.textContent = 'Saved results restored. Use Revalidate uploaded CSV to refresh this preview.'; }
  });
 })();
