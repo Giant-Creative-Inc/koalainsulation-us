@@ -101,6 +101,7 @@ final class Bootstrap {
 		add_action( 'admin_notices', array( $this, 'dependency_notice' ) );
 		add_action( 'cli_init', array( $this, 'register_cli_commands' ) );
 		( new ServiceAreaSchema() )->register();
+		( new CityPageAdminImport( new CityPageImportJob( $this->city_page_updater ) ) )->register();
 	}
 
 	/** Register the migration command only when WordPress is running under WP-CLI. */
