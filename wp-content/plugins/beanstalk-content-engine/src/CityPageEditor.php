@@ -14,6 +14,7 @@ final class CityPageEditor {
 	public function __construct( private PatternRegistry $patterns, private ContentValidator $validator, private ContentBuilder $builder, private CityPageContext $context, private CityPageUpdater $updater ) {}
 
 	public function register(): void {
+		( new CityPageEditorPreview( $this, $this->updater ) )->register();
 		add_action( 'acf/init', array( $this, 'fields' ), 20 );
 		add_filter( 'acf/load_value', array( $this, 'load' ), 20, 3 );
 		add_action( 'acf/validate_save_post', array( $this, 'validate' ) );
@@ -185,7 +186,9 @@ final class CityPageEditor {
 		$context = $this->context->prepare( CityPageUpdater::TEMPLATE_VALUE, 'resources-landing-pa', array( 'related_location_id' => (int) $row['related_location_id'] ), true );
 		if ( is_wp_error( $context ) ) { return $context; }
 		$built = $this->builder->build( $manifest, $content );
-		return is_wp_error( $built ) ? $built : $row;
+		if ( is_wp_error( $built ) ) { return $built; }
+		$row['_editor_post_content'] = $built;
+		return $row;
 	}
 
 	public function validate(): void {

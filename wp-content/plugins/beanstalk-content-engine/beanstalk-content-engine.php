@@ -61,6 +61,7 @@ require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/CityPageCsv.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/CityPageImportJob.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/CityPageAdminImport.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/CityPageEditor.php';
+require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/CityPageEditorPreview.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/ServiceAreaSchema.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/DraftManager.php';
 require_once BEANSTALK_CONTENT_ENGINE_PATH . 'src/AbilityRegistrar.php';
