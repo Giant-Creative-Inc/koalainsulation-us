@@ -37,3 +37,5 @@ Draft creation extension: preview labels each row as an existing-page update or 
 Updated read-only Local preview on 2026-10-30: 132 valid rows comprising 121 new drafts and 11 existing-page updates; two errors remain (Denham Springs malformed slug, Chesterfield missing location). No apply request was made and no city content was created or updated.
 
 City slugs are normalized with WordPress `sanitize_title()` before lookup, duplicate detection and creation. For example, `denham springs-la` becomes `denham-springs-la`. Preview and reports show the normalized slug. Empty sanitized slugs are rejected.
+
+Use **Revalidate uploaded CSV** to rebuild a preview from the saved original rows without uploading again. It creates a fresh job identity, clears selections, re-runs normalization and validation, and preserves source row numbers. Administrator/nonce/job ownership checks and the shared request lock apply. Revalidation is blocked once any row was updated, created or interrupted, so it cannot erase write history or silently replay changes. The saved rows remain subject to the two-hour expiration.

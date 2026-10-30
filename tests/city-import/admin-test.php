@@ -1,5 +1,5 @@
 <?php
-namespace GiantCreative\BeanstalkContentEngine { class CityPageImportJob {} }
+namespace GiantCreative\BeanstalkContentEngine { class CityPageImportJob {public function create($rows){return ['rows'=>$rows,'results'=>[],'prepared'=>[],'seen'=>[],'cursor'=>0];}} }
 namespace {
 class Response extends RuntimeException { public function __construct(public $data,public $status=200){parent::__construct();} }
 class WP_Error {public function __construct(private $code,private $message){} public function get_error_message(){return $this->message;} }
@@ -16,6 +16,7 @@ function set_transient($key,$job,...$args){$GLOBALS['jobs'][$key]=$job;}
 function sanitize_key($v){return $v;}
 function sanitize_text_field($v){return $v;}
 function wp_unslash($v){return $v;}
+function wp_generate_uuid4(){return 'refreshed';}
 define('HOUR_IN_SECONDS',3600);
 require __DIR__.'/../../wp-content/plugins/beanstalk-content-engine/src/CityPageAdminImport.php';
 $controller=new GiantCreative\BeanstalkContentEngine\CityPageAdminImport(new GiantCreative\BeanstalkContentEngine\CityPageImportJob());
@@ -35,6 +36,12 @@ check(invoke($controller)->status===400,'wrong job rejected');
 check(!$GLOBALS['options'],'lock released after error');
 $_POST=['operation'=>'resume'];
 check(invoke($controller)->data['job']==='expected','owner can resume');
+$_POST=['operation'=>'revalidate','job'=>'expected'];
+$r=invoke($controller);
+check($r->status===200 && $r->data['job']==='refreshed' && $r->data['cursor']===0,'saved upload can start a fresh preview without upload');
+$GLOBALS['jobs']['beanstalk_city_import_1']['results']=[['status'=>'updated']];
+$_POST=['operation'=>'revalidate','job'=>'refreshed'];
+check(invoke($controller)->status===400,'revalidation cannot reset completed or uncertain writes');
 $GLOBALS['user']=2;
 check(invoke($controller)->status===400,'another administrator cannot read owner job');
 $_POST=['operation'=>'upload'];
