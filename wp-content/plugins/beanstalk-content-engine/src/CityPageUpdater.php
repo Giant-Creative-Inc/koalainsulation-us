@@ -15,6 +15,8 @@ final class CityPageUpdater {
 	public const TEMPLATE_VALUE = 'koala/city-page';
 	private const POST_TYPE     = 'resources-landing-pa';
 
+	public const SEO_FIELDS = array( 'meta_title' => '_yoast_wpseo_title', 'meta_description' => '_yoast_wpseo_metadesc', 'canonical_url' => '_yoast_wpseo_canonical' );
+
 	/** Protected metadata written by this migration. */
 	private const META_KEYS = array(
 		'_beanstalk_ai_manifest_version',
@@ -25,6 +27,9 @@ final class CityPageUpdater {
 		self::TEMPLATE_META,
 		'rl_related_location',
 		'_rl_related_location',
+		'_yoast_wpseo_title',
+		'_yoast_wpseo_metadesc',
+		'_yoast_wpseo_canonical',
 	);
 
 	/**
@@ -91,6 +96,8 @@ final class CityPageUpdater {
 			}
 
 		}
+		$seo = self::seo_values( $row );
+		if ( is_wp_error( $seo ) ) { return $seo; }
 		$manifest = $this->patterns->manifest( self::TEMPLATE_VALUE );
 		if ( is_wp_error( $manifest ) ) {
 			return $manifest;
@@ -197,6 +204,7 @@ final class CityPageUpdater {
 			'_beanstalk_structured_data_values'           => wp_json_encode( $structured ),
 			'_beanstalk_structured_data_contract_sha256'  => hash( 'sha256', wp_json_encode( $manifest['structuredData'] ) ),
 		);
+		$metadata = array_merge( $metadata, $seo );
 		foreach ( $metadata as $key => $value ) {
 			if ( ! $this->write_meta( $post->ID, $key, $value ) ) {
 				$this->restore( $post->ID, $snapshot );
@@ -212,6 +220,28 @@ final class CityPageUpdater {
 
 		$result['revision_id'] = is_int( $revision ) ? $revision : 0;
 		return $result;
+	}
+
+	/** Optional SEO overrides. Empty cells retain Yoast's existing values and defaults. */
+	public static function seo_values( array $row ) {
+		$values = array();
+		foreach ( self::SEO_FIELDS as $column => $key ) {
+			if ( ! array_key_exists( $column, $row ) ) { continue; }
+			if ( ! is_scalar( $row[ $column ] ) ) { return new WP_Error( 'city_seo_value', 'SEO values must be plain text: ' . $column ); }
+			$value = trim( (string) $row[ $column ] );
+			if ( '' === $value ) {
+				if ( ! empty( $row['_seo_clear_empty'] ) ) { $values[ $key ] = ''; }
+				continue;
+			}
+			if ( 'canonical_url' === $column ) {
+				$url = parse_url( $value );
+				if ( ! filter_var( $value, FILTER_VALIDATE_URL ) || ! is_array( $url ) || ! in_array( strtolower( $url['scheme'] ?? '' ), array( 'http', 'https' ), true ) || empty( $url['host'] ) || isset( $url['fragment'] ) || isset( $url['user'] ) || isset( $url['pass'] ) ) {
+					return new WP_Error( 'city_seo_canonical', 'Canonical URL must be a complete HTTP or HTTPS URL without credentials or a fragment.' );
+				}
+			} else { $value = sanitize_text_field( $value ); }
+			$values[ $key ] = $value;
+		}
+		return $values;
 	}
 
 	/**

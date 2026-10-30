@@ -33,6 +33,19 @@ $GLOBALS['content']='<!-- wp:paragraph {"metadata":{"name":"city"},"content":"O\
 $service=new BCE\CityPageUpdater(new BCE\PatternRegistry,new BCE\ContentValidator,new BCE\ContentBuilder,new BCE\CityPageContext);
 $result=$service->update(['post_id'=>10,'slug'=>'town'],true);
 if(is_wp_error($result)||$GLOBALS['post']->post_content!==$GLOBALS['content'])throw new RuntimeException('WordPress must store generated block content without losing JSON escapes or backslashes.');
+$seo_row=['post_id'=>10,'slug'=>'town','meta_title'=>'Insulation in Town | Koala','meta_description'=>'Local insulation services for Town.','canonical_url'=>'https://koalainsulation.com/location/town'];
+$before_meta=$GLOBALS['meta'];
+if(is_wp_error($service->update($seo_row,false))||$GLOBALS['meta']!==$before_meta)throw new RuntimeException('SEO preview must not write metadata.');
+$result=$service->update($seo_row,true);
+foreach(['meta_title'=>'_yoast_wpseo_title','meta_description'=>'_yoast_wpseo_metadesc','canonical_url'=>'_yoast_wpseo_canonical'] as $column=>$key){if(($GLOBALS['meta'][$key]??null)!==$seo_row[$column])throw new RuntimeException('SEO import must save '.$column.' to Yoast metadata.');}
+$before_meta=$GLOBALS['meta'];
+$service->update(['post_id'=>10,'slug'=>'town','meta_title'=>'','canonical_url'=>''],true);
+if($GLOBALS['meta']!==$before_meta)throw new RuntimeException('Blank or omitted SEO cells must preserve existing values.');
+foreach(['javascript:alert(1)','/relative-path','https://example.com/path#fragment','https://user:pass@example.com/path','invalid url'] as $bad){
+ if(!is_wp_error($service->update(['post_id'=>10,'slug'=>'town','canonical_url'=>$bad],true)))throw new RuntimeException('Invalid canonical URL must fail before writes: '.$bad);
+}
+$service->update(['post_id'=>10,'slug'=>'town','meta_title'=>'','_seo_clear_empty'=>true],true);
+if($GLOBALS['meta']['_yoast_wpseo_title']!=='')throw new RuntimeException('Explicit editor clearing must restore Yoast automatic defaults.');
 $row=['title'=>'New City','slug'=>'town'];
 $before=$GLOBALS['insert_count']??0;
 $result=$service->create($row,false);

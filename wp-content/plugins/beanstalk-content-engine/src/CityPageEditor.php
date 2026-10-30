@@ -10,6 +10,7 @@ final class CityPageEditor {
 	private const ENABLE = 'field_beanstalk_city_enabled';
 	private array $cache = array();
 	private bool $saving = false;
+	private array $pending_seo = array();
 
 	public function __construct( private PatternRegistry $patterns, private ContentValidator $validator, private ContentBuilder $builder, private CityPageContext $context, private CityPageUpdater $updater ) {}
 
@@ -19,6 +20,7 @@ final class CityPageEditor {
 		add_filter( 'acf/load_value', array( $this, 'load' ), 20, 3 );
 		add_action( 'acf/validate_save_post', array( $this, 'validate' ) );
 		add_action( 'acf/save_post', array( $this, 'save' ), 20 );
+		add_action( 'wp_after_insert_post', array( $this, 'save_seo' ), 30 );
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_filter( 'wp_terms_checklist_args', array( $this, 'default_terms' ), 20, 2 );
 		add_filter( 'use_block_editor_for_post', array( $this, 'use_blocks' ), 20, 2 );
@@ -83,6 +85,10 @@ final class CityPageEditor {
 			}
 			$fields[] = $field;
 		}
+		$fields[] = array( 'key' => 'field_beanstalk_city_tab_seo', 'label' => 'SEO', 'type' => 'tab', 'conditional_logic' => $condition );
+		foreach ( array( 'meta_title' => 'Meta title', 'meta_description' => 'Meta description', 'canonical_url' => 'Canonical URL' ) as $id => $label ) {
+			$fields[] = array( 'key' => 'field_' . self::PREFIX . $id, 'name' => self::PREFIX . $id, 'label' => $label, 'type' => 'canonical_url' === $id ? 'url' : ( 'meta_description' === $id ? 'textarea' : 'text' ), 'required' => 0, 'conditional_logic' => $condition, 'instructions' => 'Optional Yoast SEO override. Leave blank to use the automatic default. These fields take precedence over the Yoast panel on this save. Canonical URLs do not redirect or rename pages.' );
+		}
 		$defaults = $this->values( 0 );
 		$section = '';
 		foreach ( $manifest['fields'] as $id => $definition ) {
@@ -118,6 +124,8 @@ final class CityPageEditor {
 			return $value ?? 0;
 		}
 		if ( CityPageUpdater::TEMPLATE_VALUE !== get_post_meta( $id, CityPageUpdater::TEMPLATE_META, true ) && metadata_exists( 'post', $id, $name ) ) { return $value; }
+		$seo_key = substr( $name, strlen( self::PREFIX ) );
+		if ( isset( CityPageUpdater::SEO_FIELDS[ $seo_key ] ) ) { return get_post_meta( $id, CityPageUpdater::SEO_FIELDS[ $seo_key ], true ); }
 		$values = $this->values( $id );
 		$key = substr( $name, strlen( self::PREFIX ) );
 		return $values[ $key ] ?? $value;
@@ -172,6 +180,12 @@ final class CityPageEditor {
 		foreach ( array( 'related_location_id', 'state_name', 'state_abbreviation', 'service_type' ) as $id ) { $row[ $id ] = $posted[ 'field_' . self::PREFIX . $id ] ?? ''; }
 		$row['state_abbreviation'] = strtoupper( trim( (string) $row['state_abbreviation'] ) );
 		if ( '' === trim( $title ) || ! preg_match( '/^[A-Z]{2}$/', $row['state_abbreviation'] ) || '' === trim( $row['state_name'] ) || '' === trim( $row['service_type'] ) ) { return new WP_Error( 'city_editor_context', 'Enter a city title, state name, two-letter state abbreviation and service type.' ); }
+		foreach ( CityPageUpdater::SEO_FIELDS as $id => $meta_key ) {
+			if ( array_key_exists( 'field_' . self::PREFIX . $id, $posted ) ) { $row[ $id ] = $posted[ 'field_' . self::PREFIX . $id ]; }
+		}
+		$row['_seo_clear_empty'] = true;
+		$seo = CityPageUpdater::seo_values( $row );
+		if ( is_wp_error( $seo ) ) { return $seo; }
 		$content = array();
 		foreach ( $manifest['fields'] as $id => $definition ) {
 			$value = $posted[ 'field_' . self::PREFIX . $id ] ?? null;
@@ -216,13 +230,21 @@ final class CityPageEditor {
 			}
 			$row = $this->prepare( $posted, $post->post_title, $post->post_name );
 			$was_enabled = CityPageUpdater::TEMPLATE_VALUE === get_post_meta( $id, CityPageUpdater::TEMPLATE_META, true );
-			if ( ! is_wp_error( $row ) ) { $row['post_id'] = $id; $row = $this->updater->update( $row, true ); }
+			if ( ! is_wp_error( $row ) ) { $seo = CityPageUpdater::seo_values( $row ); $row['post_id'] = $id; $row = $this->updater->update( $row, true ); }
 			if ( is_wp_error( $row ) ) {
 				if ( ! $was_enabled && 'publish' === $post->post_status ) { wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ) ); }
 				set_transient( 'beanstalk_city_editor_error_' . get_current_user_id(), $row->get_error_message(), 300 );
 			}
+			if ( ! is_wp_error( $row ) ) { $this->pending_seo[ $id ] = $seo; }
 			$this->cache = array();
 		} finally { $this->saving = false; }
+	}
+
+	/** Yoast saves its panel after ACF; keep the validated city SEO fields authoritative. */
+	public function save_seo( int $id ): void {
+		if ( $this->saving || ! isset( $this->pending_seo[ $id ] ) ) { return; }
+		foreach ( $this->pending_seo[ $id ] as $key => $value ) { update_post_meta( $id, $key, wp_slash( $value ) ); }
+		unset( $this->pending_seo[ $id ] );
 	}
 
 	public function notice(): void {
