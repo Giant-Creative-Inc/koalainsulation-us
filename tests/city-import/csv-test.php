@@ -31,7 +31,8 @@ check($result['testimonials_fallback_link_label']==='Read more reviews','missing
 $GLOBALS['matches'][]=(object)['ID'=>11,'post_name'=>'ho-ho-kus-nj'];
 check(is_wp_error(CityPageCsv::normalize($row)),'ambiguous slug rejected');
 $GLOBALS['matches']=[];
-check(is_wp_error(CityPageCsv::normalize($row)),'missing page rejected');
+$new=CityPageCsv::normalize($row);
+check(!is_wp_error($new) && $new['post_id']===0 && $new['_import_action']==='create','missing page prepared for draft creation');
 $GLOBALS['matches']=[(object)['ID'=>10,'post_name'=>'ho-ho-kus-nj']];
 $GLOBALS['city']=false;
 check(is_wp_error(CityPageCsv::normalize($row)),'non-city resource rejected');

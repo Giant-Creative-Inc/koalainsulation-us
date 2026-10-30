@@ -33,12 +33,12 @@ final class CityPageAdminImport {
 		?>
 		<div class="wrap" id="beanstalk-city-import">
 			<h1>City Page Import</h1>
-			<p>Upload the Local Cities Pages CSV to update existing city pages. Slugs must match an existing areas-served page. New pages are not created and publication status is preserved. Applying an update also enables the Beanstalk City Page template.</p>
+			<p>Upload the Local Cities Pages CSV to update existing city pages or create missing pages as drafts. An existing slug must belong to an areas-served page. Missing slugs create new drafts. Existing publication status is preserved. Applying an import also enables the Beanstalk City Page template.</p>
 			<p>Title supplies the service-area name. The related_location_id column accepts a numeric ID or an exact published franchise slug (with optional surrounding slashes). Service type defaults to “Insulation services” and the reviews link label to “Read more reviews”. Placeholders remain editable and resolve through the city template. Image URLs must already exist in this site’s Media Library; blank optional images retain pattern defaults.</p>
 			<p><a href="<?php echo esc_url( $url ); ?>">Download CSV template</a> · Maximum 2,000 rows / 10 MB. Rows with all city identity fields blank are skipped. Preview does not change pages. Back up the database before applying a batch.</p>
 			<form id="city-import-upload"><input type="file" name="csv" accept=".csv,text/csv" required aria-label="City pages CSV"><button class="button button-primary">Upload and preview</button></form>
 			<p id="city-import-status" role="status" aria-live="polite"></p>
-			<p><button class="button" id="city-import-preview" type="button" disabled>Continue preview</button> <button class="button" id="city-import-select" type="button" disabled>Select all valid rows</button> <button class="button button-primary" id="city-import-apply" type="button" disabled>Apply selected updates</button> <button class="button" id="city-import-report" type="button" disabled>Download results CSV</button></p>
+			<p><button class="button" id="city-import-preview" type="button" disabled>Continue preview</button> <button class="button" id="city-import-select" type="button" disabled>Select all valid rows</button> <button class="button button-primary" id="city-import-apply" type="button" disabled>Apply selected rows</button> <button class="button" id="city-import-report" type="button" disabled>Download results CSV</button></p>
 			<table class="widefat striped"><thead><tr><th>Select</th><th>Row</th><th>City</th><th>Slug</th><th>Result</th><th>Details</th></tr></thead><tbody id="city-import-results"></tbody></table>
 		</div>
 		<?php
