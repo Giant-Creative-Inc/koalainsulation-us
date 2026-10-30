@@ -51,7 +51,14 @@ final class CityPageImportJob {
 				$save( $job );
 			}
 			if ( 'create' === ( $row['_import_action'] ?? '' ) ) {
-				$result = $this->updater->create( $row, true );
+				$current = CityPageCsv::normalize( $job['rows'][ $i ] );
+				if ( is_wp_error( $current ) ) {
+					$result = $current;
+				} elseif ( 'create' !== $current['_import_action'] ) {
+					$result = new \WP_Error( 'csv_target_changed', 'An existing city now matches this row. Refresh the preview before applying; no duplicate was created.' );
+				} else {
+					$result = $this->updater->create( $current, true );
+				}
 			} elseif ( ! has_term( 'areas-served', 'resources-page-type', $row['post_id'] ) ) {
 				$result = new \WP_Error( 'csv_target_changed', 'The target is no longer an areas-served page.' );
 			} else {

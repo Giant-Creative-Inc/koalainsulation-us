@@ -80,6 +80,25 @@ final class CityPageCsv {
 			'post_status' => array( 'publish', 'draft', 'pending', 'private', 'future' ),
 			'posts_per_page' => 2, 'suppress_filters' => true,
 		) );
+		// Existing cities may predate the CSV's state-suffix naming convention.
+		$suffix = '-' . strtolower( trim( $row['state_abbreviation'] ) );
+		if ( strlen( $suffix ) === 3 && str_ends_with( $slug, $suffix ) ) {
+			$base = substr( $slug, 0, -3 );
+			$legacy = get_posts( array( 'post_type' => 'resources-landing-pa', 'name' => $base, 'post_status' => array( 'publish', 'draft', 'pending', 'private', 'future' ), 'posts_per_page' => 2, 'suppress_filters' => true ) );
+			$legacy = array_values( array_filter( $legacy, static function ( $post ) use ( $row, $base ) {
+				$location = get_post_meta( $post->ID, 'rl_related_location', true );
+				$ids = array_map( 'intval', is_array( $location ) ? $location : array( $location ) );
+				return $post->post_name === $base && has_term( 'areas-served', 'resources-page-type', $post->ID ) && array( (int) $row['related_location_id'] ) === $ids;
+			} ) );
+			if ( count( $legacy ) > 1 || ( $legacy && $matches ) ) {
+				return new WP_Error( 'csv_city_conflict', 'Both state-suffixed and original city URLs exist, or city matching is ambiguous. Resolve the duplicate before importing.' );
+			}
+			if ( $legacy ) {
+				$matches = $legacy;
+				$slug = $base;
+				$row['slug'] = $base;
+			}
+		}
 		if ( count( $matches ) > 1 || ( $matches && ( $matches[0]->post_name !== $slug || ! has_term( 'areas-served', 'resources-page-type', $matches[0]->ID ) ) ) ) {
 			return new WP_Error( 'csv_target', 'The slug must match exactly one existing areas-served City Page.' );
 		}
