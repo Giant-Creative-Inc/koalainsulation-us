@@ -50,23 +50,47 @@ final class CityPageUpdater {
 	 * @return array|WP_Error
 	 */
 	public function update( array $row, bool $apply = false ) {
-		$post_id = filter_var( $row['post_id'] ?? null, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) );
-		if ( ! $post_id ) {
-			return new WP_Error( 'beanstalk_invalid_city_page_id', __( 'Each row requires a positive integer post_id.', 'beanstalk-content-engine' ) );
-		}
+		return $this->process( $row, $apply, false );
+	}
 
-		$post = get_post( (int) $post_id );
-		if ( ! $post || self::POST_TYPE !== $post->post_type || in_array( $post->post_status, array( 'trash', 'auto-draft' ), true ) ) {
-			return new WP_Error( 'beanstalk_invalid_city_page_target', __( 'The target must be an existing City Page.', 'beanstalk-content-engine' ) );
-		}
-		if ( ! current_user_can( 'edit_post', $post->ID ) ) {
-			return new WP_Error( 'beanstalk_city_page_update_forbidden', __( 'The current user cannot edit the target City Page.', 'beanstalk-content-engine' ) );
-		}
-		$expected_slug = sanitize_title( (string) ( $row['slug'] ?? '' ) );
-		if ( '' === $expected_slug || $expected_slug !== $post->post_name ) {
-			return new WP_Error( 'beanstalk_city_page_slug_mismatch', __( 'The CSV slug does not match the existing page.', 'beanstalk-content-engine' ) );
-		}
+	/** Validate or create a City Page, publishing only after all setup succeeds. */
+	public function create( array $row, bool $apply = false ) {
+		return $this->process( $row, $apply, true );
+	}
 
+	private function process( array $row, bool $apply, bool $create ) {
+		if ( $create ) {
+			$slug = trim( (string) ( $row['slug'] ?? '' ) );
+			$type = get_post_type_object( self::POST_TYPE );
+			if ( ! $type || ( ! current_user_can( $type->cap->create_posts ) || ! current_user_can( $type->cap->publish_posts ) ) ) {
+				return new WP_Error( 'beanstalk_create_forbidden', 'You cannot create and publish City Pages.' );
+			}
+			if ( '' === trim( sanitize_text_field( $row['title'] ?? '' ) ) || '' === $slug || sanitize_title( $slug ) !== $slug ) {
+				return new WP_Error( 'beanstalk_create_identity', 'New City Pages require a title and exact valid slug.' );
+			}
+			if ( get_posts( array( 'post_type' => self::POST_TYPE, 'name' => $slug, 'post_status' => array( 'publish', 'draft', 'pending', 'private', 'future', 'trash', 'auto-draft' ), 'posts_per_page' => 1, 'suppress_filters' => true ) ) ) {
+				return new WP_Error( 'beanstalk_create_collision', 'A page now uses this slug. Upload again to review the existing page.' );
+			}
+			$post = (object) array( 'ID' => 0, 'post_name' => $slug, 'post_status' => 'draft' );
+		} else {
+			$post_id = filter_var( $row['post_id'] ?? null, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) );
+			if ( ! $post_id ) {
+				return new WP_Error( 'beanstalk_invalid_city_page_id', __( 'Each row requires a positive integer post_id.', 'beanstalk-content-engine' ) );
+			}
+
+			$post = get_post( (int) $post_id );
+			if ( ! $post || self::POST_TYPE !== $post->post_type || in_array( $post->post_status, array( 'trash', 'auto-draft' ), true ) ) {
+				return new WP_Error( 'beanstalk_invalid_city_page_target', __( 'The target must be an existing City Page.', 'beanstalk-content-engine' ) );
+			}
+			if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+				return new WP_Error( 'beanstalk_city_page_update_forbidden', __( 'The current user cannot edit the target City Page.', 'beanstalk-content-engine' ) );
+			}
+			$expected_slug = sanitize_title( (string) ( $row['slug'] ?? '' ) );
+			if ( '' === $expected_slug || $expected_slug !== $post->post_name ) {
+				return new WP_Error( 'beanstalk_city_page_slug_mismatch', __( 'The CSV slug does not match the existing page.', 'beanstalk-content-engine' ) );
+			}
+
+		}
 		$manifest = $this->patterns->manifest( self::TEMPLATE_VALUE );
 		if ( is_wp_error( $manifest ) ) {
 			return $manifest;
@@ -120,12 +144,39 @@ final class CityPageUpdater {
 			return $result;
 		}
 
+		if ( $create ) {
+			$id = wp_insert_post( array( 'post_type' => self::POST_TYPE, 'post_status' => 'draft', 'post_title' => wp_slash( sanitize_text_field( $row['title'] ) ), 'post_name' => $post->post_name ), true );
+			if ( is_wp_error( $id ) || ! $id ) {
+				return is_wp_error( $id ) ? $id : new WP_Error( 'beanstalk_create_failed', 'The draft could not be created.' );
+			}
+			try {
+				$row['post_id'] = (int) $id;
+				$result = $this->update( $row, true );
+				if ( is_wp_error( $result ) ) {
+					wp_delete_post( $id, true );
+					return $result;
+				}
+				// Keep incomplete setup unpublished; publish only the fully verified page.
+				$published = wp_update_post( array( 'ID' => $id, 'post_status' => 'publish' ), true );
+				if ( is_wp_error( $published ) || ! $published || 'publish' !== get_post( $id )->post_status ) {
+					wp_delete_post( $id, true );
+					return new WP_Error( 'beanstalk_publish_failed', 'The completed City Page could not be published.' );
+				}
+				$result['status'] = 'publish';
+				$result['action'] = 'created';
+				return $result;
+			} catch ( \Throwable $error ) {
+				wp_delete_post( $id, true );
+				throw $error;
+			}
+		}
+
 		$snapshot = $this->snapshot( $post );
 		$revision = function_exists( 'wp_save_post_revision' ) ? wp_save_post_revision( $post->ID ) : 0;
 		$updated  = wp_update_post(
 			array(
 				'ID'           => $post->ID,
-				'post_content' => $post_content,
+				'post_content' => wp_slash( $post_content ),
 			),
 			true
 		);
@@ -235,7 +286,7 @@ final class CityPageUpdater {
 		wp_update_post(
 			array(
 				'ID'           => $post_id,
-				'post_content' => $snapshot['post_content'],
+				'post_content' => wp_slash( $snapshot['post_content'] ),
 			)
 		);
 		if ( is_array( $snapshot['terms'] ) ) {
