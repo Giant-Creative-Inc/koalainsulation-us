@@ -47,3 +47,21 @@ The pilot uncovered older Local copies of CityPageContext, ContentBuilder and Co
 Publication behavior update: missing city pages now publish after all content, location, taxonomy, schema and template setup succeeds. Temporary draft insertion is an internal step; failed setup never leaves a partial published page. Creating users must have both create and publish permissions. Existing-page updates preserve their current publication status. This supersedes the earlier draft-only behavior described in historical QA notes. The completed Chesterfield Local pilot was also published at the user's request; the remaining 132 rows were not applied.
 
 Existing-route matching correction: a CSV slug ending with its two-letter state abbreviation also checks the unsuffixed city slug. A fallback match must be an areas-served page linked to exactly the same franchise ID. The original slug is preserved and shown in the preview. Multiple candidates or both suffixed/unsuffixed URLs in the same franchise block the row. Creation re-resolves the original row during apply and refuses to create if an existing city has appeared or is now recognized. The Local pilot duplicate Chesterfield `88322` was backed up and moved to Trash; original `/gateway-west-metro-east-il/chesterfield` (`69221`) remains published and was not modified. Read-only Local normalization confirms CSV `chesterfield-mo` now selects update target `69221` with canonical slug `chesterfield`.
+
+## City Pages in the WordPress editor
+
+Use **Resources Landing Pages → Add City Page**. Enter the city as the WordPress title, select its published franchise, and enter state name and abbreviation. The Beanstalk City Page ACF group has all manifest content fields organized into City details, Hero, Residential Services, Commercial Services, Why Koala, Testimonials, FAQs and Final CTA tabs. New pages start with the active pattern's default copy and optional pattern images. Defaults are editable starter copy from the theme; location-specific pricing, rebates and climate statements should be reviewed for the new city.
+
+The dedicated entry point enables field generation automatically. Existing enabled city pages load their current block copy, inline formatting, FAQs, images, related location and saved state/schema values. Field-managed pages use WordPress's classic title-and-ACF form, keeping the generated core blocks stored as `post_content`. Saving these fields regenerates the editorial blocks; use these fields for content changes. Other resource types keep their existing editor. The existing legacy ACF group is retained.
+
+ACF validates required content, state inputs, images and published-location context before saving. On an explicit ACF save (after ACF persists its fields), the shared updater creates a revision and saves generated blocks, taxonomy, relationship, schema and template activation. New first-save drafts receive a sanitized title slug before generation. The WordPress Save Draft/Publish/Update controls determine publication status. Autosaves, revisions, disabled forms, unrelated post types and unauthorized requests are ignored. Generation failures show an admin notice; a newly enabled published page falls back to draft if setup fails. No schema or dynamic location data is embedded as static copy.
+
+Additional tests:
+
+```sh
+php tests/city-import/editor-test.php
+php tests/city-import/editor-validation-test.php
+php tests/city-import/editor-save-test.php
+```
+
+Local browser QA on 2026-10-30: created `City Editor QA` draft `88324` using the actual editor, chose Gateway West & Metro East IL, Missouri/MO, and saved defaults. Changed hero heading and saved again; reloaded the form and preview to verify round-trip. Database readback showed 60 named content blocks, location `4931`, areas-served term, template activation, Missouri schema and matching field/block content. Preview showed the edited heading with resolved placeholders, the correct franchise header/phone/reviews, footer/form, and no broken loaded images. The QA page remains a draft and was not published. Existing Chesterfield `69221` was opened read-only to verify current context hydration; its content was not changed. Code is in the Content Engine plugin; no theme files were modified.
