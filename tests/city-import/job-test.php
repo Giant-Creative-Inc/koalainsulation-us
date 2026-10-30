@@ -2,6 +2,7 @@
 namespace GiantCreative\BeanstalkContentEngine {
  class CityPageUpdater {
   public array $calls=[];
+  public function create($row,$apply=false) { $this->calls[]=$apply; return ['post_id'=>20,'action'=>$apply?'created':'validated']; }
   public function update($row,$apply=false) { $this->calls[]=$apply; return ['post_id'=>$row['post_id'],'action'=>$apply?'updated':'validated']; }
  }
 }
@@ -26,5 +27,12 @@ check(count(array_filter($updater->calls))===1,'replay cannot apply completed ro
 $job=$service->create([$row]);
 $service->apply($job,[0]);
 check(count(array_filter($updater->calls))===1,'unpreviewed row cannot apply');
+$GLOBALS['matches']=[];
+$job=$service->create([$row,$row]);
+$service->preview($job);
+check($job['results'][0]['status']==='validated' && str_contains($job['results'][0]['detail'],'create new draft'),'preview labels new drafts');
+check($job['results'][1]['status']==='error','duplicate new slug rejected');
+$service->apply($job,[0]);
+check($job['results'][0]['status']==='created','missing page is created on apply');
 echo "City import job tests passed\n";
 }

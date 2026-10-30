@@ -16,18 +16,18 @@ final class CityPageImportJob {
 		while ( $job['cursor'] < $end ) {
 			$i = $job['cursor']++;
 			$row = CityPageCsv::normalize( $job['rows'][ $i ] );
-			if ( ! is_wp_error( $row ) && isset( $job['seen'][ $row['post_id'] ] ) ) {
+			if ( ! is_wp_error( $row ) && isset( $job['seen'][ $row['slug'] ] ) ) {
 				$row = new \WP_Error( 'csv_duplicate', 'Duplicate target page in this CSV.' );
 			}
 			if ( ! is_wp_error( $row ) ) {
-				$job['seen'][ $row['post_id'] ] = true;
-				$result = $this->updater->update( $row, false );
+				$job['seen'][ $row['slug'] ] = true;
+				$result = 'create' === $row['_import_action'] ? $this->updater->create( $row, false ) : $this->updater->update( $row, false );
 			} else {
 				$result = $row;
 			}
 			$job['results'][ $i ] = array(
 				'status' => is_wp_error( $result ) ? 'error' : 'validated',
-				'detail' => is_wp_error( $result ) ? $result->get_error_message() : 'Ready to update existing page ' . $row['post_id'],
+				'detail' => is_wp_error( $result ) ? $result->get_error_message() : ( 'create' === $row['_import_action'] ? 'Ready to create new draft' : 'Ready to update existing page ' . $row['post_id'] ),
 			);
 			if ( ! is_wp_error( $result ) ) {
 				$job['prepared'][ $i ] = $row;
@@ -50,14 +50,16 @@ final class CityPageImportJob {
 			if ( $save ) {
 				$save( $job );
 			}
-			if ( ! has_term( 'areas-served', 'resources-page-type', $row['post_id'] ) ) {
+			if ( 'create' === ( $row['_import_action'] ?? '' ) ) {
+				$result = $this->updater->create( $row, true );
+			} elseif ( ! has_term( 'areas-served', 'resources-page-type', $row['post_id'] ) ) {
 				$result = new \WP_Error( 'csv_target_changed', 'The target is no longer an areas-served page.' );
 			} else {
 				$result = $this->updater->update( $row, true );
 			}
 			$job['results'][ $i ] = array(
-				'status' => is_wp_error( $result ) ? 'error' : 'updated',
-				'detail' => is_wp_error( $result ) ? $result->get_error_message() : 'Updated page ' . $row['post_id'],
+				'status' => is_wp_error( $result ) ? 'error' : $result['action'],
+				'detail' => is_wp_error( $result ) ? $result->get_error_message() : ucfirst( $result['action'] ) . ' page ' . $result['post_id'],
 			);
 			if ( $save ) {
 				$save( $job );

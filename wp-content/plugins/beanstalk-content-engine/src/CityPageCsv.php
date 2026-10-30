@@ -79,13 +79,14 @@ final class CityPageCsv {
 			'post_status' => array( 'publish', 'draft', 'pending', 'private', 'future' ),
 			'posts_per_page' => 2, 'suppress_filters' => true,
 		) );
-		if ( 1 !== count( $matches ) || $matches[0]->post_name !== $slug || ! has_term( 'areas-served', 'resources-page-type', $matches[0]->ID ) ) {
+		if ( count( $matches ) > 1 || ( $matches && ( $matches[0]->post_name !== $slug || ! has_term( 'areas-served', 'resources-page-type', $matches[0]->ID ) ) ) ) {
 			return new WP_Error( 'csv_target', 'The slug must match exactly one existing areas-served City Page.' );
 		}
-		if ( ! current_user_can( 'edit_post', $matches[0]->ID ) ) {
+		if ( $matches && ! current_user_can( 'edit_post', $matches[0]->ID ) ) {
 			return new WP_Error( 'csv_forbidden', 'You cannot edit this City Page.' );
 		}
-		$row['post_id'] = (int) $matches[0]->ID;
+		$row['post_id'] = $matches ? (int) $matches[0]->ID : 0;
+		$row['_import_action'] = $matches ? 'update' : 'create';
 		$row['service_area_name'] = sanitize_text_field( $row['title'] );
 		$row['service_type'] = 'Insulation services';
 		$row['testimonials_fallback_link_label'] = $row['testimonials_fallback_link_label'] ?? 'Read more reviews';
