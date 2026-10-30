@@ -64,3 +64,9 @@ wp beanstalk city-pages update /absolute/path/city-pages.csv --apply
 
 Publishing is not part of this command. Existing published pages stay published;
 existing drafts stay drafts.
+
+## Phase II SEO values
+
+The CSV template includes optional `meta_title`, `meta_description`, and `canonical_url` columns. Supply optimized values alongside the original city identity and content columns. The importer saves these to Yoast SEO's existing title, description, and canonical metadata; it does not add duplicate head tags. Old CSV files continue to work. Blank or omitted SEO cells retain existing overrides and automatic defaults. The editor's SEO tab loads the saved Yoast overrides. Its fields take precedence over the Yoast panel when saving a field-managed city page; clearing a field in this tab restores the automatic default.
+
+A canonical must be a complete HTTP/HTTPS URL without credentials or a fragment. It may point at a different preferred page; it does not change the imported page's slug, merge pages, or create a redirect. Values are validated before any writes and restored with the content if the import fails. Preview-only CSV validation makes no changes. Phase II should use the existing full city CSV with these columns populated, rather than an SEO-only file.
