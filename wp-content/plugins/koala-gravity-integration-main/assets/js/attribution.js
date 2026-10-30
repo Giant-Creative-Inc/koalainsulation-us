@@ -12,7 +12,8 @@
  *
  *   2. Fill — on pages that carry one of this plugin's forms, write those
  *      values into the form's mapped hidden fields (kgiData.trackingFieldIds).
- *      For campaign params the current page URL wins (last touch) and the
+ *      AFL current-browser UTMs take priority when available. Otherwise
+ *      for campaign params the current page URL wins (last touch) and the
  *      cookie is the fallback (the cookie tracks last touch too); referrer /
  *      landing page always come from the first-touch cookie.
  *
@@ -229,6 +230,31 @@
 	}
 
 	/**
+	 * Reads a UTM from AFL's current-browser last-touch attribution.
+	 *
+	 * Do not infer AFL success from a nonempty hidden input: shared cached
+	 * HTML can contain another visitor's values. AFL dispatches
+	 * afl_wc_utm_event_attribution_set after this browser's data is ready.
+	 *
+	 * @param {string} key Tracking payload key.
+	 * @returns {string} AFL value, or empty so Koala can provide the fallback.
+	 */
+	function getAflUtmValue( key ) {
+		var param = URL_PARAM_KEYS[ key ];
+		var afl = window.afl_wc_utm_public;
+
+		if ( ! param || param.indexOf( 'utm_' ) !== 0 || ! afl ||
+			! afl.attribution || String( afl.attribution.status ) !== '1' ) {
+			return '';
+		}
+
+		var lastTouch = afl.attribution.utm_last_touch;
+		var value = lastTouch && lastTouch[ param ];
+
+		return typeof value === 'string' ? value.trim() : '';
+	}
+
+	/**
 	 * Computes the value for a single tracking key.
 	 *
 	 * @param {string} key    Tracking payload key.
@@ -238,8 +264,8 @@
 	 */
 	function resolveValue( key, stored, formId ) {
 		if ( URL_PARAM_KEYS.hasOwnProperty( key ) ) {
-			// Current URL wins; the cookie (last campaign value seen) is the fallback.
-			return getQueryParam( URL_PARAM_KEYS[ key ] ) || ( stored[ key ] || '' );
+			// AFL UTMs win; otherwise use the current URL, then Koala capture.
+			return getAflUtmValue( key ) || getQueryParam( URL_PARAM_KEYS[ key ] ) || ( stored[ key ] || '' );
 		}
 
 		switch ( key ) {
@@ -262,11 +288,9 @@
 	 * Fills every mapped tracking hidden field on every form present.
 	 *
 	 * Reads kgiData.trackingFieldIds (form ID => { trackingKey => GF field ID })
-	 * localized on form pages. Only writes into an input that is currently
-	 * empty, so a value already supplied (e.g. by Gravity Forms' own dynamic
-	 * population) is never clobbered. Uses querySelectorAll and walks each known
-	 * form ID for the same duplicate-form / multi-form reasons as
-	 * form-validation.js.
+	 * localized on form pages. Always resolve from current-browser AFL or
+	 * Koala capture, including empty values, to replace stale cached markup.
+	 * Walk every instance because a form may also appear in a popup.
 	 */
 	function fillForms() {
 		if ( typeof kgiData === 'undefined' || ! kgiData || ! kgiData.trackingFieldIds ) {
@@ -284,15 +308,13 @@
 					var fieldId = fieldMap[ key ];
 					var input = form.querySelector( 'input[name="input_' + fieldId + '"]' );
 
-					if ( ! input || input.value ) {
+					if ( ! input ) {
 						return;
 					}
 
 					var value = resolveValue( key, stored, formId );
 
-					if ( value ) {
-						input.value = value;
-					}
+					input.value = value;
 				} );
 			} );
 		} );
@@ -314,6 +336,10 @@
 	captureAttribution();
 	bindCtaCapture();
 	onReady( fillForms );
+	document.addEventListener( 'afl_wc_utm_event_attribution_set', fillForms );
+	document.addEventListener( 'gform/post_render', fillForms );
+	document.addEventListener( 'submit', fillForms, true );
+	window.addEventListener( 'pageshow', fillForms );
 
 	// Re-fill after Gravity Forms rebuilds the DOM on multi-page or AJAX forms.
 	// gform_post_render is a jQuery-triggered event, so bind it via jQuery when
