@@ -125,7 +125,7 @@ final class CityPageUpdater {
 		$updated  = wp_update_post(
 			array(
 				'ID'           => $post->ID,
-				'post_content' => $post_content,
+				'post_content' => wp_slash( $post_content ),
 			),
 			true
 		);
@@ -235,7 +235,7 @@ final class CityPageUpdater {
 		wp_update_post(
 			array(
 				'ID'           => $post_id,
-				'post_content' => $snapshot['post_content'],
+				'post_content' => wp_slash( $snapshot['post_content'] ),
 			)
 		);
 		if ( is_array( $snapshot['terms'] ) ) {
