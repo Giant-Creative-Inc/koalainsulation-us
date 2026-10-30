@@ -53,7 +53,7 @@ final class CityPageUpdater {
 		return $this->process( $row, $apply, false );
 	}
 
-	/** Validate or create a new City Page as a draft, never a published page. */
+	/** Validate or create a City Page, publishing only after all setup succeeds. */
 	public function create( array $row, bool $apply = false ) {
 		return $this->process( $row, $apply, true );
 	}
@@ -62,8 +62,8 @@ final class CityPageUpdater {
 		if ( $create ) {
 			$slug = trim( (string) ( $row['slug'] ?? '' ) );
 			$type = get_post_type_object( self::POST_TYPE );
-			if ( ! $type || ! current_user_can( $type->cap->create_posts ) ) {
-				return new WP_Error( 'beanstalk_create_forbidden', 'You cannot create City Pages.' );
+			if ( ! $type || ( ! current_user_can( $type->cap->create_posts ) || ! current_user_can( $type->cap->publish_posts ) ) ) {
+				return new WP_Error( 'beanstalk_create_forbidden', 'You cannot create and publish City Pages.' );
 			}
 			if ( '' === trim( sanitize_text_field( $row['title'] ?? '' ) ) || '' === $slug || sanitize_title( $slug ) !== $slug ) {
 				return new WP_Error( 'beanstalk_create_identity', 'New City Pages require a title and exact valid slug.' );
@@ -156,6 +156,13 @@ final class CityPageUpdater {
 					wp_delete_post( $id, true );
 					return $result;
 				}
+				// Keep incomplete setup unpublished; publish only the fully verified page.
+				$published = wp_update_post( array( 'ID' => $id, 'post_status' => 'publish' ), true );
+				if ( is_wp_error( $published ) || ! $published || 'publish' !== get_post( $id )->post_status ) {
+					wp_delete_post( $id, true );
+					return new WP_Error( 'beanstalk_publish_failed', 'The completed City Page could not be published.' );
+				}
+				$result['status'] = 'publish';
 				$result['action'] = 'created';
 				return $result;
 			} catch ( \Throwable $error ) {

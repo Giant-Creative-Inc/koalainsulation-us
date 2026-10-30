@@ -27,7 +27,7 @@ final class CityPageImportJob {
 			}
 			$job['results'][ $i ] = array(
 				'status' => is_wp_error( $result ) ? 'error' : 'validated',
-				'detail' => is_wp_error( $result ) ? $result->get_error_message() : ( 'create' === $row['_import_action'] ? 'Ready to create new draft' : 'Ready to update existing page ' . $row['post_id'] ),
+				'detail' => is_wp_error( $result ) ? $result->get_error_message() : ( 'create' === $row['_import_action'] ? 'Ready to create and publish new page' : 'Ready to update existing page ' . $row['post_id'] ),
 			);
 			if ( ! is_wp_error( $result ) ) {
 				$job['prepared'][ $i ] = $row;

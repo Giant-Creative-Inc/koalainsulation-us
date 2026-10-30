@@ -63,7 +63,7 @@
     status.textContent = `Validating ${data.cursor} of ${data.total} rows…`;
     data = await request('preview');
    }
-   status.textContent = `Preview complete: ${items.filter(i => i.status === 'validated').length} valid, ${items.filter(i => i.status === 'error').length} errors. Select rows to update or create as drafts. No pages have changed.`;
+   status.textContent = `Preview complete: ${items.filter(i => i.status === 'validated').length} valid, ${items.filter(i => i.status === 'error').length} errors. Select rows to update or create and publish. No pages have changed.`;
   });
  });
  revalidate.addEventListener('click', () => run(async () => {
@@ -75,7 +75,7 @@
  preview.addEventListener('click', () => run(async () => {
   let data = await request('preview');
   while (data.cursor < data.total) { status.textContent = `Validating ${data.cursor} of ${data.total} rows…`; data = await request('preview'); }
-  status.textContent = 'Preview complete. Select valid rows to update or create as drafts. No pages have changed.';
+  status.textContent = 'Preview complete. Select valid rows to update or create and publish. No pages have changed.';
  }));
  select.addEventListener('click', () => {
   items.filter(i => i.status === 'validated').forEach(i => checked.add(i.index));
@@ -84,13 +84,13 @@
  apply.addEventListener('click', () => run(async () => {
   const selected = items.filter(i => checked.has(i.index) && i.status === 'validated').map(i => i.index);
   if (!selected.length) { status.textContent = 'Select at least one valid row.'; return; }
-  if (!window.confirm(`Import ${selected.length} selected rows? Existing pages will be updated; missing pages will be created as drafts. Their Beanstalk template will be enabled.`)) return;
+  if (!window.confirm(`Import ${selected.length} selected rows? Existing pages will be updated; missing pages will be created and published. Their Beanstalk template will be enabled.`)) return;
   for (let i = 0; i < selected.length; i += 5) {
    status.textContent = `Applying ${i} of ${selected.length} selected updates…`;
    const data = new FormData(); selected.slice(i, i + 5).forEach(index => data.append('selected[]', index));
    await request('apply', data);
   }
-  checked.clear(); status.textContent = `Import finished. ${items.filter(i => i.status === 'updated').length} updated, ${items.filter(i => i.status === 'created').length} drafts created; ${items.filter(i => ['error', 'interrupted'].includes(i.status)).length} errors or interrupted rows. Download the report for details.`;
+  checked.clear(); status.textContent = `Import finished. ${items.filter(i => i.status === 'updated').length} updated, ${items.filter(i => i.status === 'created').length} pages created and published; ${items.filter(i => ['error', 'interrupted'].includes(i.status)).length} errors or interrupted rows. Download the report for details.`;
  }));
  report.addEventListener('click', () => {
   // Prevent spreadsheet formula execution when opening a user-supplied value.

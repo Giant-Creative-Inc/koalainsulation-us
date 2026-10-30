@@ -10,8 +10,8 @@ class WP_Error {public function __construct(...$args){}}
 function __($s,...$args){return $s;}
 function is_wp_error($v){return $v instanceof WP_Error;}
 function get_post($id){return $GLOBALS['post'];}
-function current_user_can(...$args){return !empty($GLOBALS['can_create'] ?? true);}
-function get_post_type_object($type){return (object)['cap'=>(object)['create_posts'=>'edit_posts']];}
+function current_user_can(...$args){return $args[0]==='publish_posts'?($GLOBALS['can_publish']??true):!empty($GLOBALS['can_create'] ?? true);}
+function get_post_type_object($type){return (object)['cap'=>(object)['create_posts'=>'edit_posts','publish_posts'=>'publish_posts']];}
 function get_posts($args){return !empty($GLOBALS['collision'])?[$GLOBALS['post']]:[];}
 function sanitize_text_field($s){return strip_tags($s);}
 function wp_insert_post($values,...$args){$GLOBALS['insert_count']=($GLOBALS['insert_count']??0)+1;$GLOBALS['post']=(object)array_merge(['ID'=>20,'post_content'=>''],$values);$GLOBALS['collision']=true;return 20;}
@@ -22,7 +22,7 @@ function sanitize_title($s){return $s;}
 function metadata_exists(...$args){return false;}
 function get_post_meta($id,$key,...$args){return $GLOBALS['meta'][$key]??'';}
 function wp_get_object_terms(...$args){return [];}
-function wp_update_post($values,...$args){$GLOBALS['post']->post_content=stripslashes($values['post_content']);return 10;}
+function wp_update_post($values,...$args){if(isset($values['post_content']))$GLOBALS['post']->post_content=stripslashes($values['post_content']);if(isset($values['post_status'])){if(($GLOBALS['meta']['_beanstalk_template']??'')!=='koala/city-page')throw new RuntimeException('Publishing must happen after complete setup.');$GLOBALS['post']->post_status=$values['post_status'];}return 10;}
 function wp_json_encode($value){return json_encode($value);}
 function wp_slash($value){return is_string($value)?addslashes($value):$value;}
 function update_post_meta($id,$key,$value){$GLOBALS['meta'][$key]=is_string($value)?stripslashes($value):$value;}
@@ -38,13 +38,15 @@ $before=$GLOBALS['insert_count']??0;
 $result=$service->create($row,false);
 if(is_wp_error($result)||($GLOBALS['insert_count']??0)!==$before)throw new RuntimeException('Creation preview must never insert a page.');
 $result=$service->create($row,true);
-if(is_wp_error($result)||$result['action']!=='created'||$GLOBALS['post']->post_status!=='draft'||$GLOBALS['post']->post_content!==$GLOBALS['content']||($GLOBALS['meta']['_beanstalk_template']??'')!=='koala/city-page')throw new RuntimeException('New City Page must be a complete enabled draft.');
+if(is_wp_error($result)||$result['action']!=='created'||$GLOBALS['post']->post_status!=='publish'||$GLOBALS['post']->post_content!==$GLOBALS['content']||($GLOBALS['meta']['_beanstalk_template']??'')!=='koala/city-page')throw new RuntimeException('New City Page must be a complete enabled published page.');
 if(!is_wp_error($service->create($row,true))||$GLOBALS['insert_count']!==1)throw new RuntimeException('Repeated creation must reject an existing slug.');
 $GLOBALS['collision']=false;$GLOBALS['invalid']=true;
 if(!is_wp_error($service->create($row,true))||$GLOBALS['insert_count']!==1)throw new RuntimeException('Invalid content must not insert a draft.');
 $GLOBALS['invalid']=false;$GLOBALS['can_create']=false;
 if(!is_wp_error($service->create($row,true)))throw new RuntimeException('Create permission must be enforced.');
-$GLOBALS['can_create']=true;$GLOBALS['context_fail']=true;
+$GLOBALS['can_create']=true;$GLOBALS['can_publish']=false;
+if(!is_wp_error($service->create($row,true)))throw new RuntimeException('Publish permission must be enforced before insertion.');
+$GLOBALS['can_publish']=true;$GLOBALS['context_fail']=true;
 if(!is_wp_error($service->create($row,true))||($GLOBALS['deleted']??0)!==20)throw new RuntimeException('Failed draft setup must remove the partial draft.');
 echo "City updater content preservation and draft creation tests passed\n";
 }
