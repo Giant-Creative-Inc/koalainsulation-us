@@ -19,6 +19,7 @@ final class CityPageEditor {
 		add_action( 'acf/validate_save_post', array( $this, 'validate' ) );
 		add_action( 'acf/save_post', array( $this, 'save' ), 20 );
 		add_action( 'admin_menu', array( $this, 'menu' ) );
+		add_filter( 'wp_terms_checklist_args', array( $this, 'default_terms' ), 20, 2 );
 		add_filter( 'use_block_editor_for_post', array( $this, 'use_blocks' ), 20, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'editor_style' ) );
 		add_action( 'admin_notices', array( $this, 'notice' ) );
@@ -28,6 +29,19 @@ final class CityPageEditor {
 	public function use_blocks( bool $use, $post ): bool {
 		if ( $post && 'resources-landing-pa' === $post->post_type && ( CityPageUpdater::TEMPLATE_VALUE === get_post_meta( $post->ID, CityPageUpdater::TEMPLATE_META, true ) || get_post_meta( $post->ID, self::PREFIX . 'enabled', true ) || ( isset( $_GET['beanstalk_city'] ) && '1' === $_GET['beanstalk_city'] ) ) ) { return false; }
 		return $use;
+	}
+
+	/** Preselect Areas served in the city editor before the first save. No GET writes. */
+	public function default_terms( array $args, int $post_id ): array {
+		if ( 'resources-page-type' !== ( $args['taxonomy'] ?? '' ) ) { return $args; }
+		$post = get_post( $post_id );
+		if ( ! $post || $this->use_blocks( true, $post ) ) { return $args; }
+		$term = get_term_by( 'slug', 'areas-served', 'resources-page-type' );
+		if ( ! $term || is_wp_error( $term ) ) { return $args; }
+		$selected = isset( $args['selected_cats'] ) && is_array( $args['selected_cats'] ) ? $args['selected_cats'] : wp_get_object_terms( $post_id, 'resources-page-type', array( 'fields' => 'ids' ) );
+		if ( is_wp_error( $selected ) ) { return $args; }
+		$args['selected_cats'] = array_values( array_unique( array_merge( array_map( 'intval', $selected ), array( (int) $term->term_id ) ) ) );
+		return $args;
 	}
 
 	public function editor_style(): void {
