@@ -1,0 +1,36 @@
+.koala-location-lower{box-sizing:border-box;padding:60px 64px;color:#042e53;background:#fff;scroll-margin-top:190px}
+.koala-location-lower__intro{max-width:980px;margin:0 auto 58px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:24px}
+.koala-location-content .koala-location-lower h2,.editor-styles-wrapper .koala-location-lower h2{font:700 48px/48px "Alegreya Sans",sans-serif;color:#042e53;margin:0}
+.koala-location-lower p{font:400 18px/30.6px "Filson Pro",sans-serif;margin:0}
+.koala-location-lower a{color:inherit}
+.koala-location-lower__intro .koala-location-hero__quote{background:#afd56c;border-color:#afd56c;color:#042e53}
+.koala-location-communities__list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;max-width:936px;margin:0 auto;padding:0;list-style:none}
+.koala-location-communities__list li{display:flex;align-items:center;gap:24px;border-bottom:1px solid #042e53;padding-bottom:24px;font:700 24px/28.8px "Alegreya Sans",sans-serif;overflow-wrap:anywhere}
+.koala-location-communities__list li::before{content:"";width:12px;height:12px;border-radius:50%;background:#afd56c;flex:0 0 12px}
+.koala-location-communities__list li[hidden]{display:none}
+.koala-location-communities__more,.koala-location-widget__load{display:block;margin:48px auto 0;padding:8px;border:0;background:transparent;color:#042e53;text-decoration:underline;font:700 18px/1.5 Montserrat,sans-serif;cursor:pointer}
+.koala-location-lower button:focus-visible,.koala-location-lower a:focus-visible{outline:2px solid #042e53;outline-offset:4px}
+.koala-location-nap{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.koala-location-nap__map{min-width:0;overflow:hidden;border-radius:12px}
+.koala-location-nap__details{min-width:0}.koala-location-nap h2 span{color:#8bc34a}
+.koala-location-nap__contact{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px}
+.koala-location-lower h3{font:700 27px/37.8px "Alegreya Sans",sans-serif;margin:0 0 16px}
+.koala-location-nap__contact p{margin-bottom:24px;overflow-wrap:anywhere}.koala-location-nap dl{margin:0;font:400 16px/1.6 "Filson Pro",sans-serif}.koala-location-nap dl div{display:flex;justify-content:space-between;gap:16px}.koala-location-nap dd{margin:0;text-align:right}
+.koala-location-offers__grid{display:flex;flex-wrap:wrap;gap:24px;justify-content:center}
+.koala-location-offers__card{box-sizing:border-box;padding:24px;border-radius:12px;background:#afd56c;width:454px;max-width:100%}
+.koala-location-offers__card>div{box-sizing:border-box;border:2px dashed #101113;border-radius:12px;padding:24px;display:flex;flex-direction:column;align-items:flex-start;gap:24px;height:100%}
+.koala-location-offers__card h3{margin:0}.koala-location-offers__card p{color:#101113}.koala-location-offers__card .koala-location-hero__quote{font-size:16px;line-height:24px;max-width:100%;border-radius:8px;border:4px solid white;padding:12px 20px;margin-top:auto}
+.koala-location-education{display:flex;align-items:center;gap:24px;justify-content:space-between}.koala-location-education>.wp-block-group{max-width:750px}.koala-location-education p{margin-top:24px}
+.koala-location-education .wp-block-button__link{display:block;white-space:nowrap;box-sizing:border-box;padding:10px 30px;border:2px solid #042e53;border-radius:1000px;background:transparent;color:#042e53;font:700 18px/36px Montserrat,sans-serif;text-decoration:none;transition:background .2s,color .2s,transform .2s}
+.koala-location-education .wp-block-button__link:hover{background:#042e53;color:white;transform:translateY(-2px)}
+.koala-location-education>.wp-block-group__inner-container{display:contents}
+@media(min-width:992px) and (max-width:1440px){.koala-location-lower{padding:48px 40px}.koala-location-nap{gap:32px}.koala-location-nap__contact{grid-template-columns:1fr}.koala-location-content .koala-location-lower h2{font-size:48px}}
+@media(max-width:991px){.koala-location-lower{padding:48px 20px;scroll-margin-top:160px}.koala-location-lower__intro{margin-bottom:32px;text-align:left;align-items:flex-start;gap:24px}.koala-location-content .koala-location-lower h2,.editor-styles-wrapper .koala-location-lower h2{font-size:32px;line-height:32px}.koala-location-communities__list{grid-template-columns:1fr}.koala-location-nap{grid-template-columns:1fr;gap:32px}.koala-location-nap__contact{grid-template-columns:1fr}.koala-location-offers__card{padding:20px}.koala-location-offers__card>div{padding:20px}.koala-location-education{flex-direction:column;align-items:flex-start}.koala-location-lower .koala-location-hero__quote{font-size:18px}}
+@media(prefers-reduced-motion:reduce){.koala-location-education .wp-block-button__link{transition:none;transform:none}}
+
+.koala-location-education ul{margin:24px 0 0;padding-left:24px;font:400 18px/30.6px "Filson Pro",sans-serif;overflow-wrap:anywhere}
+.koala-location-education li+li{margin-top:12px}
+.koala-location-education li a{text-decoration:underline;text-underline-offset:4px}
+
+.koala-location-customer-reviews__feed{position:relative;min-height:280px}
+.koala-location-customer-reviews__feed>.koala-location-widget__load{position:absolute;top:0;right:0;z-index:2;margin:0;background:#fff}

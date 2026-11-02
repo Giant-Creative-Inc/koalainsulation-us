@@ -1,0 +1,54 @@
+@font-face{font-family:"Alegreya Sans";font-style:normal;font-weight:700;font-display:swap;src:url("location-hero/alegreya-sans-bold.woff2") format("woff2")}
+.koala-location-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"copy media" "copy reviews";grid-template-rows:407px auto;gap:24px 80px;margin:0;padding:48px 64px;background:linear-gradient(90deg,rgba(0,0,0,.05),rgba(0,0,0,.05)),linear-gradient(79.39deg,#95c93d 35%,#043968 100%)}
+.koala-location-hero::before{content:"";position:absolute;z-index:-1;left:39.3%;bottom:12.5%;width:33.3%;aspect-ratio:572/214;background:url("location-hero/accent.png") center/contain no-repeat;pointer-events:none}
+.koala-location-hero__copy{grid-area:copy;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:24px;min-width:0;align-self:center;margin:0}
+.koala-location-content .koala-location-hero h1,.editor-styles-wrapper .koala-location-hero h1{font-family:"Alegreya Sans",sans-serif;font-size:56px;line-height:1;font-weight:700;color:#042e53;margin:0}
+.koala-location-hero__introduction{font-family:"Filson Pro",sans-serif;font-size:18px;line-height:27px;font-weight:400;color:#53602c;margin:0}
+.koala-location-hero__quote{display:inline-flex;align-items:center;justify-content:center;gap:12px;border:2px solid #042e53;border-radius:1000px;background:#042e53;color:#afd56c;font-family:Montserrat,sans-serif;font-weight:700;font-size:18px;line-height:36px;padding:10px 30px;opacity:1;max-width:100%;margin:0;cursor:default}
+.koala-location-hero__media{grid-area:media;position:relative;min-width:0;overflow:hidden;border-radius:12px;margin:0;height:407px}
+.koala-location-hero__media>img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 5%}
+.koala-location-hero__play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border:2px solid #fff;border-radius:50%;background:#042e53;color:#afd56c;font-size:28px;cursor:pointer}
+.koala-location-hero__media iframe{width:100%;height:100%;border:0;position:absolute;inset:0}
+.koala-location-hero__reviews{grid-area:reviews;display:flex;flex-direction:column;justify-content:center;align-self:start;gap:0;min-width:0;padding:20px;border-radius:12px;background:rgba(0,0,0,.4);backdrop-filter:blur(25px);text-decoration:none;color:#fff;margin:0}
+.koala-location-hero__reviews p{font-family:"Alegreya Sans",sans-serif;font-size:24px;font-weight:700;line-height:1.7;color:#fff;margin:0}
+.koala-location-hero__reviews p span{color:#afd56c}
+.koala-location-hero__proof{display:flex;flex-wrap:wrap;align-items:center;gap:16px;font-family:"Alegreya Sans",sans-serif;font-size:16px;line-height:1.7}
+.koala-location-hero__stars{position:relative;display:inline-grid;flex:none}
+.koala-location-hero__stars>span{display:flex;gap:6.579px;grid-area:1/1}
+.koala-location-hero__stars>span:first-child{opacity:.25}
+.koala-location-hero__stars img{display:block;width:19.7368px;height:19.7368px}
+.koala-location-hero__reviews:focus-visible,.koala-location-hero__play:focus-visible{outline:3px solid #fff;outline-offset:4px}
+@media(min-width:992px) and (max-width:1440px){.koala-location-hero{gap:24px 40px;padding:48px 40px}.koala-location-hero__reviews{padding:20px}}
+@media(max-width:991px){
+.koala-location-hero{grid-template-columns:minmax(0,1fr);grid-template-areas:"copy" "reviews" "media";grid-template-rows:auto auto auto;gap:32px;min-height:0;padding:48px 20px;background:#f7fafd}
+.koala-location-hero::before{display:none}
+.koala-location-hero__copy{gap:16px}
+.koala-location-content .koala-location-hero h1,.editor-styles-wrapper .koala-location-hero h1{font-size:56px;line-height:1}
+.koala-location-hero__introduction{color:#808080}
+.koala-location-hero__quote{font-size:20px;padding:14px 30px}
+.koala-location-hero__media{height:322px}
+.koala-location-hero__reviews{min-height:0}
+}
+@media(max-width:359px){.koala-location-hero__quote{font-size:17px;padding-inline:20px}.koala-location-hero__reviews{padding-inline:20px}}
+
+.koala-location-hero>.wp-block-group__inner-container,.koala-location-hero__copy>.wp-block-group__inner-container{display:contents}
+
+@media(max-width:767px){.koala-location-content .koala-location-hero h1,.editor-styles-wrapper .koala-location-hero h1{font-size:40px;line-height:1}}
+
+.koala-location-hero__quote:hover{background:transparent!important;color:#042e53!important;border-color:#042e53!important}
+
+.koala-location-promo{padding:40px 64px;background:#f7fafd;text-align:center}
+.koala-location-promo img{display:block;max-width:100%;height:auto;margin:auto}
+.koala-location-booking{position:fixed;left:0;bottom:15vh;width:240px;max-width:240px;z-index:990}
+.koala-location-booking button:hover,.koala-location-booking a:hover{background:transparent!important;color:#042e53!important;border-color:#042e53!important}
+.koala-location-reviews{padding:64px;scroll-margin-top:120px;overflow-wrap:anywhere}
+@media(max-width:991px){.koala-location-promo,.koala-location-reviews{padding:40px 20px}.koala-location-booking{width:160px;max-width:160px;bottom:80px}}
+
+.koala-location-booking .hcp-button{display:block;width:100%;cursor:pointer}
+.koala-location-booking img{display:block;width:100%!important;max-width:100%!important;height:auto!important}
+
+.koala-location-hero__quote,.koala-location-booking .hcp-button,.koala-location-booking button{transition:background-color .2s ease,color .2s ease,border-color .2s ease,transform .2s ease}
+@media(hover:hover) and (pointer:fine){.koala-location-hero__quote:hover,.koala-location-booking .hcp-button:hover,.koala-location-booking button:hover{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){.koala-location-hero__quote,.koala-location-booking .hcp-button,.koala-location-booking button{transition:none!important;transform:none!important}}
+
+.koala-location-hero__quote{cursor:pointer}

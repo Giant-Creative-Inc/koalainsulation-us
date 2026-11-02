@@ -15,6 +15,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/data.php';
 require_once __DIR__ . '/city-page.php';
 require_once __DIR__ . '/parts.php';
+require_once __DIR__ . '/location-sidebar.php';
+require_once __DIR__ . '/location-page.php';
+require_once __DIR__ . '/location-hero.php';
+require_once __DIR__ . '/location-partners.php';
+require_once __DIR__ . '/location-services.php';
+require_once __DIR__ . '/location-overview.php';
+require_once __DIR__ . '/location-quote-banner.php';
+require_once __DIR__ . '/location-features.php';
 
 /**
  * Determine whether the current request should use the Beanstalk template.
@@ -115,6 +123,7 @@ function koala_beanstalk_native_block_images( string $html, array $block, ?bool 
 }
 add_filter( 'render_block', 'koala_beanstalk_native_block_images', 100, 2 );
 
+
 /**
  * Preserve native image lazy loading on Beanstalk pages when WP Rocket is active.
  *
@@ -143,6 +152,7 @@ function koala_beanstalk_lazy_page_images( string $html ): string {
 	}
 	return $processor->get_updated_html();
 }
+
 
 
 /**
@@ -202,7 +212,37 @@ function koala_beanstalk_remove_nicejob_sdk(): void {
 add_action( 'wp_enqueue_scripts', 'koala_beanstalk_remove_nicejob_sdk', 1002 );
 add_action( 'wp_print_footer_scripts', 'koala_beanstalk_remove_nicejob_sdk', 1 );
 
+/**
+ * Use the City Page's intentionally scoped form styles instead of Gravity Forms' global theme bundle.
+ *
+ * @param bool $disabled Whether Gravity Forms frontend CSS is disabled.
+ */
+function koala_beanstalk_disable_gravity_forms_css( bool $disabled ): bool {
+	return koala_is_beanstalk_area_served_page() ? true : $disabled;
+}
+// Gravity Forms rules remain authoritative and are inlined below.
 
+/**
+ * Load below-the-fold Beanstalk CSS without blocking the initial render.
+ *
+ * @param string $html   Stylesheet link markup.
+ * @param string $handle Registered stylesheet handle.
+ */
+function koala_beanstalk_defer_noncritical_style( string $html, string $handle ): string {
+	$deferred_handles = array( 'koala-beanstalk-city-page', 'koala-beanstalk-footer' );
+
+	if ( ! in_array( $handle, $deferred_handles, true ) ) {
+		return $html;
+	}
+
+	// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Filters markup produced by wp_enqueue_style().
+	$deferred = preg_replace( '/\smedia\s*=\s*([\'"])[^\'"]*\1/i', '', $html );
+	$deferred = preg_replace( '/<link\b/i', '<link data-no-optimize="1" media="print" onload="this.media=\'all\'"', $deferred, 1 );
+
+	// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- No-JavaScript fallback for the enqueued stylesheet.
+	return $deferred . '<noscript>' . $html . '</noscript>';
+}
+add_filter( 'style_loader_tag', 'koala_beanstalk_defer_noncritical_style', 20, 2 );
 
 /**
  * Keep the Beanstalk page payload independent from Bricks' frontend assets.
@@ -279,8 +319,8 @@ function koala_beanstalk_manage_frontend_assets(): void {
 	$quote_attention_js     = __DIR__ . '/assets/city-page-quote-attention.js';
 	$city_page_video_js     = __DIR__ . '/assets/city-page-video.js';
 	$footer_css             = __DIR__ . '/assets/footer.css';
-	$city_page_css          = __DIR__ . '/assets/city-page.css';
 	$city_page_critical_css = __DIR__ . '/assets/city-page-critical.css';
+	$city_page_css          = __DIR__ . '/assets/city-page.css';
 
 	wp_enqueue_style(
 		'koala-beanstalk-header',
@@ -356,30 +396,6 @@ function koala_beanstalk_manage_review_assets(): void {
 	wp_dequeue_style( 'grw-public-main-css' );
 }
 add_action( 'wp_enqueue_scripts', 'koala_beanstalk_manage_review_assets', 1001 );
-
-/**
- * Load below-the-fold Beanstalk CSS without blocking the initial render.
- *
- * @param string $html   Stylesheet link markup.
- * @param string $handle Registered stylesheet handle.
- */
-function koala_beanstalk_defer_noncritical_style( string $html, string $handle ): string {
-	$deferred_handles = array( 'koala-beanstalk-city-page', 'koala-beanstalk-footer' );
-
-	if ( ! in_array( $handle, $deferred_handles, true ) ) {
-		return $html;
-	}
-
-	// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Filters markup produced by wp_enqueue_style().
-	$deferred = preg_replace( '/\smedia\s*=\s*([\'"])[^\'"]*\1/i', '', $html );
-	$deferred = preg_replace( '/<link\b/i', '<link data-no-optimize="1" media="print" onload="this.media=\'all\'"', $deferred, 1 );
-
-	// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- No-JavaScript fallback for the enqueued stylesheet.
-	return $deferred . '<noscript>' . $html . '</noscript>';
-}
-add_filter( 'style_loader_tag', 'koala_beanstalk_defer_noncritical_style', 20, 2 );
-
-
 
 /**
  * Inline known first-paint styles without changing their rules or cascade order.
@@ -861,3 +877,17 @@ function koala_beanstalk_output_resource_schema(): void {
 	echo '<script type="application/ld+json">' . $encoded . '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 add_action( 'wp_head', 'koala_beanstalk_output_resource_schema', 3 );
+
+require_once __DIR__ . '/location-financing.php';
+
+require_once __DIR__ . '/location-community.php';
+
+require_once __DIR__ . '/location-estimate-popup.php';
+
+require_once __DIR__ . '/location-performance.php';
+
+require_once __DIR__ . '/location-lazy-widgets.php';
+
+require_once __DIR__ . '/location-estimate-demand.php';
+
+require_once __DIR__ . '/location-media.php';

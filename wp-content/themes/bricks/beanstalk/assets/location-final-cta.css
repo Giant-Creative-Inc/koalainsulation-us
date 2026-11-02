@@ -1,0 +1,5 @@
+/* Location assets and tokens; layout lives in city-page-final-cta.css. */
+.koala-location-final-cta{--city-navy:#042e53;--city-green:#afd56c}
+.koala-beanstalk-location .koala-location-final-cta::before,.editor-styles-wrapper .koala-location-final-cta::before{background-image:url("location-final-cta/accent.webp")}
+.koala-location-content .koala-location-final-cta h2{color:white}
+.koala-location-final-cta>.wp-block-group__inner-container{display:contents}
