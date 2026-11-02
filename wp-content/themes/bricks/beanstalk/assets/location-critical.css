@@ -196,6 +196,8 @@ body.koala-beanstalk-location{margin:0;background:#fff;color:#042e53;font-family
 /* Source: location-sidebar.css */
 /* Location sidebar: isolated from City Page and legacy form styles. */
 body:has([data-location-sidebar]){--koala-sidebar-width:350px}
+/* Keep provider shadow controls below the quote panel stacking context. */
+body:has([data-location-sidebar]) chat-widget{position:relative;z-index:10000}
 .koala-location-sidebar{font-family:"Filson pro",sans-serif;color:#042e53}
 .koala-location-sidebar__panel{box-sizing:border-box;position:fixed;inset:0 0 0 auto;width:var(--koala-sidebar-width);height:100dvh;overflow-y:auto;background:#f7fafd;z-index:10002;overscroll-behavior:contain;border:1px solid #042e53}
 .koala-location-sidebar__heading{box-sizing:border-box;min-height:0;padding:15px 20px;background:#afd56c;display:flex;align-items:center}

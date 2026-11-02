@@ -63,3 +63,6 @@
 @media (prefers-reduced-motion: reduce) {
 	.beanstalk-footer__column a { transition: none; }
 }
+
+.beanstalk-footer__social { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.beanstalk-footer__social a, .beanstalk-footer__facts a { color: inherit; text-decoration: underline; }
