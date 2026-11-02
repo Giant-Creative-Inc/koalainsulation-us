@@ -16,7 +16,8 @@ class GFAPI { static function get_feeds(...$args){global $feeds;return $feeds;} 
 class FakeDB {public $options='wp_options';function get_results($q,$type){return [['option_name'=>'kgi_quote_form_id','option_value'=>'12']];}}
 $wpdb=new FakeDB();
 function get_option($key,$default=false){global $options;return array_key_exists($key,$options)?$options[$key]:$default;}
-function update_option($key,$value,$autoload=false){global $options,$writes,$failOption;++$writes;if($key===$failOption)return false;$options[$key]=$value;return true;}
+function update_option($key,$value,$autoload=false){global $options,$writes,$failOption;++$writes;if($key===$failOption || (!array_key_exists($key,$options) && $value===false))return false;$options[$key]=$value;return true;}
+function add_option($key,$value,$deprecated='',$autoload=false){global $options,$writes,$failOption;++$writes;if($key===$failOption || array_key_exists($key,$options))return false;$options[$key]=$value;return true;}
 function delete_option($key){global $options,$writes;++$writes;unset($options[$key]);return true;}
 function home_url(){return 'https://koalainsulation.com';}
 function wp_get_environment_type(){return 'production';}
