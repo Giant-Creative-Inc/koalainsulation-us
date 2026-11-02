@@ -133,8 +133,9 @@ final class Koala_Location_Migration {
         return $data;
     }
     private static function save_option($key,$value) {
-        update_option($key,$value,false);
-        $missing=new stdClass();$actual=get_option($key,$missing);
+        $missing=new stdClass();
+        if (get_option($key,$missing)===$missing) add_option($key,$value,'',false); else update_option($key,$value,false);
+        $actual=get_option($key,$missing);
         if ($actual===$missing || $actual!=$value) throw new RuntimeException('Option did not persist: '.$key);
     }
     public static function apply($plan,$journal) {
