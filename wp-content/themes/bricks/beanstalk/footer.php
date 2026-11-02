@@ -30,6 +30,7 @@ $copy               = wp_parse_args(
 	)
 );
 $footer             = koala_beanstalk_get_navigation_data();
+$location_preview   = function_exists( 'koala_beanstalk_sidebar_preview' ) && koala_beanstalk_sidebar_preview();
 $footer_logo        = 'https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2024/06/Logo.png/w=115,h=80';
 $resources          = array(
 	array(
@@ -58,6 +59,10 @@ $resources          = array(
 					<a class="beanstalk-footer__heading" href="<?php echo esc_url( $footer['base'] . '/' ); ?>"><?php echo esc_html( $copy['homeLabel'] ); ?></a>
 					<a class="beanstalk-footer__heading" href="<?php echo esc_url( $footer['base'] . '/why-koala/' ); ?>"><?php echo esc_html( $copy['whyKoalaLabel'] ); ?></a>
 					<a class="beanstalk-footer__heading" href="<?php echo esc_url( $footer['base'] . '/why-reinsulate/' ); ?>"><?php echo esc_html( $copy['whyReinsulateLabel'] ); ?></a>
+					<?php if ( $location_preview ) : ?>
+						<a class="beanstalk-footer__heading" href="https://koalainsulationfranchise.com/">Franchise</a>
+						<a href="<?php echo esc_url( home_url( '/national-partnerships' ) ); ?>">National Partnerships</a>
+					<?php endif; ?>
 				</nav>
 
 				<nav class="beanstalk-footer__column beanstalk-footer__services" aria-label="Footer services">
@@ -105,8 +110,8 @@ $resources          = array(
 		<div class="beanstalk-footer__bottom">
 			<div class="beanstalk-footer__legal">
 				<span>© <?php echo esc_html( wp_date( 'Y' ) . ' ' . $copy['copyrightSuffix'] ); ?></span>
-				<a href="<?php echo esc_url( home_url( '/privacy-policy/' ) ); ?>"><?php echo esc_html( $copy['privacyLabel'] ); ?></a>
-				<a href="<?php echo esc_url( home_url( '/terms-and-conditions/' ) ); ?>"><?php echo esc_html( $copy['termsLabel'] ); ?></a>
+				<a href="<?php echo esc_url( $location_preview ? $footer['base'] . '/privacy-policy' : home_url( '/privacy-policy/' ) ); ?>"><?php echo esc_html( $copy['privacyLabel'] ); ?></a>
+				<a href="<?php echo esc_url( $location_preview ? $footer['base'] . '/terms-and-conditions' : home_url( '/terms-and-conditions/' ) ); ?>"><?php echo esc_html( $copy['termsLabel'] ); ?></a>
 			</div>
 		</div>
 	</div>

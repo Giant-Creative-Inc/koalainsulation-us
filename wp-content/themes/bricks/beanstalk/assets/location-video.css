@@ -1,0 +1,8 @@
+.koala-location-video{box-sizing:border-box;width:min(1100px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);padding:44px 0 0;border:0;border-radius:0;background:transparent;color:white;overflow:auto;margin:auto}
+.koala-location-video::backdrop{background:rgba(0,0,0,.85)}
+.koala-location-video__close{position:absolute;top:4px;right:0;width:40px;height:40px;padding:0;border:0;background:transparent;color:white;font-size:36px;line-height:40px;cursor:pointer}
+.koala-location-video__close:hover{color:#ddd}
+.koala-location-video__close:focus-visible{outline:2px solid white;outline-offset:0}
+.koala-location-video__player{width:100%;aspect-ratio:16/9;max-height:calc(100dvh - 100px);position:relative;background:#000}
+.koala-location-video__player iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+
