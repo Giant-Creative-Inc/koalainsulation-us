@@ -21,8 +21,31 @@ $labels             = wp_parse_args(
 	)
 );
 $header             = koala_beanstalk_get_navigation_data();
-$logo               = 'https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2024/06/Logo.png/w=115,h=80';
-$icons              = get_template_directory_uri() . '/beanstalk/assets/icons/';
+// Retain the legacy location Resources destinations without changing city menus.
+if ( function_exists( 'koala_beanstalk_sidebar_preview' ) && koala_beanstalk_sidebar_preview() ) {
+	$resource_urls = array_map(
+		static function ( $link ) {
+			return rtrim( $link['url'], '/' );
+		},
+		$header['resources']
+	);
+	foreach ( array(
+		array(
+			'title' => 'FAQ',
+			'url'   => $header['base'] . '/faq',
+		),
+		array(
+			'title' => 'Franchise',
+			'url'   => 'https://koalainsulationfranchise.com/',
+		),
+	) as $resource ) {
+		if ( ! in_array( rtrim( $resource['url'], '/' ), $resource_urls, true ) ) {
+			$header['resources'][] = $resource;
+		}
+	}
+}
+$logo  = 'https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2024/06/Logo.png/w=115,h=80';
+$icons = get_template_directory_uri() . '/beanstalk/assets/icons/';
 ?>
 <header class="beanstalk-header" data-beanstalk-header>
 	<div class="beanstalk-header__utility">
