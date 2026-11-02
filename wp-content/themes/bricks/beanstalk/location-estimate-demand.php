@@ -33,7 +33,7 @@ add_action( 'rest_api_init', 'koala_beanstalk_register_estimate_route' );
  */
 function koala_beanstalk_estimate_permission( $request ): bool {
 	$post = get_post( (int) $request['id'] );
-	return koala_beanstalk_location_environment_enabled() && $post && 'location' === $post->post_type && 'publish' === $post->post_status && function_exists( 'gravity_form' );
+	return koala_beanstalk_location_environment_enabled( (int) $request['id'] ) && $post && 'location' === $post->post_type && 'publish' === $post->post_status && function_exists( 'gravity_form' );
 }
 
 /**

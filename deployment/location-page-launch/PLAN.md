@@ -1,6 +1,6 @@
 # Beanstalk location launch: database and release plan
 
-Status: draft release plan. No deployment, production database change, activation, or form submission is authorized by this document. PR approval and a separately scheduled execution are required. Do not enable auto-merge. No deployment hook may run this migration automatically.
+Status: implementation and manual release runbook; see README.md for executable commands. No deployment, production database change, activation, or form submission is authorized by this document. PR approval and a separately scheduled execution are required. Do not enable auto-merge. No deployment hook may run this migration automatically.
 
 ## Database strategy
 
@@ -16,15 +16,15 @@ Migrate the target site's current records in place. Never restore staging over p
 | `koala_beanstalk_location_media` option | Save the production attachment mapping as each import completes. | Snapshot whether the option existed and its original value; reruns must reuse completed imports. |
 | Location review feed mappings / review plugin data | Conditional repair only if a fresh parity audit proves a location would lose its existing reviews. | Separate reviewed per-location diff and rollback export. Do not copy staging feed IDs, cached reviews or a whole plugin table. Prefer production's current feed; preserve intentional corporate fallback. |
 | SEO/schema postmeta | Preserve current production values by default. A separately reviewed correction may be needed for confirmed regressions. | Compare titles, descriptions, canonical, robots, social tags, local-business/service/FAQ/breadcrumb schema and visible copy. No wholesale staging SEO import. Record exact before/after keys for any approved exception. |
-| `koala_beanstalk_locations_enabled` option | Enable only as the final release write after all content/media checks pass. | Preserve absent/false state for rollback. Production renderer support must first be implemented and tested; changing this option alone currently cannot launch the renderer. |
+| `koala_beanstalk_locations_enabled` option | Enable only as the final release write after all content/media checks pass. | Preserve absent/false state for rollback. Production renderer support is included and tested; changing this option alone currently cannot launch the renderer. |
 
 Other ACF fields, Bricks metadata, global content parts, menus, location ownership/territories, ZIP/postal coverage, form definitions and feeds, notification destinations, CRM credentials, SMTP, consent settings, lead entries and attribution settings are outside the default write set. Any necessary exception requires its own diff and validation. WordPress may create revisions/update modification timestamps and plugin hooks may update derived caches; inventory and verify those effects in the rehearsal.
 
-## Required migration implementation before execution
+## Migration implementation and required rehearsal
 
-The existing staging migration is a reference, not a production command. Build and test a production-safe runner with `dry-run`, `apply`, `verify` and `rollback` modes. It must validate the exact `home_url` including Canada's `/ca` path, the intended environment, code hashes, forms/fields, attachment identity and approved location allowlist. Never spoof the environment to bypass the staging guard.
+The existing staging migration is a reference, not a production command. The package now includes a production-safe runner with `dry-run`, `apply`, `verify`, `activate` and `rollback` modes. Complete a current-production staging rehearsal before execution. It must validate the exact `home_url` including Canada's `/ca` path, the intended environment, code hashes, forms/fields, attachment identity and approved location allowlist. Never spoof the environment to bypass the staging guard.
 
-A dry run must make zero persistent writes and export per-record before/after hashes and the exact proposed option/meta/media changes. Apply must require that reviewed plan, reject drift, create an exclusive private rollback file before writing, read back every save, journal progress, and stop on failure with activation disabled. Test reruns, interruption, cross-site backup rejection and rollback drift detection. Use WordPress APIs rather than raw SQL so field synchronization and caches remain coherent. Do not deploy development test tooling.
+A dry run makes zero database/media writes and exports per-record before/after hashes and the exact proposed option/meta/media changes. Apply must require that reviewed plan, reject drift, create an exclusive private rollback file before writing, read back every save, journal progress, and stop on failure with activation disabled. Test reruns, interruption, cross-site backup rejection and rollback drift detection. Use WordPress APIs rather than raw SQL so field synchronization and caches remain coherent. Do not deploy development test tooling.
 
 ## Execution sequence after approval
 
@@ -53,7 +53,7 @@ Disable activation first and purge all HTML caches so the old Bricks renderer se
 
 Target home URL: `https://koalainsulation.com`. Current read-only inventory: 111 published production location records; 112 on staging, including staging-only Central Connecticut. Production has zero native layouts and no activation option; staging has 112 native layouts and activation enabled. This PR includes the existing location implementation merged onto current main. Its runtime Beanstalk hashes match the audited staging files, excluding `.DS_Store`.
 
-Forms are 12 (sidebar/contact) and 13 (popup). Their audited field structures match between production and staging; notification recipients, feed execution and CRM delivery have not been verified. Existing code hardcodes these IDs and remains guarded to Local/staging. Production activation support and the production migration runner are still required; this draft does not implement those changes.
+Forms are 12 (sidebar/contact) and 13 (popup). Their audited field structures match between production and staging; notification recipients, feed execution and CRM delivery have not been verified. The location code uses these US form IDs; production activation now requires the reviewed migration allowlist. Production activation support and the production migration runner are implemented in this PR. Production requires both activation and the explicit migrated-ID list; the lazy form route checks the requested location ID even without a main page query. No database changes are automatic.
 
 Start from production's own location inventory, not all 112 staging posts. Preserve closed-location redirects for Savannah and Central Connecticut; confirm the final allowlist excludes redirects. Review Testing, Efficiency and Comfort individually: their observed production noindex policy and missing canonical must not be changed incidentally. Do not migrate draft/private/scheduled posts merely because the staging script includes them.
 

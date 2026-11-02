@@ -10,11 +10,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Allow native previews on Local or an explicitly configured staging environment.
+ * Allow Local/staging previews and explicitly migrated US production locations.
+ *
+ * @param int $location_id REST location context, or zero for the current page.
  */
-function koala_beanstalk_location_environment_enabled(): bool {
-	return 'koalainsulation.local' === wp_parse_url( home_url(), PHP_URL_HOST )
-	|| ( function_exists( 'wp_get_environment_type' ) && 'staging' === wp_get_environment_type() );
+function koala_beanstalk_location_environment_enabled( int $location_id = 0 ): bool {
+	$home = rtrim( home_url(), '/' );
+	if ( 'koalainsulation.local' === wp_parse_url( $home, PHP_URL_HOST )
+		|| ( function_exists( 'wp_get_environment_type' ) && 'staging' === wp_get_environment_type() ) ) {
+		return true;
+	}
+	if ( 'https://koalainsulation.com' !== $home
+		|| ! function_exists( 'wp_get_environment_type' )
+		|| 'production' !== wp_get_environment_type()
+		|| ! get_option( 'koala_beanstalk_locations_enabled', false ) ) {
+		return false;
+	}
+	$ids = get_option( 'koala_beanstalk_location_ids', array() );
+	return is_array( $ids ) && in_array( $location_id ? $location_id : (int) get_queried_object_id(), array_map( 'intval', $ids ), true );
 }
 
 /**
