@@ -29,6 +29,30 @@ function koala_beanstalk_location_rich_copy( int $id, string $key ): string {
 	return wp_kses_post( wpautop( (string) get_post_meta( $id, $key, true ) ) );
 }
 
+/** Format all-caps city-list labels without modifying city records or mixed case.
+ *
+ * @param string $name Saved city title.
+ * @return string
+ */
+function koala_beanstalk_location_city_label( string $name ): string {
+	if ( ! preg_match( '/\p{Lu}/u', $name ) || preg_match( '/\p{Ll}/u', $name ) ) {
+		return $name;
+	}
+	$label = function_exists( 'mb_convert_case' ) ? mb_convert_case( $name, MB_CASE_TITLE, 'UTF-8' ) : ucwords( strtolower( $name ), " \t\r\n\f\v-'" );
+	$label = preg_replace_callback(
+		"/(['’]|\\bMc)(\\p{Ll})/u",
+		static function ( $parts ) {
+			return $parts[1] . strtoupper( $parts[2] );
+		},
+		$label
+	);
+	// Keep state abbreviations after a comma and the Air Force Base suffix.
+	if ( preg_match( '/(,\s*)([A-Z]{2})$/', $name, $state ) ) {
+		$label = preg_replace( '/,\s*[a-z]{2}$/i', $state[1] . $state[2], $label );
+	}
+	return preg_replace( '/\bAfb\b/', 'AFB', $label );
+}
+
 /** Render one ACF-backed section.
  *
  * @param array         $attributes Block attributes.
@@ -64,7 +88,7 @@ function koala_beanstalk_render_location_community( array $attributes, string $c
 			if ( 'publish' !== get_post_status( $city ) ) {
 				continue;
 			}
-			$html .= '<li' . ( $count >= 9 ? ' hidden' : '' ) . '>' . esc_html( get_the_title( $city ) ) . '</li>';
+			$html .= '<li' . ( $count >= 9 ? ' hidden' : '' ) . '>' . esc_html( koala_beanstalk_location_city_label( (string) get_the_title( $city ) ) ) . '</li>';
 			++$count;
 		}
 		$html .= '</ul>';
