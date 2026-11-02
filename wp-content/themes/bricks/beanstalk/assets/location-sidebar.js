@@ -5,6 +5,28 @@
   const trigger = root.querySelector('[data-sidebar-open]');
   const close = root.querySelector('[data-sidebar-close]');
   const mobile = window.matchMedia('(max-width: 1229px)');
+  // LeadConnector positions its controls inside an open shadow root. Reserve
+  // the mobile quote bar's space without disabling chat or changing desktop.
+  let chatCheckPending = false;
+  const reserveChatSpace = () => {
+    chatCheckPending = false;
+    document.querySelectorAll('chat-widget').forEach((host) => {
+      const shadow = host.shadowRoot;
+      if (!shadow || shadow.querySelector('[data-koala-chat-clearance]')) return;
+      const style = document.createElement('style');
+      style.setAttribute('data-koala-chat-clearance', '');
+      style.textContent = '@media(max-width:1229px){.lc_text-widget{bottom:calc(80px + env(safe-area-inset-bottom, 0px))!important;max-height:calc(100dvh - 100px)!important}}';
+      shadow.append(style);
+    });
+  };
+  const scheduleChatCheck = () => {
+    if (chatCheckPending) return;
+    chatCheckPending = true;
+    requestAnimationFrame(reserveChatSpace);
+  };
+  new MutationObserver(scheduleChatCheck).observe(document.body, {childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  if (window.customElements) window.customElements.whenDefined('chat-widget').then(scheduleChatCheck);
+  scheduleChatCheck();
   let previousFocus;
   let pointerStartedOutside = false;
   function setOpen(open) {

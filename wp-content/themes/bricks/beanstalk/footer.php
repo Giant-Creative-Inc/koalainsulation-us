@@ -60,6 +60,7 @@ $resources          = array(
 					<a class="beanstalk-footer__heading" href="<?php echo esc_url( $footer['base'] . '/why-koala/' ); ?>"><?php echo esc_html( $copy['whyKoalaLabel'] ); ?></a>
 					<a class="beanstalk-footer__heading" href="<?php echo esc_url( $footer['base'] . '/why-reinsulate/' ); ?>"><?php echo esc_html( $copy['whyReinsulateLabel'] ); ?></a>
 					<?php if ( $location_preview ) : ?>
+						<a class="beanstalk-footer__heading" href="<?php echo esc_url( home_url( '/locations/' ) ); ?>">Locations</a>
 						<a class="beanstalk-footer__heading" href="https://koalainsulationfranchise.com/">Franchise</a>
 						<a href="<?php echo esc_url( home_url( '/national-partnerships' ) ); ?>">National Partnerships</a>
 					<?php endif; ?>
@@ -96,10 +97,31 @@ $resources          = array(
 				<img src="<?php echo esc_url( $footer_logo ); ?>" width="99" height="69" alt="Koala Insulation">
 			</a>
 
+			<?php if ( $location_preview ) : ?>
+				<nav class="beanstalk-footer__social" aria-label="Social media">
+					<a href="https://www.facebook.com/KoalaInsulationHQ/">Facebook</a>
+					<a href="https://www.instagram.com/koalainsulation/">Instagram</a>
+					<a href="https://www.linkedin.com/company/koalainsulation">LinkedIn</a>
+					<a href="https://www.youtube.com/channel/UCEYUbnu82sHwLIRzsY6qtPQ">YouTube</a>
+				</nav>
+			<?php endif; ?>
+
 			<div class="beanstalk-footer__facts">
-				<p><?php echo esc_html( $copy['factOne'] ); ?></p>
-				<p><?php echo esc_html( $copy['factTwo'] ); ?></p>
-				<p><?php echo esc_html( $copy['factThree'] ); ?></p>
+				<?php
+				foreach ( array(
+					'factOne'   => 'https://insulationinstitute.org/news-industry-issues/news-and-industry-issues/press-release/',
+					'factTwo'   => 'https://www.insulate.org/homeowners-frequently-asked-questions/',
+					'factThree' => 'https://www.energy.gov/sites/prod/files/2013/11/f5/insulation_guide.pdf',
+				) as $fact_key => $source_url ) :
+					?>
+					<p>
+						<?php if ( $location_preview ) : ?>
+							<a href="<?php echo esc_url( $source_url ); ?>"><?php echo esc_html( $copy[ $fact_key ] ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html( $copy[ $fact_key ] ); ?>
+						<?php endif; ?>
+					</p>
+				<?php endforeach; ?>
 			</div>
 		</div>
 
