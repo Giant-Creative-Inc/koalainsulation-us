@@ -112,3 +112,32 @@ function koala_beanstalk_location_assets(): void {
 	wp_enqueue_script( 'koala-beanstalk-header', $theme_url . 'beanstalk/assets/header.js', array(), (string) filemtime( __DIR__ . '/assets/header.js' ), true );
 }
 add_action( 'wp_enqueue_scripts', 'koala_beanstalk_location_assets', 1005 );
+
+/**
+ * Repair embedded widget semantics on native location pages.
+ *
+ * @param string    $html Shortcode output.
+ * @param bool|null $native Whether this is a native location request; null resolves it.
+ * @return string
+ */
+function koala_beanstalk_location_widget_accessibility( string $html, ?bool $native = null ): string {
+	if ( ! ( $native ?? koala_beanstalk_sidebar_preview() ) ) {
+		return $html;
+	}
+	$tags = new WP_HTML_Tag_Processor( $html );
+	while ( $tags->next_tag() ) {
+		if ( $tags->has_class( 'zip-shape-map' ) && ! $tags->get_attribute( 'role' ) ) {
+			$tags->set_attribute( 'role', 'region' );
+		}
+		if ( 'BUTTON' !== $tags->get_tag() || $tags->get_attribute( 'aria-label' ) || $tags->get_attribute( 'aria-labelledby' ) ) {
+			continue;
+		}
+		if ( $tags->has_class( 'grw-prev' ) ) {
+			$tags->set_attribute( 'aria-label', 'Previous reviews' );
+		} elseif ( $tags->has_class( 'grw-next' ) ) {
+			$tags->set_attribute( 'aria-label', 'Next reviews' );
+		}
+	}
+	return $tags->get_updated_html();
+}
+add_filter( 'do_shortcode_tag', 'koala_beanstalk_location_widget_accessibility', 20, 1 );
