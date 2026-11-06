@@ -696,6 +696,12 @@ document.addEventListener("DOMContentLoaded", function () {
           sessionStorage.setItem("ho_link", JSON.stringify([]));
         }
 
+        if (areasServedNavLink && data.hasAreasServed) {
+          areasServedNavLink.style.display = "flex";
+          areasServedNavLink.style.visibility = "visible";
+          areasServedNavLink.href = `${data.url}/areas-served`;
+        }
+
         if (
           data.rlPage &&
           Array.isArray(data.rlPage) &&
@@ -707,22 +713,6 @@ document.addEventListener("DOMContentLoaded", function () {
             terms: rlPageLink.terms,
             title: rlPageLink.title,
           }));
-          // Check if any object in rlPageLinks has terms equal to 'areas-served'
-          const hasAreasServed = rlPageLinks.some((rlPageLink) =>
-            rlPageLink.terms.includes("Areas served")
-          );
-
-          if (hasAreasServed) {
-            if (areasServedNavLink) {
-              areasServedNavLink.style.display = "flex";
-              areasServedNavLink.style.visibility = "visible";
-              areasServedNavLink.href = `${data.url}/areas-served`;
-            }
-          }
-
-          console.log(rlPageLinks)
-
-          //areasServedNavLink.href = `${data.url}/areas-served`;
           sessionStorage.setItem("rl_arr", JSON.stringify(rlPageLinks));
           const resourceContainer =
             document.getElementById("resource-container");

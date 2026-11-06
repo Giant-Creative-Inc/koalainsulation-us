@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Koala Areas Served cache
- * Description: Refresh the US Areas Served page after a city page is published or unpublished.
+ * Description: Refresh US Areas Served listings and navigation after a city page is published or unpublished.
  */
 
 if (!defined('ABSPATH') || get_option('siteurl') !== 'https://koalainsulation.com') {
@@ -41,21 +41,32 @@ function koala_queue_areas_served_cache_refresh($new_status, $old_status, $post)
                 continue;
             }
 
-            // Each transition refreshes this one listing. Simultaneous
+            // Refresh the affected location on every transition. Simultaneous
             // publishes must not both skip the purge after seeing each other.
-            koala_purge_areas_served_cache('/' . $location->post_name . '/areas-served');
+            delete_transient('koala_location_data_' . $location->post_name);
+            $base = '/' . $location->post_name;
+            $paths = array($base, $base . '/areas-served');
+            foreach (koala_beanstalk_get_published_city_pages($location_id) as $city) {
+                $paths[] = wp_parse_url(get_permalink($city), PHP_URL_PATH);
+            }
+            koala_purge_areas_served_cache(array_unique(array_filter($paths)), $location->post_name);
         }
     });
 }
 
-function koala_purge_areas_served_cache($path)
+function koala_purge_areas_served_cache(array $paths, $location_slug)
 {
-    $paths = array($path, $path . '/');
+    $paths[] = '/wp-json/custom/v1/location-data/' . $location_slug;
+    $variants = array();
+    foreach ($paths as $path) {
+        $variants[] = untrailingslashit($path);
+        $variants[] = trailingslashit($path);
+    }
     if (function_exists('rocket_clean_files')) {
-        rocket_clean_files(array_map('home_url', $paths));
+        rocket_clean_files(array_map('home_url', $variants));
     }
 
-    foreach ($paths as $variant) {
+    foreach ($variants as $variant) {
         $request = curl_init('https://koalainsulation.com/purge' . $variant);
         curl_setopt_array($request, array(
             CURLOPT_RESOLVE => array('koalainsulation.com:443:127.0.0.1'),
@@ -81,12 +92,12 @@ function koala_purge_areas_served_cache($path)
             throw new RuntimeException('Cloudflare zone unavailable');
         }
         $response = $api->callAPI(new Cloudflare\APO\API\Request('POST', 'zones/' . $zone . '/purge_cache', array(), array(
-            'prefixes' => array('koalainsulation.com' . $path),
+            'prefixes' => array_map(static function ($path) { return 'koalainsulation.com' . untrailingslashit($path); }, $paths),
         )));
         if (empty($response['success'])) {
             throw new RuntimeException('Cloudflare prefix purge failed');
         }
     } catch (Throwable $error) {
-        error_log('Koala Areas Served CDN purge failed for ' . $path . ': ' . $error->getMessage());
+        error_log('Koala Areas Served CDN purge failed for ' . $location_slug . ': ' . $error->getMessage());
     }
 }

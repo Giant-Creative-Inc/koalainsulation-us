@@ -1951,7 +1951,7 @@ function get_location_data($data)
 
     $cache_key = 'koala_location_data_' . $slug;
     $cached = get_transient($cache_key);
-    if ($cached !== false) {
+    if ($cached !== false && isset($cached['hasAreasServed'])) {
         return $cached;
     }
 
@@ -1991,6 +1991,7 @@ function get_location_data($data)
         'wrPage' => [],
         'hoPage' => [],
         'rlPage' => [],
+        'hasAreasServed' => !empty(koala_beanstalk_get_published_city_pages($location_post[0]->ID)),
         'blogPage' => [],
         'navText' => get_post_meta($location_post[0]->ID, 'location_nav_top_text', true),
         'navTopLink' => get_post_meta($location_post[0]->ID, 'location_nav_top_link', true),

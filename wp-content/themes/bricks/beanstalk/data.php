@@ -309,21 +309,59 @@ function koala_beanstalk_get_location_relationship_links( int $location_id, stri
 }
 
 /**
+ * Get published city pages assigned to a location.
+ *
+ * @param int $location_id Location post ID.
+ * @return WP_Post[]
+ */
+function koala_beanstalk_get_published_city_pages( int $location_id ): array {
+	$areas_served = get_posts(
+		array(
+			'post_type'      => 'resources-landing-pa',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+			'meta_query'     => array(
+				array(
+					'key'     => 'rl_related_location',
+					'value'   => $location_id,
+					'compare' => 'LIKE',
+				),
+			),
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'resources-page-type',
+					'field'    => 'slug',
+					'terms'    => 'areas-served',
+				),
+			),
+		)
+	);
+	// The SQL LIKE narrows the candidates. Match the actual relationship ID
+	// so a different location with a similar ID cannot populate this list.
+	return array_filter(
+		$areas_served,
+		static function ( $area ) use ( $location_id ) {
+			$related_locations = (array) get_post_meta( $area->ID, 'rl_related_location', true );
+			return in_array( $location_id, array_map( 'intval', $related_locations ), true );
+		}
+	);
+}
+
+/**
  * Build the primary Resources menu in the same order as the location service pages.
  *
  * @param string $base Location home URL without a trailing slash.
  * @param array  $related_resources Published resources associated with the location.
  * @param bool   $has_blog Whether the location has a published blog page.
+ * @param bool   $has_areas_served Whether the location has published city pages.
  * @return array
  */
-function koala_beanstalk_get_header_resources( string $base, array $related_resources, bool $has_blog ): array {
-	$links            = array();
-	$resources        = array();
-	$has_areas_served = false;
+function koala_beanstalk_get_header_resources( string $base, array $related_resources, bool $has_blog, bool $has_areas_served ): array {
+	$links     = array();
+	$resources = array();
 
 	foreach ( $related_resources as $resource ) {
 		if ( has_term( 'areas-served', 'resources-page-type', $resource['id'] ) ) {
-			$has_areas_served = true;
 			continue;
 		}
 
@@ -425,7 +463,8 @@ function koala_beanstalk_get_navigation_data(): array {
 	$navigation_data['header_resources'] = $location ? koala_beanstalk_get_header_resources(
 		$base_url,
 		$context['resource_urls'],
-		! empty( koala_beanstalk_get_location_relationship_links( $location->ID, 'related_blog_page' ) )
+		! empty( koala_beanstalk_get_location_relationship_links( $location->ID, 'related_blog_page' ) ),
+		! empty( koala_beanstalk_get_published_city_pages( $location->ID ) )
 	) : $navigation_data['resources'];
 	$navigation_data['phone_url']        = $context['phone_url'];
 

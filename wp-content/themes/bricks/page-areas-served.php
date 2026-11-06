@@ -11,31 +11,7 @@ if ($location) {
     // Get the location ID
     $location_id = $location->ID;
 
-    $areas_served = get_posts(array(
-        'post_type' => 'resources-landing-pa',
-        'posts_per_page' => -1,
-        'post_status' => 'publish',
-        'meta_query' => array(
-            array(
-                'key' => 'rl_related_location',
-                'value' => $location_id,
-                'compare' => 'LIKE',
-            ),
-        ),
-        'tax_query' => array(
-            array(
-                'taxonomy' => 'resources-page-type',
-                'field' => 'slug',
-                'terms' => 'areas-served',
-            ),
-        ),
-    ));
-    // The SQL LIKE narrows the candidates. Match the actual relationship ID
-    // so a different location with a similar ID cannot populate this list.
-    $areas_served = array_filter($areas_served, static function ($area) use ($location_id) {
-        $related_locations = (array) get_post_meta($area->ID, 'rl_related_location', true);
-        return in_array($location_id, array_map('intval', $related_locations), true);
-    });
+    $areas_served = koala_beanstalk_get_published_city_pages($location_id);
 }
 
 if ($location && !$areas_served) {
