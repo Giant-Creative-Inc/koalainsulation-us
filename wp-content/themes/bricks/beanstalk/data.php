@@ -245,7 +245,7 @@ function koala_beanstalk_get_location_context(): array {
 		'address'                 => (string) get_post_meta( $location->ID, 'location_address', true ),
 		'home_url'                => $location_url,
 		'service_urls'            => koala_beanstalk_get_location_relationship_links( $location->ID, 'location_service', 'location_service_name', 'location_service_image' ),
-		'resource_urls'           => koala_beanstalk_get_location_relationship_links( $location->ID, 'related_rl_page' ),
+		'resource_urls'           => koala_beanstalk_get_location_relationship_links( $location->ID, 'related_rl_page', '', '', true ),
 		'review_data'             => is_array( $reviews ) ? $reviews : array(),
 		'nicejob_id'              => (string) get_post_meta( $location->ID, 'location_nicejob_id', true ),
 		'google_review_shortcode' => (string) get_post_meta( $location->ID, 'google_review_shortcode', true ),
@@ -263,9 +263,10 @@ function koala_beanstalk_get_location_context(): array {
  * @param string $field       Relationship field name.
  * @param string $title_field Optional custom title field.
  * @param string $image_field Optional attachment-ID field.
+ * @param bool   $include_id Include the related post ID for taxonomy checks.
  * @return array<int, array<string, int|string>>
  */
-function koala_beanstalk_get_location_relationship_links( int $location_id, string $field, string $title_field = '', string $image_field = '' ): array {
+function koala_beanstalk_get_location_relationship_links( int $location_id, string $field, string $title_field = '', string $image_field = '', bool $include_id = false ): array {
 	$related_posts = get_post_meta( $location_id, $field, true );
 	$links         = array();
 
@@ -289,10 +290,13 @@ function koala_beanstalk_get_location_relationship_links( int $location_id, stri
 				'url'   => $url,
 			);
 
+			if ( $include_id || $image_field ) {
+				$link['id'] = $related_post_id;
+			}
+
 			if ( $image_field ) {
 				$image_id          = (int) get_post_thumbnail_id( $related_post_id );
 				$image_id          = $image_id ? $image_id : (int) get_post_meta( $related_post_id, $image_field, true );
-				$link['id']        = $related_post_id;
 				$link['image_id']  = $image_id;
 				$link['image_alt'] = $image_id ? (string) get_post_meta( $image_id, '_wp_attachment_image_alt', true ) : '';
 			}
@@ -302,6 +306,59 @@ function koala_beanstalk_get_location_relationship_links( int $location_id, stri
 	}
 
 	return $links;
+}
+
+/**
+ * Build the primary Resources menu in the same order as the location service pages.
+ *
+ * @param string $base Location home URL without a trailing slash.
+ * @param array  $related_resources Published resources associated with the location.
+ * @param bool   $has_blog Whether the location has a published blog page.
+ * @return array
+ */
+function koala_beanstalk_get_header_resources( string $base, array $related_resources, bool $has_blog ): array {
+	$links            = array();
+	$resources        = array();
+	$has_areas_served = false;
+
+	foreach ( $related_resources as $resource ) {
+		if ( has_term( 'areas-served', 'resources-page-type', $resource['id'] ) ) {
+			$has_areas_served = true;
+			continue;
+		}
+
+		$resources[] = $resource;
+	}
+
+	if ( $has_areas_served ) {
+		$links[] = array(
+			'title' => 'Areas Served',
+			'url'   => $base . '/areas-served',
+		);
+	}
+
+	if ( $has_blog ) {
+		$links[] = array(
+			'title' => 'Blog',
+			'url'   => $base . '/blog',
+		);
+	}
+
+	$links[] = array(
+		'title' => 'Homeowner Incentives',
+		'url'   => $base . '/homeowner-incentives',
+	);
+	$links[] = array(
+		'title' => 'FAQ',
+		'url'   => $base . '/faq',
+	);
+
+	$links[] = array(
+		'title' => 'Testimonials',
+		'url'   => $base . '/testimonials',
+	);
+
+	return array_merge( $links, $resources );
 }
 
 /**
@@ -355,7 +412,7 @@ function koala_beanstalk_get_navigation_data(): array {
 
 	$location_name = $location ? $context['location_name'] : get_bloginfo( 'name' );
 
-	$navigation_data              = array(
+	$navigation_data                     = array(
 		'location'  => $location,
 		'base'      => $base_url,
 		'name'      => $location_name,
@@ -365,7 +422,12 @@ function koala_beanstalk_get_navigation_data(): array {
 		'services'  => $services,
 		'resources' => array_merge( $default_resources, $resources ),
 	);
-	$navigation_data['phone_url'] = $context['phone_url'];
+	$navigation_data['header_resources'] = $location ? koala_beanstalk_get_header_resources(
+		$base_url,
+		$context['resource_urls'],
+		! empty( koala_beanstalk_get_location_relationship_links( $location->ID, 'related_blog_page' ) )
+	) : $navigation_data['resources'];
+	$navigation_data['phone_url']        = $context['phone_url'];
 
 	return $navigation_data;
 }

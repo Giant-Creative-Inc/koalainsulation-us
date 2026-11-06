@@ -21,31 +21,8 @@ $labels             = wp_parse_args(
 	)
 );
 $header             = koala_beanstalk_get_navigation_data();
-// Retain the legacy location Resources destinations without changing city menus.
-if ( function_exists( 'koala_beanstalk_sidebar_preview' ) && koala_beanstalk_sidebar_preview() ) {
-	$resource_urls = array_map(
-		static function ( $link ) {
-			return rtrim( $link['url'], '/' );
-		},
-		$header['resources']
-	);
-	foreach ( array(
-		array(
-			'title' => 'FAQ',
-			'url'   => $header['base'] . '/faq',
-		),
-		array(
-			'title' => 'Franchise',
-			'url'   => 'https://koalainsulationfranchise.com/',
-		),
-	) as $resource ) {
-		if ( ! in_array( rtrim( $resource['url'], '/' ), $resource_urls, true ) ) {
-			$header['resources'][] = $resource;
-		}
-	}
-}
-$logo  = 'https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2024/06/Logo.png/w=115,h=80';
-$icons = get_template_directory_uri() . '/beanstalk/assets/icons/';
+$logo               = 'https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2024/06/Logo.png/w=115,h=80';
+$icons              = get_template_directory_uri() . '/beanstalk/assets/icons/';
 ?>
 <header class="beanstalk-header" data-beanstalk-header>
 	<div class="beanstalk-header__utility">
@@ -97,7 +74,7 @@ $icons = get_template_directory_uri() . '/beanstalk/assets/icons/';
 							<button type="button" aria-expanded="false" aria-label="<?php echo esc_attr( 'Toggle ' . $labels['resourcesLabel'] . ' submenu' ); ?>"><img src="<?php echo esc_url( $icons . 'down-icon.svg' ); ?>" width="10" height="6" alt=""></button>
 						</div>
 						<ul class="beanstalk-header__submenu">
-							<?php foreach ( $header['resources'] as $menu_link ) : ?>
+							<?php foreach ( $header['header_resources'] as $menu_link ) : ?>
 								<li><a href="<?php echo esc_url( $menu_link['url'] ); ?>"><?php echo esc_html( $menu_link['title'] ); ?></a></li>
 							<?php endforeach; ?>
 						</ul>
