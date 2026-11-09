@@ -97,7 +97,8 @@ if ($query->have_posts()):
                         <div id="brxe-fswwiw" class="brxe-block brx-grid hero-block-grid">
                             <div id="brxe-txszej" class="brxe-block hero_content-wrapper">
                                 <div id="brxe-qawlhh" class="brxe-block">
-                                    <span id="brxe-nxojuy" class="brxe-heading heading-style-h1 font-weight-bold is-all-caps"
+                                    <?php $heroHeadingTag = 'boulder' === $location ? 'h1' : 'span'; ?>
+                                    <<?php echo $heroHeadingTag; ?> id="brxe-nxojuy" class="brxe-heading heading-style-h1 font-weight-bold is-all-caps"
                                         data-animi="up" data-duration="0.6">
                                         <?php
                                         $heroHeading = get_field('location_service_name');
@@ -105,7 +106,7 @@ if ($query->have_posts()):
                                             echo $heroHeading . ' in ' . get_field('location_name', $related_locations[0]->ID);
                                         }
                                         ?>
-                                    </span>
+                                    </<?php echo $heroHeadingTag; ?>>
                                     <div id="brxe-urabqa" class="brxe-text-basic text-size-regular text-color-mute"
                                         data-animi="up" data-duration="0.6" data-delay="0.2">
                                         <?php
