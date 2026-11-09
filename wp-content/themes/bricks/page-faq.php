@@ -146,10 +146,11 @@ function show_location_page($location_slug)
                         <div id="brxe-lflwxr" class="brxe-block section-component">
                             <div id="brxe-ejabqy" class="brxe-block">
                                 <div id="brxe-eleiix" class="brxe-block">
-                                    <h1 id="brxe-xsoqwb" class="brxe-heading heading-style-h1 font-weight-bold" data-animi="up"
+                                    <?php $faqHeadingTag = 'boulder' === $location_slug ? 'h2' : 'h1'; ?>
+                                    <<?php echo $faqHeadingTag; ?> id="brxe-xsoqwb" class="brxe-heading heading-style-h1 font-weight-bold" data-animi="up"
                                         data-duration="0.6">
                                         <?php echo $location_title ?> FAQs
-                                    </h1>
+                                    </<?php echo $faqHeadingTag; ?>>
                                 </div>
                             </div>
                         </div>
