@@ -320,6 +320,8 @@ function koala_beanstalk_get_published_city_pages( int $location_id ): array {
 			'post_type'      => 'resources-landing-pa',
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
+			'orderby'        => 'title',
+			'order'          => 'ASC',
 			'meta_query'     => array(
 				array(
 					'key'     => 'rl_related_location',
