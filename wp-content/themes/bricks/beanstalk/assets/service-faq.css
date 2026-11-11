@@ -1,0 +1,106 @@
+.koala-service-faq {
+	padding: clamp(48px, 7.7vw, 120px) clamp(20px, 4.1vw, 64px);
+	color: #042e53;
+	background: #fff;
+	font: 400 18px/2 "Filson Pro", sans-serif;
+	scroll-margin-top: var(--beanstalk-header-height, 170px);
+}
+.koala-service-faq__intro { max-width: 840px; margin: 0 auto 58px; text-align: center; }
+.koala-service-faq h2 {
+	margin: 0;
+	color: #afd56c;
+	font: 700 clamp(36px, 4.65vw, 72px)/1.2 "Alegreya Sans", sans-serif;
+}
+.koala-service-faq h2 span {
+	display: block;
+	color: #042e53;
+	font-size: clamp(28px, 2.6vw, 40px);
+	font-weight: 500;
+}
+.koala-service-faq__intro p { margin: 24px 0 0; }
+.koala-service-faq__intro a { color: inherit; font-weight: 700; text-decoration: underline; }
+.koala-service-faq__items {
+	display: grid;
+	gap: 16px;
+	max-width: 1422px;
+	margin-inline: auto;
+}
+.koala-service-faq__items h3 {
+	margin: 0;
+	color: #042e53;
+	font: 700 28px/1.2 "Alegreya Sans", sans-serif;
+}
+.koala-service-faq__items .koala-location-feature__item > :is(p, ul, ol) {
+	margin-block: 16px 0;
+	color: #5a646d;
+	line-height: 2;
+}
+.koala-service-faq__items .koala-location-feature__item > :is(ul, ol) { padding-inline-start: 27px; }
+.koala-service-faq__items strong { color: #042e53; }
+.koala-service-faq__image { display: block; width: 100%; height: auto; border-radius: 12px; margin-top: 16px; }
+.koala-service-faq__offer { background: #eff7e2; margin-top: 16px; }
+.koala-service-faq__offer .koala-service-process__coupon-inner { display: grid; justify-items: start; gap: 24px; }
+.koala-service-faq__offer h3 { font-size: 32px; }
+.koala-service-faq__offer .koala-service-process__coupon-inner p { margin: 0; color: #101113; line-height: 2; }
+.koala-service-faq__offer .koala-location-hero__quote { margin: 0; border: 0; }
+.koala-service-faq__video {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	margin-top: 16px;
+	overflow: hidden;
+	border-radius: 12px;
+	background: #042e53;
+	color: #fff;
+	text-decoration: none;
+}
+.koala-service-faq__video-preview {
+	position: relative;
+	display: grid;
+	place-items: center;
+	min-height: 160px;
+}
+.koala-service-faq__video-preview.has-poster img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.koala-service-faq__video-preview.has-poster::after {
+	z-index: 1;
+	display: grid;
+	place-items: center;
+	width: 64px;
+	height: 64px;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	background: #042e53;
+	color: #fff;
+	content: "▶";
+}
+.koala-service-faq__video-content {
+	display: grid;
+	align-content: center;
+	justify-items: start;
+	gap: clamp(24px, 3vw, 48px);
+	padding: clamp(24px, 3vw, 48px);
+	background: #042e53 url("service-faq-background.webp") center / cover no-repeat;
+}
+.koala-service-faq__video-title {
+	color: #fff;
+	font: 700 clamp(32px, 4.13vw, 64px)/1.2 "Alegreya Sans", sans-serif;
+}
+.koala-service-faq__video-title p { margin: 0; font: inherit; color: inherit; }
+.koala-service-faq__video-title strong { color: inherit; }
+.koala-service-faq__video-content > strong {
+	padding: 10px 30px;
+	border: 2px solid #fff;
+	border-radius: 999px;
+	color: #fff;
+	font: 700 18px/2 "Montserrat", sans-serif;
+}
+.koala-service-faq__video:hover .koala-service-faq__video-content > strong { background: #fff; color: #042e53; }
+@media (max-width: 767px) {
+	.koala-service-faq__video { grid-template-columns: minmax(0, 1fr); }
+	.koala-service-faq__video-preview.has-poster { aspect-ratio: 16 / 9; }
+}

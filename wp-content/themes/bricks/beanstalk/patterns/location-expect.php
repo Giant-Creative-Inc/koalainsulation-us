@@ -5,6 +5,7 @@
  * @package Koala_Beanstalk
  */
 
+$expect_service_video = $expect_service_video ?? null;
 ?>
 <!-- wp:group {"className":"koala-location-feature koala-location-expect","metadata":{"name":"koala-location-expect"},"tagName":"section"} -->
 <section class="wp-block-group koala-location-feature koala-location-expect">
@@ -21,6 +22,15 @@
 <!-- /wp:group -->
 <!-- wp:group {"className":"koala-location-feature__images"} -->
 <div class="wp-block-group koala-location-feature__images">
+<?php if ( null !== $expect_service_video ) : ?>
+	<?php if ( '' !== $expect_service_video ) : ?>
+		<div class="koala-service-expect__video">
+			<img src="<?php echo esc_url( get_template_directory_uri() . '/beanstalk/assets/service-expect-poster.webp' ); ?>" width="950" height="583" alt="" loading="lazy">
+			<button class="koala-location-hero__play" type="button" data-location-hero-video="<?php echo esc_url( $expect_service_video ); ?>" aria-label="Play What to Expect video">&#9654;</button>
+		</div>
+	<?php endif; ?>
+	<!-- wp:koala/location-hero-quote {"label":"Get a FREE Quote"} /-->
+<?php else : ?>
 <!-- wp:image {"sizeSlug": "full", "linkDestination": "none", "className": "koala-location-feature__photo"} -->
 <figure class="wp-block-image size-full koala-location-feature__photo"><img src="<?php echo esc_url( get_template_directory_uri() . '/beanstalk/assets/location-features/48160.webp' ); ?>" alt="Professional insulation installation service for residential or commercial property improvement."/></figure>
 <!-- /wp:image -->
@@ -36,6 +46,7 @@
 <!-- wp:image {"sizeSlug": "full", "linkDestination": "none", "className": "koala-location-feature__photo"} -->
 <figure class="wp-block-image size-full koala-location-feature__photo"><img src="<?php echo esc_url( get_template_directory_uri() . '/beanstalk/assets/location-features/9255.webp' ); ?>" alt="Professional home insulation services to improve energy efficiency and boost property value."/></figure>
 <!-- /wp:image -->
+<?php endif; ?>
 
 </div>
 <!-- /wp:group -->
@@ -75,5 +86,8 @@
 </div>
 <!-- /wp:group -->
 
+<?php if ( null !== $expect_service_video ) : ?>
+	<img class="koala-service-expect__obie" src="<?php echo esc_url( get_template_directory_uri() . '/beanstalk/assets/service-expect-obie.svg?v=2' ); ?>" width="325" height="539" alt="" loading="lazy">
+<?php endif; ?>
 </section>
 <!-- /wp:group -->

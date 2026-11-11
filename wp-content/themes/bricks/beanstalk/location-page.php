@@ -40,7 +40,7 @@ function koala_beanstalk_location_legacy_asset( string $handle, string $source, 
 /** Remove Bricks-owned output callbacks before the native document renders. */
 function koala_beanstalk_location_prepare(): void {
 	global $wp_filter;
-	if ( ! koala_beanstalk_sidebar_preview() ) {
+	if ( ! koala_beanstalk_sidebar_preview() && ( ! koala_beanstalk_service_hero_preview() || koala_beanstalk_is_national_service() ) ) {
 		return;
 	}
 	remove_action( 'wp_footer', 'custom_body_code' );
@@ -60,12 +60,9 @@ function koala_beanstalk_location_prepare(): void {
 }
 add_action( 'template_redirect', 'koala_beanstalk_location_prepare', 101 );
 
-/** Keep only native theme components and plugin dependencies on location previews. */
-function koala_beanstalk_location_assets(): void {
+/** Drop styles and scripts owned by the legacy page renderer. */
+function koala_beanstalk_dequeue_bricks_assets(): void {
 	global $wp_scripts, $wp_styles;
-	if ( ! koala_beanstalk_sidebar_preview() ) {
-		return;
-	}
 	$theme_url = trailingslashit( get_template_directory_uri() );
 	foreach ( array(
 		'style'  => $wp_styles,
@@ -85,6 +82,15 @@ function koala_beanstalk_location_assets(): void {
 			}
 		}
 	}
+}
+
+/** Keep only native theme components and plugin dependencies on location previews. */
+function koala_beanstalk_location_assets(): void {
+	if ( ! koala_beanstalk_sidebar_preview() ) {
+		return;
+	}
+	koala_beanstalk_dequeue_bricks_assets();
+	$theme_url = trailingslashit( get_template_directory_uri() );
 	wp_enqueue_style( 'wp-block-library' );
 	wp_enqueue_style( 'global-styles' );
 	// Section sources are bundled; first-paint rules are inlined by location-performance.php.
@@ -112,3 +118,32 @@ function koala_beanstalk_location_assets(): void {
 	wp_enqueue_script( 'koala-beanstalk-header', $theme_url . 'beanstalk/assets/header.js', array(), (string) filemtime( __DIR__ . '/assets/header.js' ), true );
 }
 add_action( 'wp_enqueue_scripts', 'koala_beanstalk_location_assets', 1005 );
+
+/**
+ * Repair embedded widget semantics on native location pages.
+ *
+ * @param string    $html Shortcode output.
+ * @param bool|null $native Whether this is a native location request; null resolves it.
+ * @return string
+ */
+function koala_beanstalk_location_widget_accessibility( string $html, ?bool $native = null ): string {
+	if ( ! ( $native ?? koala_beanstalk_sidebar_preview() ) ) {
+		return $html;
+	}
+	$tags = new WP_HTML_Tag_Processor( $html );
+	while ( $tags->next_tag() ) {
+		if ( $tags->has_class( 'zip-shape-map' ) && ! $tags->get_attribute( 'role' ) ) {
+			$tags->set_attribute( 'role', 'region' );
+		}
+		if ( 'BUTTON' !== $tags->get_tag() || $tags->get_attribute( 'aria-label' ) || $tags->get_attribute( 'aria-labelledby' ) ) {
+			continue;
+		}
+		if ( $tags->has_class( 'grw-prev' ) ) {
+			$tags->set_attribute( 'aria-label', 'Previous reviews' );
+		} elseif ( $tags->has_class( 'grw-next' ) ) {
+			$tags->set_attribute( 'aria-label', 'Next reviews' );
+		}
+	}
+	return $tags->get_updated_html();
+}
+add_filter( 'do_shortcode_tag', 'koala_beanstalk_location_widget_accessibility', 20, 1 );

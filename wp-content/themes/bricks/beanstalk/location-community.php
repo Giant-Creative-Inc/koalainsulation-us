@@ -29,6 +29,30 @@ function koala_beanstalk_location_rich_copy( int $id, string $key ): string {
 	return wp_kses_post( wpautop( (string) get_post_meta( $id, $key, true ) ) );
 }
 
+/** Format all-caps city-list labels without modifying city records or mixed case.
+ *
+ * @param string $name Saved city title.
+ * @return string
+ */
+function koala_beanstalk_location_city_label( string $name ): string {
+	if ( ! preg_match( '/\p{Lu}/u', $name ) || preg_match( '/\p{Ll}/u', $name ) ) {
+		return $name;
+	}
+	$label = function_exists( 'mb_convert_case' ) ? mb_convert_case( $name, MB_CASE_TITLE, 'UTF-8' ) : ucwords( strtolower( $name ), " \t\r\n\f\v-'" );
+	$label = preg_replace_callback(
+		"/(['’]|\\bMc)(\\p{Ll})/u",
+		static function ( $parts ) {
+			return $parts[1] . strtoupper( $parts[2] );
+		},
+		$label
+	);
+	// Keep state abbreviations after a comma and the Air Force Base suffix.
+	if ( preg_match( '/(,\s*)([A-Z]{2})$/', $name, $state ) ) {
+		$label = preg_replace( '/,\s*[a-z]{2}$/i', $state[1] . $state[2], $label );
+	}
+	return preg_replace( '/\bAfb\b/', 'AFB', $label );
+}
+
 /** Render one ACF-backed section.
  *
  * @param array         $attributes Block attributes.
@@ -49,29 +73,15 @@ function koala_beanstalk_render_location_community( array $attributes, string $c
 		return '<section class="koala-location-lower koala-location-education"><div>' . ( '' !== $title ? '<h2>' . esc_html( $title ) . '</h2>' : '' ) . koala_beanstalk_location_rich_copy( $id, 'insulation_education_description' ) . '</div></section>';
 	}
 	if ( 'reviews' === $section ) {
-		$title     = get_post_meta( $id, 'satisfaction_title', true );
-		$shortcode = (string) get_post_meta( $id, 'google_review_shortcode', true );
-		return '<section id="location-reviews" class="koala-location-lower koala-location-customer-reviews"><div class="koala-location-lower__intro"><h2>' . esc_html( $title ? $title : 'Customer Reviews' ) . '</h2>' . koala_beanstalk_location_rich_copy( $id, 'satisfaction_description' ) . '</div><div class="koala-location-customer-reviews__feed">' . ( trim( $shortcode ) ? do_shortcode( $shortcode ) : '<p>Reviews are currently unavailable.</p>' ) . '</div></section>';
+		$title = get_post_meta( $id, 'satisfaction_title', true );
+		return '<section id="location-reviews" class="koala-location-lower koala-location-customer-reviews"><div class="koala-location-lower__intro"><h2>' . esc_html( $title ? $title : 'Customer Reviews' ) . '</h2>' . koala_beanstalk_location_rich_copy( $id, 'satisfaction_description' ) . '</div><div class="koala-location-customer-reviews__feed">' . koala_beanstalk_location_review_content( $id ) . '</div></section>';
 	}
 	if ( 'communities' === $section ) {
 		if ( ! get_post_meta( $id, 'show_location_areas_serviced', true ) ) {
 			return '';
 		}
-		$cities = koala_beanstalk_location_selected_ids( $id, 'local_cities' );
-		$html   = '<section class="koala-location-lower koala-location-communities"><div class="koala-location-lower__intro"><h2>' . esc_html( get_post_meta( $id, 'local_cities_title', true ) ) . '</h2>' . koala_beanstalk_location_rich_copy( $id, 'local_cities_description' ) . koala_beanstalk_render_location_hero_quote( array( 'label' => 'Get a FREE Quote' ) ) . '</div><ul class="koala-location-communities__list">';
-		$count  = 0;
-		foreach ( $cities as $city ) {
-			if ( 'publish' !== get_post_status( $city ) ) {
-				continue;
-			}
-			$html .= '<li' . ( $count >= 9 ? ' hidden' : '' ) . '>' . esc_html( get_the_title( $city ) ) . '</li>';
-			++$count;
-		}
-		$html .= '</ul>';
-		if ( $count > 9 ) {
-			$html .= '<button class="koala-location-communities__more" type="button" aria-expanded="false">Show More</button>';
-		}
-		return $html . '</section>';
+		$html = '<section class="koala-location-lower koala-location-communities"><div class="koala-location-lower__intro"><h2>' . esc_html( get_post_meta( $id, 'local_cities_title', true ) ) . '</h2>' . koala_beanstalk_location_rich_copy( $id, 'local_cities_description' ) . koala_beanstalk_render_location_hero_quote( array( 'label' => 'Get a FREE Quote' ) ) . '</div>';
+		return $html . koala_beanstalk_location_communities_list( koala_beanstalk_location_selected_ids( $id, 'local_cities' ) ) . '</section>';
 	}
 	if ( 'nap' === $section ) {
 		$html = '<section class="koala-location-lower koala-location-nap"><div class="koala-location-nap__map">' . do_shortcode( '[zip_shape_map post_id="' . $id . '"]' ) . '</div><div class="koala-location-nap__details"><h2>Koala Insulation of <span>' . esc_html( $name ) . '</span></h2><div class="koala-location-nap__contact"><div><h3>Address</h3><p>' . esc_html( get_post_meta( $id, 'location_address', true ) ) . '</p><h3>Phone</h3><p><a href="tel:' . esc_attr( preg_replace( '/[^+0-9]/', '', (string) get_post_meta( $id, 'location_phone_number', true ) ) ) . '">' . esc_html( get_post_meta( $id, 'location_phone_number', true ) ) . '</a></p></div>';
@@ -132,14 +142,16 @@ function koala_beanstalk_location_display_hours( string $hours ): string {
 
 /** Return one reusable pattern.
  *
- * @param string $name Section name.
+ * @param string      $name Section name.
+ * @param string|null $copy Optional service copy for the final CTA.
  * @return string
  */
-function koala_beanstalk_location_community_content( string $name ): string {
+function koala_beanstalk_location_community_content( string $name, ?string $copy = null ): string {
 	if ( ! in_array( $name, array( 'reviews', 'communities', 'nap', 'offers', 'education', 'final-cta' ), true ) ) {
 		return '';
 	}
 	ob_start();
+	$final_cta_copy = $copy;
 	include __DIR__ . '/patterns/location-' . $name . '.php';
 	return (string) ob_get_clean();
 }
@@ -214,3 +226,48 @@ function koala_beanstalk_location_education_saved( string $html, array $block ):
 	return koala_beanstalk_render_location_community( array( 'section' => 'education' ) );
 }
 add_filter( 'render_block_core/group', 'koala_beanstalk_location_education_saved', 1001, 2 );
+
+
+/**
+ * Render the configured review feed for a location.
+ *
+ * @param int $location_id Related location ID.
+ */
+function koala_beanstalk_location_review_content( int $location_id ): string {
+	$shortcode = (string) get_post_meta( $location_id, 'google_review_shortcode', true );
+	return '' !== trim( $shortcode ) ? do_shortcode( $shortcode ) : '<p>Reviews are currently unavailable.</p>';
+}
+
+/**
+ * Render the shared community grid and Show More control.
+ *
+ * @param array $cities      City post IDs in display order.
+ * @param bool  $allow_links Use links for cities marked as linked resources.
+ */
+function koala_beanstalk_location_communities_list( array $cities, bool $allow_links = false ): string {
+	$html  = '';
+	$count = 0;
+	foreach ( $cities as $city ) {
+		if ( 'publish' !== get_post_status( $city ) ) {
+			continue;
+		}
+		$label = esc_html( koala_beanstalk_location_city_label( (string) get_the_title( $city ) ) );
+		if ( $allow_links && get_post_meta( $city, 'linked_resource', true ) ) {
+			$url = esc_url( (string) get_permalink( $city ) );
+			if ( '' !== $url ) {
+				$label = '<a href="' . $url . '">' . $label . '</a>';
+			}
+		}
+		$html .= '<li' . ( $count >= 9 ? ' hidden' : '' ) . '>' . $label . '</li>';
+		++$count;
+	}
+	if ( 0 === $count ) {
+		return '';
+	}
+
+	$html = '<ul class="koala-location-communities__list">' . $html . '</ul>';
+	if ( $count > 9 ) {
+		$html .= '<button class="koala-location-communities__more" type="button" aria-expanded="false">Show More</button>';
+	}
+	return $html;
+}

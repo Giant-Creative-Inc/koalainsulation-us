@@ -1,0 +1,102 @@
+/* Bricks service palette on the shared location hero layout. */
+.beanstalk-service-hero-preview .koala-location-hero {
+	background: #dfeec4;
+}
+
+.beanstalk-service-hero-preview .koala-location-hero h1 {
+	color: #043968;
+}
+
+.beanstalk-service-hero-preview .koala-location-hero__introduction {
+	color: #53602c;
+}
+
+.beanstalk-service-hero-preview .koala-location-hero__quote {
+	text-transform: uppercase;
+}
+
+.beanstalk-service-hero-preview .koala-location-financing h2 .green { color: #afd56c; }
+
+.beanstalk-service-hero-preview .koala-location-quote-banner__heading .green { color: #afd56c; }
+
+.koala-location-content .koala-service-commercial {
+	padding: 0 clamp(20px, 4.1vw, 64px) clamp(40px, 3.75vw, 58px);
+	scroll-margin-top: calc(var(--beanstalk-header-height, 170px) + 16px);
+}
+.koala-service-commercial .koala-location-lower__intro {
+	max-width: 816px;
+	align-items: center;
+	text-align: center;
+}
+.koala-location-content .koala-service-commercial h2 {
+	font: 700 clamp(36px, 3.6vw, 56px)/1.2 "Alegreya Sans", sans-serif;
+}
+.koala-service-commercial h2 .green { color: #afd56c; }
+.koala-service-commercial p { line-height: 2; }
+.koala-service-commercial .koala-location-communities__list li { text-transform: uppercase; }
+.koala-service-commercial .koala-location-communities__list li::before { width: 20px; height: 20px; flex-basis: 20px; }
+
+.koala-beanstalk-national-service { --koala-sidebar-width: 0px; }
+
+/* Keep the Bricks header above its footer (999) and below its locator popup (10000). */
+.koala-beanstalk-national-service #brx-header.sticky {
+	z-index: 1000;
+}
+
+.koala-service-reviews__national {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+	gap: 24px;
+	margin: 32px auto;
+}
+
+.koala-service-reviews__national figure {
+	margin: 0;
+	padding: 24px;
+	border-radius: 12px;
+	background: #eff7e2;
+}
+
+.koala-service-reviews__national blockquote { margin: 0 0 16px; }
+
+
+/* Darker text on the light service panels. Keep the green accent on navy. */
+.beanstalk-service-hero-preview {
+	--koala-service-heading-green: #55751f;
+}
+
+.beanstalk-service-hero-preview .koala-location-hero__reviews {
+	border-radius: 12px;
+	background: rgba(20, 25, 12, 0.40);
+	backdrop-filter: blur(20px);
+}
+
+.beanstalk-service-hero-preview :is(
+	#koala-service-trusted-heading,
+	#koala-service-superior-heading,
+	#koala-service-advantages-heading,
+	#service-process-heading,
+	#service-reviews-heading,
+	#service-faq-heading,
+	.koala-service-advantages h3,
+	.koala-service-commercial h2 .green
+) {
+	color: var(--koala-service-heading-green);
+}
+
+.beanstalk-service-hero-preview .beanstalk-footer :is(
+	.beanstalk-footer__column,
+	.beanstalk-footer__column a,
+	.beanstalk-footer__column address,
+	.beanstalk-footer__column .beanstalk-footer__heading,
+	.beanstalk-footer__facts,
+	.beanstalk-footer__financing,
+	.beanstalk-footer__legal span,
+	.beanstalk-footer__legal a
+) {
+	color: #042e53;
+}
+
+.beanstalk-service-hero-preview .beanstalk-footer a:is(:hover, :focus-visible) {
+	text-decoration: underline;
+}

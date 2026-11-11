@@ -1,0 +1,64 @@
+.beanstalk-service-hero-preview .koala-location-expect {
+	position: relative;
+	isolation: isolate;
+	grid-template-columns: minmax(0, 644fr) minmax(0, 720fr);
+	grid-template-areas: "heading images" "items images";
+}
+
+.beanstalk-service-hero-preview .koala-location-expect h2 { font-weight: 700; line-height: 1.2; }
+.beanstalk-service-hero-preview .koala-location-expect h2 mark { color: var(--koala-service-heading-green) !important; }
+.beanstalk-service-hero-preview .koala-location-expect .koala-location-feature__lead { font-weight: 400; }
+.beanstalk-service-hero-preview .koala-location-expect .koala-location-feature__item p { color: #5a646d; line-height: 2; }
+
+.beanstalk-service-hero-preview .koala-location-expect .koala-location-feature__images {
+	height: auto;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: clamp(24px, 3.1vw, 48px);
+}
+
+.koala-service-expect__video {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 720 / 443;
+	overflow: hidden;
+	border-radius: 12px;
+	background: #042e53;
+}
+
+.koala-service-expect__video img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.koala-service-expect__video .koala-location-hero__play {
+	border-color: #afd56c;
+	background: #afd56c;
+	color: #fff;
+}
+
+.beanstalk-service-hero-preview .koala-location-expect .koala-location-hero__quote {
+	position: relative;
+	z-index: 1;
+	background: #afd56c;
+	border-color: #afd56c;
+	color: #042e53;
+}
+
+.koala-service-expect__obie {
+	z-index: 2;
+	position: absolute;
+	top: 70%;
+	right: 0;
+	width: min(22%, 325px);
+	height: auto;
+	pointer-events: none;
+}
+
+@media (max-width: 991px) {
+	.koala-service-expect__obie { display: none; }
+}

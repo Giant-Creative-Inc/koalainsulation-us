@@ -1,0 +1,89 @@
+.koala-service-reviews {
+	padding: 0 clamp(20px, 4.1vw, 64px) clamp(48px, 7.7vw, 120px);
+	background: #fff;
+	color: #042e53;
+	font: 400 18px/2 "Filson Pro", sans-serif;
+	scroll-margin-top: var(--beanstalk-header-height, 170px);
+}
+.koala-service-reviews__intro { max-width: 666px; margin: 0 auto; text-align: center; }
+.koala-service-reviews h2 {
+	margin: 0 0 24px;
+	color: #afd56c;
+	font: 700 clamp(36px, 4.65vw, 72px)/1.2 "Alegreya Sans", sans-serif;
+}
+.koala-service-reviews h2 span {
+	display: block;
+	color: #042e53;
+	font-size: clamp(28px, 2.6vw, 40px);
+	font-weight: 500;
+}
+.koala-service-reviews__feed {
+	max-width: 1422px;
+	margin: clamp(32px, 3.7vw, 58px) auto;
+	min-width: 0;
+	overflow: hidden;
+}
+.koala-service-reviews__gallery { max-width: 1422px; margin-inline: auto; }
+.koala-service-reviews__track {
+	display: flex;
+	gap: 24px;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+}
+.koala-service-reviews__track img {
+	flex: 0 0 calc((100% - 24px) / 2);
+	width: calc((100% - 24px) / 2);
+	height: auto;
+	aspect-ratio: 699 / 481;
+	object-fit: cover;
+	border-radius: 12px;
+	scroll-snap-align: start;
+}
+.koala-service-reviews__controls:not([hidden]) { display: flex; justify-content: center; gap: 24px; margin-top: 48px; }
+.koala-service-reviews__controls button {
+	display: grid;
+	place-items: center;
+	width: 61px;
+	height: 61px;
+	padding: 0;
+	border: 2px solid #042e53;
+	border-radius: 12px;
+	background: #fff;
+	color: #042e53;
+	cursor: pointer;
+}
+.koala-service-reviews__controls button:last-child { background: #afd56c; border-color: #afd56c; }
+.koala-service-reviews__controls button:disabled { opacity: .4; cursor: default; }
+.koala-service-reviews :focus-visible { outline: 2px solid #042e53; outline-offset: 4px; }
+@media (max-width: 575px) {
+	.koala-service-reviews__track img { flex-basis: 100%; width: 100%; }
+}
+
+.koala-service-reviews__feed .wp-google-powered {
+	color: #595959 !important;
+}
+
+.koala-service-reviews__feed .rpi .rpi-dots-wrap {
+	--slider-dot-size: 24px;
+	--slider-dot-gap: 2px;
+}
+
+.koala-service-reviews__feed .rpi-dots button.rpi-dot {
+	transform: none !important;
+	background: transparent !important;
+	opacity: 1 !important;
+}
+
+.koala-service-reviews__feed .rpi-dots button.rpi-dot::before {
+	content: "";
+	display: block;
+	width: 8px;
+	height: 8px;
+	margin: auto;
+	border-radius: 50%;
+	background: #727d88;
+}
+
+.koala-service-reviews__feed .rpi-dots button.rpi-dot.active::before {
+	background: #042e53;
+}

@@ -9,8 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$beanstalk_settings = isset( $beanstalk_settings ) && is_array( $beanstalk_settings ) ? $beanstalk_settings : array();
-$copy               = wp_parse_args(
+$beanstalk_settings  = isset( $beanstalk_settings ) && is_array( $beanstalk_settings ) ? $beanstalk_settings : array();
+$copy                = wp_parse_args(
 	$beanstalk_settings,
 	array(
 		'homeLabel'          => 'Home',
@@ -29,10 +29,38 @@ $copy               = wp_parse_args(
 		'termsLabel'         => 'Terms and Conditions',
 	)
 );
-$footer             = koala_beanstalk_get_navigation_data();
-$location_preview   = function_exists( 'koala_beanstalk_sidebar_preview' ) && koala_beanstalk_sidebar_preview();
-$footer_logo        = 'https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2024/06/Logo.png/w=115,h=80';
-$resources          = array(
+$footer              = koala_beanstalk_get_navigation_data();
+$location_preview    = function_exists( 'koala_beanstalk_sidebar_preview' ) && koala_beanstalk_sidebar_preview();
+$financing_terms_url = 'https://www.wisetack.com/faqs/';
+if ( koala_beanstalk_service_hero_preview() || 'koalainsulation.local' === wp_parse_url( home_url( '/' ), PHP_URL_HOST ) ) {
+	$application_url = '';
+	$financing_id    = (int) get_queried_object_id();
+	$service_preview = koala_beanstalk_service_hero_preview();
+	if ( $service_preview ) {
+		$financing       = koala_beanstalk_service_financing_data( $financing_id );
+		$application_url = $financing['link'] ?? '';
+	} elseif ( $location_preview && koala_beanstalk_location_financing_enabled( $financing_id ) ) {
+		$application_url = koala_beanstalk_location_financing_link( $financing_id );
+	}
+
+	if ( $service_preview || $location_preview ) {
+		$provider = koala_beanstalk_financing_provider( $application_url );
+		if ( 'enerbank' === $provider ) {
+			$copy['financingText']      = 'EnerBank home improvement loans are provided by Regions Bank, Member FDIC. See the lender for loan terms and eligibility.';
+			$copy['financingLinkLabel'] = 'See EnerBank financing details.';
+			$financing_terms_url        = 'https://prequalify.enerbank.com/';
+		} elseif ( 'synchrony' === $provider ) {
+			$copy['financingText']      = 'Financing through Synchrony is subject to credit approval. See your offer for applicable terms.';
+			$copy['financingLinkLabel'] = 'See Synchrony financing details.';
+			$financing_terms_url        = 'https://www.synchrony.com/marketplace/home-improvement';
+		} elseif ( 'wisetack' !== $provider ) {
+			$copy['financingText'] = 'Financing terms and eligibility vary by lender. Ask your local Koala Insulation team for details.';
+			$financing_terms_url   = '';
+		}
+	}
+}
+$footer_logo = 'https://imagedelivery.net/uX8LTtWSHgeVJ6eG75QgxQ/koalainsulation.com/2024/06/Logo.png/w=115,h=80';
+$resources   = array(
 	array(
 		'title' => 'Blog',
 		'url'   => $footer['base'] . '/blog/',
@@ -60,6 +88,7 @@ $resources          = array(
 					<a class="beanstalk-footer__heading" href="<?php echo esc_url( $footer['base'] . '/why-koala/' ); ?>"><?php echo esc_html( $copy['whyKoalaLabel'] ); ?></a>
 					<a class="beanstalk-footer__heading" href="<?php echo esc_url( $footer['base'] . '/why-reinsulate/' ); ?>"><?php echo esc_html( $copy['whyReinsulateLabel'] ); ?></a>
 					<?php if ( $location_preview ) : ?>
+						<a class="beanstalk-footer__heading" href="<?php echo esc_url( home_url( '/locations/' ) ); ?>">Locations</a>
 						<a class="beanstalk-footer__heading" href="https://koalainsulationfranchise.com/">Franchise</a>
 						<a href="<?php echo esc_url( home_url( '/national-partnerships' ) ); ?>">National Partnerships</a>
 					<?php endif; ?>
@@ -96,15 +125,40 @@ $resources          = array(
 				<img src="<?php echo esc_url( $footer_logo ); ?>" width="99" height="69" alt="Koala Insulation">
 			</a>
 
+			<?php if ( $location_preview ) : ?>
+				<nav class="beanstalk-footer__social" aria-label="Social media">
+					<a href="https://www.facebook.com/KoalaInsulationHQ/">Facebook</a>
+					<a href="https://www.instagram.com/koalainsulation/">Instagram</a>
+					<a href="https://www.linkedin.com/company/koalainsulation">LinkedIn</a>
+					<a href="https://www.youtube.com/channel/UCEYUbnu82sHwLIRzsY6qtPQ">YouTube</a>
+				</nav>
+			<?php endif; ?>
+
 			<div class="beanstalk-footer__facts">
-				<p><?php echo esc_html( $copy['factOne'] ); ?></p>
-				<p><?php echo esc_html( $copy['factTwo'] ); ?></p>
-				<p><?php echo esc_html( $copy['factThree'] ); ?></p>
+				<?php
+				foreach ( array(
+					'factOne'   => 'https://insulationinstitute.org/news-industry-issues/news-and-industry-issues/press-release/',
+					'factTwo'   => 'https://www.insulate.org/homeowners-frequently-asked-questions/',
+					'factThree' => 'https://www.energy.gov/sites/prod/files/2013/11/f5/insulation_guide.pdf',
+				) as $fact_key => $source_url ) :
+					?>
+					<p>
+						<?php if ( $location_preview ) : ?>
+							<a href="<?php echo esc_url( $source_url ); ?>"><?php echo esc_html( $copy[ $fact_key ] ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html( $copy[ $fact_key ] ); ?>
+						<?php endif; ?>
+					</p>
+				<?php endforeach; ?>
 			</div>
 		</div>
 
 		<div class="beanstalk-footer__financing" id="footnote">
-			<p><?php echo esc_html( $copy['financingText'] ); ?> <a href="https://www.wisetack.com/faqs/"><?php echo esc_html( $copy['financingLinkLabel'] ); ?></a></p>
+			<p><?php echo esc_html( $copy['financingText'] ); ?>
+			<?php
+			if ( $financing_terms_url ) :
+				?>
+				<a href="<?php echo esc_url( $financing_terms_url ); ?>"><?php echo esc_html( $copy['financingLinkLabel'] ); ?></a><?php endif; ?></p>
 		</div>
 
 		<div class="beanstalk-footer__bottom">

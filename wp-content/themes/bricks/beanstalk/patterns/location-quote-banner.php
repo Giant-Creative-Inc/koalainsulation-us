@@ -16,7 +16,11 @@
 <p class="koala-location-quote-banner__eyebrow">Get a Quote</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"className":"koala-location-quote-banner__heading"} -->
-<h2 class="wp-block-heading koala-location-quote-banner__heading">Ready to start your insulation project? <mark style="background-color:rgba(0, 0, 0, 0);color:#afd56c" class="has-inline-color">Get a FREE quote</mark> from your local Koala Insulation team today.</h2>
+<h2 class="wp-block-heading koala-location-quote-banner__heading"><?php if ( ! empty( $banner_heading ) ) : ?>
+	<?php echo wp_kses_post( $banner_heading ); ?>
+<?php else : ?>
+Ready to start your insulation project? <mark style="background-color:rgba(0, 0, 0, 0);color:#afd56c" class="has-inline-color">Get a FREE quote</mark> from your local Koala Insulation team today.
+<?php endif; ?></h2>
 <!-- /wp:heading -->
 </div>
 <!-- /wp:group -->

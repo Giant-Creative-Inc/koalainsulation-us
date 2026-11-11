@@ -103,3 +103,23 @@ function koala_beanstalk_location_financing_button( string $html, array $block )
 	return $html;
 }
 add_filter( 'render_block_core/buttons', 'koala_beanstalk_location_financing_button', 20, 2 );
+
+/**
+ * Identify a known financing provider by the application URL's host.
+ *
+ * @param string $url Application URL.
+ */
+function koala_beanstalk_financing_provider( string $url ): string {
+	$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+	foreach ( array(
+		'enerbank.com'  => 'enerbank',
+		'wisetack.us'   => 'wisetack',
+		'wisetack.com'  => 'wisetack',
+		'synchrony.com' => 'synchrony',
+	) as $domain => $provider ) {
+		if ( $host === $domain || substr( $host, -strlen( '.' . $domain ) ) === '.' . $domain ) {
+			return $provider;
+		}
+	}
+	return '';
+}

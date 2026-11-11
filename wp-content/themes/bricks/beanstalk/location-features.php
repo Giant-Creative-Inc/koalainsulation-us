@@ -12,13 +12,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Return one portable feature pattern with theme-owned WebP assets.
  *
- * @param string $name Pattern suffix.
+ * @param string      $name          Pattern suffix.
+ * @param string|null $service_video Service video URL, or null for location media.
  * @return string
  */
-function koala_beanstalk_location_feature_content( string $name ): string {
+function koala_beanstalk_location_feature_content( string $name, ?string $service_video = null ): string {
 	if ( ! in_array( $name, array( 'benefits', 'energy', 'expect' ), true ) ) {
 		return '';
 	}
+	$expect_service_video = $service_video;
 	ob_start();
 	include __DIR__ . '/patterns/location-' . $name . '.php';
 	return (string) ob_get_clean();

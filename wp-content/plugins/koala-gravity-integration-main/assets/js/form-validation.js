@@ -43,7 +43,7 @@
 		}
 		input.dataset.kgiMasked = '1';
 
-		// Re-format on every keystroke.
+		// Format typed and pasted numbers.
 		input.addEventListener( 'input', function () {
 			this.value = formatPhone( this.value.replace( /\D/g, '' ).slice( 0, 11 ) );
 		} );
@@ -62,13 +62,6 @@
 			if ( ( e.keyCode < 48 || e.keyCode > 57 ) && ( e.keyCode < 96 || e.keyCode > 105 ) ) {
 				e.preventDefault();
 			}
-		} );
-
-		// Strip non-digits from pasted content and re-format.
-		input.addEventListener( 'paste', function ( e ) {
-			e.preventDefault();
-			var pasted = ( e.clipboardData || window.clipboardData ).getData( 'text' );
-			this.value = formatPhone( pasted.replace( /\D/g, '' ).slice( 0, 11 ) );
 		} );
 	}
 

@@ -1,0 +1,73 @@
+.koala-service-advantages {
+	padding: 0 clamp(20px, 4.1vw, 64px) clamp(48px, 7.7vw, 120px);
+	background: #fff;
+	color: #042e53;
+	font: 400 18px/2 "Filson Pro", sans-serif;
+}
+
+.koala-service-advantages__header {
+	max-width: 920px;
+	margin: 0 auto clamp(32px, 4vw, 64px);
+	text-align: center;
+}
+
+.koala-service-advantages h2 {
+	margin: 0;
+	color: #afd56c;
+	font: 700 clamp(36px, 4.65vw, 72px)/1.2 "Alegreya Sans", sans-serif;
+}
+
+.koala-service-advantages h2 span {
+	display: block;
+	color: #042e53;
+	font-size: clamp(28px, 2.6vw, 40px);
+	font-weight: 500;
+}
+
+.koala-service-advantages__header > div { margin-top: 24px; }
+
+.koala-service-advantages__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 48px;
+	max-width: 1422px;
+	margin-inline: auto;
+}
+
+.koala-service-advantages__card { color: #5a646d; }
+.koala-service-advantages__card img { display: block; }
+.koala-service-advantages__card h3 {
+	margin: 24px 0 12px;
+	color: #afd56c;
+	font: 700 26px/1.2 "Alegreya Sans", sans-serif;
+}
+
+.koala-service-advantages p:last-child { margin-bottom: 0; }
+
+@media (max-width: 991px) {
+	.koala-service-advantages__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+}
+
+@media (max-width: 575px) {
+	.koala-service-advantages__grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (min-width: 992px) {
+	.koala-service-advantages__grid:has(> :nth-child(5):last-child) {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+
+	.koala-service-advantages__grid:has(> :nth-child(5):last-child) > * {
+		grid-column: span 2;
+	}
+
+	.koala-service-advantages__grid:has(> :nth-child(5):last-child) > :nth-child(n+4) {
+		grid-column: span 3;
+	}
+}
+
+@media (576px <= width <= 991px) {
+	.koala-service-advantages__grid > :nth-child(5):last-child {
+		grid-column: 1 / -1;
+	}
+}

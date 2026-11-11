@@ -9,6 +9,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Allow a lower section stylesheet to download without blocking first paint.
+ *
+ * @param string $html Stylesheet link.
+ */
+function koala_beanstalk_defer_stylesheet( string $html ): string {
+	$link = preg_replace( '/\smedia\s*=\s*([\'"])[^\'"]*\1/i', '', $html );
+	return preg_replace( '/<link\b/i', '<link data-no-optimize="1" media="print" onload="this.media=\'all\'"', $link, 1 ) . '<noscript>' . $html . '</noscript>';
+}
+
 /** Inline trusted critical CSS and defer the lower section bundle.
  *
  * @param string $html Stylesheet link.
@@ -20,8 +30,7 @@ function koala_beanstalk_location_performance_style( string $html, string $handl
 		return $html;
 	}
 	if ( 'koala-beanstalk-location-deferred' === $handle ) {
-		$link = preg_replace( '/\smedia\s*=\s*([\'"])[^\'"]*\1/i', '', $html );
-		return preg_replace( '/<link\b/i', '<link data-no-optimize="1" media="print" onload="this.media=\'all\'"', $link, 1 ) . '<noscript>' . $html . '</noscript>';
+		return koala_beanstalk_defer_stylesheet( $html );
 	}
 	$files = array(
 		'koala-beanstalk-location-critical' => __DIR__ . '/assets/location-critical.css',
@@ -30,12 +39,31 @@ function koala_beanstalk_location_performance_style( string $html, string $handl
 		'gravity_forms_theme_framework'     => WP_PLUGIN_DIR . '/gravityforms/assets/css/dist/gravity-forms-theme-framework.min.css',
 		'gravity_forms_orbital_theme'       => WP_PLUGIN_DIR . '/gravityforms/assets/css/dist/gravity-forms-orbital-theme.min.css',
 	);
-	if ( ! isset( $files[ $handle ] ) || ! is_readable( $files[ $handle ] ) ) {
+	if ( ! isset( $files[ $handle ] ) ) {
 		return $html;
 	}
 	$base = 'koala-beanstalk-location-critical' === $handle ? get_template_directory_uri() . '/beanstalk/assets/' : plugins_url( 'gravityforms/assets/css/dist/' );
- // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Trusted local CSS.
-	$css = file_get_contents( $files[ $handle ] );
+	return koala_beanstalk_inline_asset_stylesheet( $html, $handle, $files[ $handle ], $base );
+}
+add_filter( 'style_loader_tag', 'koala_beanstalk_location_performance_style', 110, 2 );
+
+/**
+ * Inline a trusted stylesheet and resolve relative URLs against its asset directory.
+ *
+ * @param string $html Original link.
+ * @param string $handle WordPress style handle.
+ * @param string $file Local stylesheet path.
+ * @param string $base Asset base URL.
+ */
+function koala_beanstalk_inline_asset_stylesheet( string $html, string $handle, string $file, string $base ): string {
+	if ( ! is_readable( $file ) ) {
+		return $html;
+	}
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Trusted local CSS.
+	$css = file_get_contents( $file );
+	if ( false === $css ) {
+		return $html;
+	}
 	$css = preg_replace_callback(
 		'~url\(\s*([\'"]?)([^\'"\)]+)\1\s*\)~i',
 		static function ( $css_match ) use ( $base ): string {
@@ -46,7 +74,6 @@ function koala_beanstalk_location_performance_style( string $html, string $handl
 	);
 	return '<style id="' . esc_attr( $handle ) . '-css" data-no-optimize="1">' . $css . '</style>';
 }
-add_filter( 'style_loader_tag', 'koala_beanstalk_location_performance_style', 110, 2 );
 
 /** Preload only the fonts needed by the mobile hero text. */
 function koala_beanstalk_location_preload_fonts(): void {
