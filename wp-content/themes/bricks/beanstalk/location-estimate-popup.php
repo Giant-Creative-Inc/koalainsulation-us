@@ -9,15 +9,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Render the modal once with this location's phone and attribution. */
-function koala_beanstalk_render_location_estimate_popup(): string {
+/**
+ * Render the modal with the location's phone and attribution.
+ *
+ * @param int $location_id Optional related location for a service preview.
+ */
+function koala_beanstalk_render_location_estimate_popup( int $location_id = 0 ): string {
 	if ( ! function_exists( 'gravity_form' ) ) {
 		return '';
 	}
-	$id    = get_the_ID();
-	$phone = (string) get_post_meta( $id, 'location_phone_number', true );
-	$form  = koala_beanstalk_estimate_is_submission() ? gravity_form( 13, false, false, false, null, true, 0, false ) : '<p role="status">Loading quote form…</p>';
-	return '<dialog id="koala-location-estimate" class="koala-location-estimate" aria-labelledby="koala-location-estimate-title" data-form-endpoint="' . esc_url( rest_url( 'koala-beanstalk/v1/estimate/' . $id ) ) . '" data-location-id="' . esc_attr( (string) $id ) . '" data-location-slug="' . esc_attr( get_post_field( 'post_name', $id ) ) . '" data-page-url="' . esc_url( get_permalink( $id ) ) . '">'
+	$id       = $location_id ? $location_id : get_the_ID();
+	$phone    = (string) get_post_meta( $id, 'location_phone_number', true );
+	$form     = koala_beanstalk_estimate_is_submission() ? gravity_form( 13, false, false, false, null, true, 0, false ) : '<p role="status">Loading quote form…</p>';
+	$endpoint = rest_url( 'koala-beanstalk/v1/estimate/' . $id );
+	if ( $location_id && ! is_ssl() ) {
+		$endpoint = str_replace( home_url( '/', 'https' ), '/', $endpoint );
+	}
+	return '<dialog id="koala-location-estimate" class="koala-location-estimate" aria-labelledby="koala-location-estimate-title" data-form-endpoint="' . esc_url( $endpoint ) . '" data-location-id="' . esc_attr( (string) $id ) . '" data-location-slug="' . esc_attr( get_post_field( 'post_name', $id ) ) . '" data-page-url="' . esc_url( get_permalink( $id ) ) . '">'
 	. '<div class="koala-location-estimate__header"><img data-popup-image-src="' . esc_url( koala_beanstalk_location_media_urls( get_template_directory_uri() . '/beanstalk/assets/location-estimate-popup/koala.webp' ) ) . '" alt="" width="100" height="100"></div>'
 	. '<h2 id="koala-location-estimate-title" class="screen-reader-text">Get a FREE Quote</h2>'
 	. '<button type="button" class="koala-location-estimate__close" aria-label="Close quote form" data-estimate-close>&times;</button>'
@@ -27,7 +35,7 @@ function koala_beanstalk_render_location_estimate_popup(): string {
 
 /** Load Gravity Forms dependencies before the document head. */
 function koala_beanstalk_location_estimate_assets(): void {
-	if ( ! koala_beanstalk_sidebar_preview() ) {
+	if ( ! koala_beanstalk_sidebar_preview() && ( ! koala_beanstalk_service_hero_preview() || koala_beanstalk_is_national_service() ) ) {
 		return;
 	}
 	if ( koala_beanstalk_estimate_is_submission() && function_exists( 'gravity_form_enqueue_scripts' ) ) {
@@ -51,6 +59,11 @@ add_action( 'wp_enqueue_scripts', 'koala_beanstalk_location_estimate_assets', 10
 function koala_beanstalk_location_estimate_output(): void {
 	if ( koala_beanstalk_sidebar_preview() ) {
 		echo koala_beanstalk_render_location_estimate_popup(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped wrapper and trusted Gravity Forms markup.
+	} elseif ( koala_beanstalk_service_hero_preview() && ! koala_beanstalk_is_national_service() ) {
+		$location = koala_beanstalk_resolve_location_post( get_post_meta( get_queried_object_id(), 'related_location', true ) );
+		if ( $location ) {
+			echo koala_beanstalk_render_location_estimate_popup( $location->ID ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped wrapper and trusted Gravity Forms markup.
+		}
 	}
 }
 add_action( 'wp_footer', 'koala_beanstalk_location_estimate_output', 6 );

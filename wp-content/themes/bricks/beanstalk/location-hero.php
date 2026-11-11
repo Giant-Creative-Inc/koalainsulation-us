@@ -60,7 +60,10 @@ function koala_beanstalk_patch_location_hero( array $blocks, array $values, bool
 		if ( 'koala-location-hero-heading' === $name ) {
 			$html = '<h1 class="wp-block-heading">' . esc_html( $values['heading'] ) . '</h1>';
 		} elseif ( 'koala-location-hero-introduction' === $name ) {
-			$html = '<p class="koala-location-hero__introduction">' . nl2br( esc_html( $values['introduction'] ), false ) . '</p>';
+			$introduction = ! empty( $values['inlineIntroduction'] )
+				? wp_kses( $values['introduction'], array_fill_keys( array( 'strong', 'b', 'em', 'i', 'br' ), array() ) )
+				: esc_html( $values['introduction'] );
+			$html         = '<p class="koala-location-hero__introduction">' . nl2br( $introduction, false ) . '</p>';
 		} else {
 			$html = null;
 		}
@@ -180,6 +183,9 @@ function koala_beanstalk_render_location_hero_media( array $attributes ): string
  * @return string
  */
 function koala_beanstalk_render_location_hero_quote( array $attributes ): string {
+	if ( koala_beanstalk_service_hero_preview() && koala_beanstalk_is_national_service() ) {
+		return '<button class="koala-location-hero__quote" type="button" data-national-location-trigger aria-haspopup="dialog" aria-controls="get-estimate-popup">Find a Location</button>';
+	}
 	return '<button class="koala-location-hero__quote" type="button" data-location-quote-popup-trigger aria-haspopup="dialog" aria-controls="koala-location-estimate">' . esc_html( $attributes['label'] ?? 'Get a FREE Quote' ) . '</button>';
 }
 
@@ -190,7 +196,7 @@ function koala_beanstalk_render_location_hero_quote( array $attributes ): string
  * @return string
  */
 function koala_beanstalk_render_location_hero_reviews( array $attributes ): string {
-	$id      = (int) ( get_the_ID() ? get_the_ID() : get_queried_object_id() );
+	$id      = (int) ( $attributes['locationId'] ?? ( get_the_ID() ? get_the_ID() : get_queried_object_id() ) );
 	$name    = (string) get_post_meta( $id, 'location_name', true );
 	$heading = ! empty( $attributes['heading'] ) ? esc_html( $attributes['heading'] ) : 'Top Insulation Contractor in <span>' . esc_html( $name ) . '</span>';
 	$summary = koala_beanstalk_get_location_google_review_summary(
@@ -205,7 +211,8 @@ function koala_beanstalk_render_location_hero_reviews( array $attributes ): stri
 		$stars = str_repeat( $star, 5 );
 		$proof = '<div class="koala-location-hero__proof" aria-label="' . esc_attr( sprintf( 'Rated %s out of 5 from %s Google reviews', $summary['rating'], $summary['count'] ) ) . '"><span class="koala-location-hero__stars" aria-hidden="true"><span>' . $stars . '</span><span style="clip-path:inset(0 ' . esc_attr( (string) ( 100 - $summary['rating'] * 20 ) ) . '% 0 0)">' . $stars . '</span></span><span>' . esc_html( number_format_i18n( $summary['count'] ) . ' Reviews' ) . '</span></div>';
 	}
-	return '<a class="koala-location-hero__reviews" href="#location-reviews"><p>' . $heading . '</p>' . $proof . '</a>';
+	$link = empty( $attributes['url'] ) ? 'href="#location-reviews"' : 'href="' . esc_url( $attributes['url'] ) . '"';
+	return '<a class="koala-location-hero__reviews" ' . $link . '><p>' . $heading . '</p>' . $proof . '</a>';
 }
 
 /** Register native hero blocks and the reusable section pattern. */

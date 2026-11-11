@@ -17,6 +17,7 @@ require_once __DIR__ . '/city-page.php';
 require_once __DIR__ . '/parts.php';
 require_once __DIR__ . '/location-sidebar.php';
 require_once __DIR__ . '/location-page.php';
+require_once __DIR__ . '/service-hero.php';
 require_once __DIR__ . '/location-hero.php';
 require_once __DIR__ . '/location-partners.php';
 require_once __DIR__ . '/location-services.php';

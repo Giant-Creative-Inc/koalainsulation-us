@@ -9,8 +9,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Return the portable core-block pattern markup. */
-function koala_beanstalk_location_quote_banner_content(): string {
+/**
+ * Return the portable core-block pattern markup.
+ *
+ * @param string $heading Optional service-specific heading.
+ */
+function koala_beanstalk_location_quote_banner_content( string $heading = '' ): string {
+	$banner_heading = $heading;
 	ob_start();
 	include __DIR__ . '/patterns/location-quote-banner.php';
 	return (string) ob_get_clean();

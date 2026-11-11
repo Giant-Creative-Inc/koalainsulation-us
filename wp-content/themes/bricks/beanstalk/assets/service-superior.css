@@ -1,0 +1,65 @@
+.koala-service-superior {
+	padding: 0 clamp(20px, 4.1vw, 64px) clamp(48px, 7.7vw, 120px);
+	background: #fff;
+	color: #53602c;
+	font: 400 18px/2 "Filson Pro", sans-serif;
+}
+
+.koala-service-superior__panel {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: center;
+	gap: clamp(24px, 3.7vw, 58px);
+	max-width: 1422px;
+	margin-inline: auto;
+	padding: clamp(24px, 3.1vw, 48px);
+	border-radius: 12px;
+	background: #eff7e2;
+}
+
+.koala-service-superior__label {
+	margin: 0;
+	color: #042e53;
+	font: 500 clamp(28px, 2.6vw, 40px)/1.2 "Alegreya Sans", sans-serif;
+}
+
+.koala-service-superior h2 {
+	margin: 0;
+	color: #afd56c;
+	font: 700 clamp(36px, 4.13vw, 64px)/1.2 "Alegreya Sans", sans-serif;
+}
+
+.koala-service-superior img { display: block; }
+.koala-service-superior__body { margin-top: 24px; }
+.koala-service-superior__body > :last-child,
+.koala-service-superior__list li p:last-child { margin-bottom: 0; }
+
+.koala-service-superior .koala-location-hero__quote {
+	margin-top: clamp(24px, 3.1vw, 48px);
+	padding: 10px 30px;
+	background: #afd56c;
+	border-color: #afd56c;
+	color: #042e53;
+	font-size: 18px;
+}
+
+.koala-service-superior__list {
+	display: grid;
+	gap: 12px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.koala-service-superior__list > li {
+	display: grid;
+	grid-template-columns: 29px minmax(0, 1fr);
+	gap: 12px;
+}
+
+.koala-service-superior__list > li > img { margin-top: 3px; }
+.koala-service-superior__list strong { color: #042e53; }
+
+@media (max-width: 991px) {
+	.koala-service-superior__panel { grid-template-columns: minmax(0, 1fr); }
+}

@@ -109,7 +109,7 @@ function kgi_enqueue_quote_form_assets( array $form = array() ): void { // phpcs
 		'kgi-form-validation',
 		plugins_url( 'assets/js/form-validation.js', KGI_PLUGIN_FILE ),
 		array( 'jquery' ),
-		KGI_VERSION,
+		(string) filemtime( dirname( __DIR__, 2 ) . '/assets/js/form-validation.js' ),
 		true
 	);
 

@@ -77,7 +77,7 @@ add_action( 'init', 'koala_beanstalk_register_location_sidebar' );
  * Enqueue the form early enough for Gravity Forms AJAX dependencies.
  */
 function koala_beanstalk_sidebar_assets(): void {
-	if ( ! koala_beanstalk_sidebar_preview() || ! function_exists( 'gravity_form_enqueue_scripts' ) ) {
+	if ( ( ! koala_beanstalk_sidebar_preview() && ! koala_beanstalk_service_hero_preview() ) || ! function_exists( 'gravity_form_enqueue_scripts' ) ) {
 		return;
 	}
 	gravity_form_enqueue_scripts( 12, true );
@@ -110,7 +110,7 @@ add_filter( 'bricks/element/render', 'koala_beanstalk_sidebar_legacy_element', 2
  * Output the replacement once, outside Bricks layout containers.
  */
 function koala_beanstalk_sidebar_preview_output(): void {
-	if ( koala_beanstalk_sidebar_preview() ) {
+	if ( koala_beanstalk_sidebar_preview() || ( koala_beanstalk_service_hero_preview() && ! koala_beanstalk_is_national_service() ) ) {
      // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped wrapper and trusted Gravity Forms output.
 		echo koala_beanstalk_render_location_sidebar();
 	}
