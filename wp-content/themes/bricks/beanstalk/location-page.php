@@ -120,14 +120,14 @@ function koala_beanstalk_location_assets(): void {
 add_action( 'wp_enqueue_scripts', 'koala_beanstalk_location_assets', 1005 );
 
 /**
- * Repair embedded widget semantics on native location pages.
+ * Repair embedded widget semantics on Beanstalk location and service pages.
  *
  * @param string    $html Shortcode output.
- * @param bool|null $native Whether this is a native location request; null resolves it.
+ * @param bool|null $native Whether this is a native page request; null resolves it.
  * @return string
  */
 function koala_beanstalk_location_widget_accessibility( string $html, ?bool $native = null ): string {
-	if ( ! ( $native ?? koala_beanstalk_sidebar_preview() ) ) {
+	if ( ! ( $native ?? ( koala_beanstalk_sidebar_preview() || koala_beanstalk_service_hero_preview() ) ) ) {
 		return $html;
 	}
 	$tags = new WP_HTML_Tag_Processor( $html );
