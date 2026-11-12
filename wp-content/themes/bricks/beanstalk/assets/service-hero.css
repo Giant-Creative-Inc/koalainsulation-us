@@ -84,19 +84,11 @@
 	color: var(--koala-service-heading-green);
 }
 
-.beanstalk-service-hero-preview .beanstalk-footer :is(
-	.beanstalk-footer__column,
-	.beanstalk-footer__column a,
-	.beanstalk-footer__column address,
-	.beanstalk-footer__column .beanstalk-footer__heading,
-	.beanstalk-footer__facts,
-	.beanstalk-footer__financing,
-	.beanstalk-footer__legal span,
-	.beanstalk-footer__legal a
-) {
-	color: #042e53;
+.beanstalk-service-hero-preview .beanstalk-footer a {
+	color: #fff;
 }
 
 .beanstalk-service-hero-preview .beanstalk-footer a:is(:hover, :focus-visible) {
+	color: #fff;
 	text-decoration: underline;
 }
