@@ -32,7 +32,7 @@ if ( $national_service ) {
 		<?php endif; ?>
 	</div>
 	<?php if ( ! empty( $national_feed ) ) : ?>
-		<div class="koala-service-reviews__feed">
+		<div class="koala-service-reviews__feed" style="overflow: hidden">
 			<?php echo $national_feed; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted Google Reviews shortcode output. ?>
 		</div>
 	<?php elseif ( ! empty( $national_reviews ) ) : ?>
@@ -45,7 +45,7 @@ if ( $national_service ) {
 			<?php endforeach; ?>
 		</div>
 	<?php elseif ( ! $national_service || $service_reviews['locationId'] ) : ?>
-	<div class="koala-service-reviews__feed">
+	<div class="koala-service-reviews__feed" style="overflow: hidden">
 		<?php echo koala_beanstalk_location_review_content( $service_reviews['locationId'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Shared location shortcode renderer. ?>
 	</div>
 	<?php endif; ?>
