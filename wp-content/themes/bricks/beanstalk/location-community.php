@@ -53,6 +53,21 @@ function koala_beanstalk_location_city_label( string $name ): string {
 	return preg_replace( '/\bAfb\b/', 'AFB', $label );
 }
 
+/**
+ * Get the location's selected city IDs in display label order.
+ *
+ * @param int $location_id Location post ID.
+ * @return int[]
+ */
+function koala_beanstalk_get_sorted_location_cities( int $location_id ): array {
+	$labels = array();
+	foreach ( koala_beanstalk_location_selected_ids( $location_id, 'local_cities' ) as $city_id ) {
+		$labels[ $city_id ] = koala_beanstalk_location_city_label( (string) get_the_title( $city_id ) );
+	}
+	asort( $labels, SORT_NATURAL | SORT_FLAG_CASE );
+	return array_keys( $labels );
+}
+
 /** Render one ACF-backed section.
  *
  * @param array         $attributes Block attributes.
@@ -81,7 +96,7 @@ function koala_beanstalk_render_location_community( array $attributes, string $c
 		if ( ! get_post_meta( $id, 'show_location_areas_serviced', true ) ) {
 			return '';
 		}
-		$cities = koala_beanstalk_location_selected_ids( $id, 'local_cities' );
+		$cities = koala_beanstalk_get_sorted_location_cities( $id );
 		$html   = '<section class="koala-location-lower koala-location-communities"><div class="koala-location-lower__intro"><h2>' . esc_html( get_post_meta( $id, 'local_cities_title', true ) ) . '</h2>' . koala_beanstalk_location_rich_copy( $id, 'local_cities_description' ) . koala_beanstalk_render_location_hero_quote( array( 'label' => 'Get a FREE Quote' ) ) . '</div><ul class="koala-location-communities__list">';
 		$count  = 0;
 		foreach ( $cities as $city ) {
