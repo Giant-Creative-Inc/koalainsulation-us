@@ -194,18 +194,37 @@ function koala_beanstalk_service_preserve_critical_css( array $exclusions ): arr
 add_filter( 'rocket_rucss_inline_atts_exclusions', 'koala_beanstalk_service_preserve_critical_css' );
 
 /**
- * Load the menu handler before the first tap on the native header.
+ * Load the menu and video handlers before the first interaction.
  *
  * @param string[] $exclusions Script patterns that WP Rocket must load without delay.
  * @return string[]
  */
-function koala_beanstalk_service_keep_header_script_ready( array $exclusions ): array {
-	if ( is_singular( 'location-service' ) && koala_beanstalk_service_hero_preview() ) {
+function koala_beanstalk_service_keep_interaction_scripts_ready( array $exclusions ): array {
+	if ( ! koala_beanstalk_service_hero_preview() ) {
+		return $exclusions;
+	}
+	if ( is_singular( 'location-service' ) ) {
 		$exclusions[] = '/beanstalk/assets/header.js';
+	}
+	$exclusions[] = '/beanstalk/assets/service-video.js';
+	return $exclusions;
+}
+add_filter( 'rocket_delay_js_exclusions', 'koala_beanstalk_service_keep_interaction_scripts_ready' );
+
+/**
+ * Serve the video handler with its WordPress file version.
+ *
+ * @param string[] $exclusions Scripts excluded from WP Rocket minification.
+ * @return string[]
+ */
+function koala_beanstalk_service_keep_video_script_versioned( array $exclusions ): array {
+	if ( koala_beanstalk_service_hero_preview() ) {
+		$exclusions[] = '/beanstalk/assets/service-video.js';
 	}
 	return $exclusions;
 }
-add_filter( 'rocket_delay_js_exclusions', 'koala_beanstalk_service_keep_header_script_ready' );
+add_filter( 'rocket_exclude_js', 'koala_beanstalk_service_keep_video_script_versioned' );
+
 
 /**
  * Drop legacy map and carousel scripts on native service templates.
@@ -260,12 +279,13 @@ function koala_beanstalk_service_style_tag( string $html, string $handle ): stri
 		'koala-beanstalk-location-critical' => 'location-critical.css',
 		'koala-beanstalk-service-hero'      => 'service-hero.css',
 		'koala-beanstalk-footer'            => 'footer.css',
+		'koala-beanstalk-service-process'   => 'service-process.css',
 	);
 	if ( isset( $critical[ $handle ] ) && koala_beanstalk_service_hero_preview() ) {
 		return koala_beanstalk_inline_asset_stylesheet( $html, $handle, __DIR__ . '/assets/' . $critical[ $handle ], get_template_directory_uri() . '/beanstalk/assets/' );
 	}
 
-	$sections = array( 'service-trusted', 'service-superior', 'service-advantages', 'location-financing', 'service-process', 'location-quote-banner', 'location-features', 'location-video', 'service-expect', 'service-reviews', 'location-community', 'service-faq', 'city-page-final-cta', 'location-final-cta' );
+	$sections = array( 'service-trusted', 'service-superior', 'service-advantages', 'location-financing', 'location-quote-banner', 'location-features', 'location-video', 'service-expect', 'service-reviews', 'location-community', 'service-faq', 'city-page-final-cta', 'location-final-cta' );
 	$forms    = array(
 		'kgi-quote-form',
 		'gravity_forms_theme_reset',
@@ -282,16 +302,15 @@ function koala_beanstalk_service_style_tag( string $html, string $handle ): stri
 add_filter( 'style_loader_tag', 'koala_beanstalk_service_style_tag', 110, 2 );
 
 /**
- * Preserve the inline service footer when WP Rocket removes unused CSS.
+ * Preserve inline footer and process video styles when WP Rocket removes unused CSS.
  *
  * @param string[] $exclusions Existing inline style attribute exclusions.
  * @return string[]
  */
-function koala_beanstalk_preserve_rocket_footer_css( array $exclusions ): array {
-	$exclusions[] = 'koala-beanstalk-footer-css';
-	return $exclusions;
+function koala_beanstalk_preserve_rocket_service_css( array $exclusions ): array {
+	return array_merge( $exclusions, array( 'koala-beanstalk-footer-css', 'koala-beanstalk-service-process-css' ) );
 }
-add_filter( 'rocket_rucss_inline_atts_exclusions', 'koala_beanstalk_preserve_rocket_footer_css' );
+add_filter( 'rocket_rucss_inline_atts_exclusions', 'koala_beanstalk_preserve_rocket_service_css' );
 
 
 /**

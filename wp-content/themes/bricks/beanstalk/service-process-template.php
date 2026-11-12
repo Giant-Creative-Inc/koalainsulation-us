@@ -31,6 +31,11 @@ if ( preg_match( '/^[0-9]+$/D', $video_id ) && preg_match( '/^[a-zA-Z0-9]+$/D', 
 	$process_video = 'https://player.vimeo.com/video/' . $video_id . '?h=' . $video_hash;
 }
 
+// Vimeo's cover image for the shared spray foam installation video.
+$process_poster = '1208167131' === $video_id
+	? 'https://i.vimeocdn.com/video/2177421276-b89da46c9fdfa7d798da6f7890366aea7c8349d2a195bd7100b0d99924030af3-d_960?region=us'
+	: '';
+
 if ( ! $process_steps && '' === $process_video ) {
 	return;
 }
@@ -62,7 +67,12 @@ $process_assets = get_template_directory_uri() . '/beanstalk/assets/';
 		<?php endif; ?>
 		<div class="koala-service-process__details">
 			<?php if ( '' !== $process_video ) : ?>
-				<button type="button" class="koala-service-process__video koala-service-process__video-play" data-service-video-play="<?php echo esc_url( $process_video . '&autoplay=1' ); ?>">Play insulation process video</button>
+				<button type="button" class="koala-service-process__video koala-service-process__video-play" data-service-video-play="<?php echo esc_url( $process_video . '&autoplay=1' ); ?>" aria-label="Play insulation process video">
+					<?php if ( $process_poster ) : ?>
+						<img src="<?php echo esc_url( $process_poster ); ?>" width="960" height="540" alt="" loading="lazy">
+					<?php endif; ?>
+					<span class="koala-service-process__play-icon" aria-hidden="true"></span>
+				</button>
 			<?php endif; ?>
 			<?php if ( $process_steps ) : ?>
 				<ol class="koala-service-process__steps" role="list">

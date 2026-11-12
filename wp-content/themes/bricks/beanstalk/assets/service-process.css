@@ -124,14 +124,62 @@
 }
 
 .koala-service-process__video-play {
+	position: relative;
+	display: grid;
+	place-items: center;
+	overflow: hidden;
+	padding: 0;
 	background: #042e53;
-	color: #fff;
 	cursor: pointer;
-	font: inherit;
-	font-weight: 700;
+}
+
+.koala-service-process__video-play img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.koala-service-process__play-icon {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: clamp(48px, 7vw, 72px);
+	aspect-ratio: 1;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	background: #042e53;
+}
+
+.koala-service-process__play-icon::before {
+	content: "";
+	margin-left: 4px;
+	border-block: 10px solid transparent;
+	border-left: 16px solid #fff;
 }
 
 .koala-service-process__video-play:focus-visible {
 	outline: 3px solid #042e53;
 	outline-offset: 3px;
 }
+
+
+.koala-service-trusted__video {
+	position: relative;
+	overflow: hidden;
+	background: #042e53;
+}
+
+.koala-service-trusted__video > iframe,
+.koala-service-trusted__video > img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.koala-service-trusted__video > img { object-fit: cover; pointer-events: none; }
+
+.koala-service-trusted__video > iframe[tabindex="-1"] { pointer-events: none; }

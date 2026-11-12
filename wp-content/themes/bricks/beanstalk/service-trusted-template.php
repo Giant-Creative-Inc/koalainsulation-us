@@ -21,6 +21,9 @@ if ( '' === $trusted['title'] && '' === $trusted['content'] ) {
 
 $trusted_assets = get_template_directory_uri() . '/beanstalk/assets/';
 $trusted_video  = koala_beanstalk_location_hero_video_url( $trusted + array( 'provider' => 'Vimeo' ) );
+$trusted_poster = '1208165722' === (string) $trusted['videoId']
+	? 'https://i.vimeocdn.com/video/2177419639-59970f4232f01022b20d0aea3d909c16610c3c14960c5310d6f616eba43d7e9e-d_960?region=us'
+	: '';
 $trusted_label  = 'insulation-removal-services' === get_query_var( 'service_slug' ) ? 'Helpful Tips' : 'Trusted';
 ?>
 <section class="koala-service-trusted" aria-labelledby="koala-service-trusted-heading">
@@ -33,7 +36,25 @@ $trusted_label  = 'insulation-removal-services' === get_query_var( 'service_slug
 		</div>
 		<div class="koala-service-trusted__media">
 			<?php if ( $trusted_video ) : ?>
-				<iframe tabindex="-1" data-service-autoplay="<?php echo esc_url( $trusted_video ); ?>" title="<?php echo esc_attr( $trusted['title'] ? $trusted['title'] : 'Insulation advice' ); ?>" loading="lazy" allow="autoplay; fullscreen" allowfullscreen></iframe>
+				<div class="koala-service-process__video koala-service-trusted__video">
+					<iframe tabindex="-1" data-service-autoplay="<?php echo esc_url( $trusted_video ); ?>" title="<?php echo esc_attr( $trusted['title'] ? $trusted['title'] : 'Insulation advice' ); ?>" allow="autoplay; fullscreen" allowfullscreen></iframe>
+					<?php if ( $trusted_poster ) : ?>
+						<img data-service-video-poster src="<?php echo esc_url( $trusted_poster ); ?>" width="960" height="540" alt="" loading="lazy">
+					<?php elseif ( $trusted['imageId'] ) : ?>
+						<?php
+						echo wp_get_attachment_image(
+							$trusted['imageId'],
+							'large',
+							false,
+							array(
+								'loading' => 'lazy',
+								'data-service-video-poster' => 'true',
+								'alt'     => '',
+							)
+						); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core-generated image markup.
+						?>
+					<?php endif; ?>
+				</div>
 			<?php elseif ( $trusted['imageId'] ) : ?>
 				<?php echo wp_get_attachment_image( $trusted['imageId'], 'large', false, array( 'loading' => 'lazy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core-generated image markup. ?>
 			<?php endif; ?>
