@@ -229,8 +229,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // Split the URL into segments and filter out empty segments
   const segments = pathname.split("/").filter(Boolean);
 
-  // Check if the URL contains a location slug
-  if (segments.length > 0) {
+  // National service URLs start with a section name, not a franchise slug.
+  if (segments.length > 0 && segments[0] !== "services") {
     const locationSlug = segments[0]; // Assume the first segment is the location slug
     console.log(locationSlug);
 

@@ -271,7 +271,10 @@ document.querySelectorAll(".top-zipcode-input").forEach(function (input) {
             // document.getElementById("keySm").value = locations.sm_key;
             // document.getElementById("url").value = locations.website;
             setPopupPhoneLink("est-phone-number", locations.phone);
-            document.getElementById("tel-href").href = "tel:" + locations.phone;
+            const phoneLink = document.getElementById("tel-href");
+            if (phoneLink) {
+              phoneLink.href = "tel:" + locations.phone;
+            }
 
           } else {
             console.log("No direct zip match found.");
@@ -511,7 +514,10 @@ document.querySelectorAll(".find-location-btn").forEach(function (button) {
           // document.getElementById("keySm").value = locations.sm_key;
           // document.getElementById("url").value = locations.website;
           setPopupPhoneLink("est-phone-number", locations.phone);
-          document.getElementById("tel-href").href = "tel:" + locations.phone;
+          const phoneLink = document.getElementById("tel-href");
+          if (phoneLink) {
+            phoneLink.href = "tel:" + locations.phone;
+          }
           document.getElementById("get-estimate-popup").style.display = "none";
         } else {
           console.log("No direct zip match found.");
