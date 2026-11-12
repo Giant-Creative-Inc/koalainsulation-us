@@ -180,6 +180,34 @@ function koala_beanstalk_service_hero_assets(): void {
 add_action( 'wp_enqueue_scripts', 'koala_beanstalk_service_hero_assets', 1006 );
 
 /**
+ * Keep the native header layout and its open/closed menu states in the document.
+ *
+ * @param string[] $exclusions Inline style attribute patterns retained by WP Rocket.
+ * @return string[]
+ */
+function koala_beanstalk_service_preserve_critical_css( array $exclusions ): array {
+	if ( is_singular( 'location-service' ) && koala_beanstalk_service_hero_preview() ) {
+		$exclusions[] = 'koala-beanstalk-location-critical-css';
+	}
+	return $exclusions;
+}
+add_filter( 'rocket_rucss_inline_atts_exclusions', 'koala_beanstalk_service_preserve_critical_css' );
+
+/**
+ * Load the menu handler before the first tap on the native header.
+ *
+ * @param string[] $exclusions Script patterns that WP Rocket must load without delay.
+ * @return string[]
+ */
+function koala_beanstalk_service_keep_header_script_ready( array $exclusions ): array {
+	if ( is_singular( 'location-service' ) && koala_beanstalk_service_hero_preview() ) {
+		$exclusions[] = '/beanstalk/assets/header.js';
+	}
+	return $exclusions;
+}
+add_filter( 'rocket_delay_js_exclusions', 'koala_beanstalk_service_keep_header_script_ready' );
+
+/**
  * Drop legacy map and carousel scripts on native service templates.
  *
  * Keep the Maps handle registered so an actual map widget can still depend on it.
