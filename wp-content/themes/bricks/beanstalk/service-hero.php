@@ -250,7 +250,7 @@ function koala_beanstalk_service_defer_jquery(): void {
 add_action( 'wp_print_scripts', 'koala_beanstalk_service_defer_jquery', 100 );
 
 /**
- * Load supporting styles without blocking the service hero.
+ * Keep the service hero and footer styles available when CSS is optimized.
  *
  * @param string $html Stylesheet link.
  * @param string $handle WordPress style handle.
@@ -259,12 +259,13 @@ function koala_beanstalk_service_style_tag( string $html, string $handle ): stri
 	$critical = array(
 		'koala-beanstalk-location-critical' => 'location-critical.css',
 		'koala-beanstalk-service-hero'      => 'service-hero.css',
+		'koala-beanstalk-footer'            => 'footer.css',
 	);
 	if ( isset( $critical[ $handle ] ) && koala_beanstalk_service_hero_preview() ) {
 		return koala_beanstalk_inline_asset_stylesheet( $html, $handle, __DIR__ . '/assets/' . $critical[ $handle ], get_template_directory_uri() . '/beanstalk/assets/' );
 	}
 
-	$sections = array( 'footer', 'service-trusted', 'service-superior', 'service-advantages', 'location-financing', 'service-process', 'location-quote-banner', 'location-features', 'location-video', 'service-expect', 'service-reviews', 'location-community', 'service-faq', 'city-page-final-cta', 'location-final-cta' );
+	$sections = array( 'service-trusted', 'service-superior', 'service-advantages', 'location-financing', 'service-process', 'location-quote-banner', 'location-features', 'location-video', 'service-expect', 'service-reviews', 'location-community', 'service-faq', 'city-page-final-cta', 'location-final-cta' );
 	$forms    = array(
 		'kgi-quote-form',
 		'gravity_forms_theme_reset',
@@ -279,6 +280,19 @@ function koala_beanstalk_service_style_tag( string $html, string $handle ): stri
 	return koala_beanstalk_defer_stylesheet( $html );
 }
 add_filter( 'style_loader_tag', 'koala_beanstalk_service_style_tag', 110, 2 );
+
+/**
+ * Preserve the inline service footer when WP Rocket removes unused CSS.
+ *
+ * @param string[] $exclusions Existing inline style attribute exclusions.
+ * @return string[]
+ */
+function koala_beanstalk_preserve_rocket_footer_css( array $exclusions ): array {
+	$exclusions[] = 'koala-beanstalk-footer-css';
+	return $exclusions;
+}
+add_filter( 'rocket_rucss_inline_atts_exclusions', 'koala_beanstalk_preserve_rocket_footer_css' );
+
 
 /**
  * Bind service fields to the shared location hero pattern.
