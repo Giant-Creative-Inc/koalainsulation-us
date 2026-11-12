@@ -89,6 +89,66 @@ function koala_beanstalk_service_hero_template( string $template ): string {
 }
 add_filter( 'template_include', 'koala_beanstalk_service_hero_template', 1001 );
 
+/**
+ * Read the existing ACF schema or describe the service from its own page data.
+ *
+ * @param int $service_id Franchise service post ID.
+ */
+function koala_beanstalk_franchise_service_schema( int $service_id ): array {
+	$schema = json_decode( (string) get_post_meta( $service_id, 'schema', true ), true );
+	if ( is_array( $schema ) && $schema ) {
+		return $schema;
+	}
+
+	$location_slug = (string) get_query_var( 'location_slug' );
+	$service_slug  = (string) get_query_var( 'service_slug' );
+	$title         = html_entity_decode( wp_strip_all_tags( get_the_title( $service_id ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	if ( '' === $location_slug || '' === $service_slug || '' === $title ) {
+		return array();
+	}
+
+	$url    = home_url( '/' . $location_slug . '/services/' . $service_slug );
+	$schema = array(
+		'@context' => 'https://schema.org',
+		'@type'    => 'Service',
+		'@id'      => $url . '#service',
+		'name'     => $title,
+		'url'      => $url,
+	);
+
+	$location = koala_beanstalk_resolve_location_post( get_post_meta( $service_id, 'related_location', true ) );
+	if ( $location ) {
+		$schema['provider'] = array(
+			'@type' => 'LocalBusiness',
+			'name'  => html_entity_decode( wp_strip_all_tags( get_the_title( $location->ID ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
+			'url'   => get_permalink( $location->ID ),
+		);
+	}
+	return $schema;
+}
+
+/** Restore JSON-LD on franchise services whose native template replaces the Bricks renderer. */
+function koala_beanstalk_output_franchise_service_schema(): void {
+	if ( ! is_singular( 'location-service' ) || ! koala_beanstalk_service_hero_preview() ) {
+		return;
+	}
+
+	$service_id = (int) get_queried_object_id();
+	if ( 8449 === $service_id && has_action( 'wp_head', 'koala_add_schema_post_8449' ) ) {
+		return; // Atlanta spray foam already has a dedicated schema graph.
+	}
+
+	$schema  = koala_beanstalk_franchise_service_schema( $service_id );
+	$encoded = $schema ? wp_json_encode( $schema, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) : false;
+	if ( false === $encoded ) {
+		return;
+	}
+
+	remove_action( 'wp_head', 'koala_output_location_service_schema', 2 );
+	echo '<script type="application/ld+json">' . $encoded . '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON_HEX_TAG prevents script tag breakout.
+}
+add_action( 'wp_head', 'koala_beanstalk_output_franchise_service_schema', 1 );
+
 /** Load the existing chrome and hero styles. */
 function koala_beanstalk_service_hero_assets(): void {
 	if ( ! koala_beanstalk_service_hero_preview() ) {
