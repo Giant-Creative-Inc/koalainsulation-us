@@ -31,7 +31,25 @@ $faq_title    = $national_copy['faqTitle'] ?? (string) get_post_meta( $faq_servi
 $faq_label    = $editorial['faqLabel'] ?? trim( (string) get_post_meta( $faq_service, 'faq_pre_header', true ) );
 $faq_intro    = $editorial['faqIntro'] ?? trim( (string) get_post_meta( $faq_service, 'faq_content', true ) );
 $faq_location = koala_beanstalk_resolve_location_post( get_post_meta( $faq_service, 'related_location', true ) );
-$faq_phone    = $faq_location ? (string) get_post_meta( $faq_location->ID, 'location_phone_number', true ) : '';
+$faq_phone    = $faq_location && function_exists( 'get_field' ) ? trim( (string) get_field( 'location_phone_number', $faq_location->ID ) ) : '';
+if ( $faq_location && '' === $faq_phone ) {
+	$faq_phone = trim( (string) get_post_meta( $faq_location->ID, 'location_phone_number', true ) );
+}
+$faq_phone_digits = preg_replace( '/[^0-9]/', '', $faq_phone );
+$faq_phone_href   = str_starts_with( $faq_phone, '+' ) ? '+' . $faq_phone_digits : $faq_phone_digits;
+
+$faq_phone_placeholder = '{acf_location_phone_number}';
+if ( str_contains( $faq_intro, $faq_phone_placeholder ) ) {
+	$faq_intro = '' !== $faq_phone_digits
+		? strtr(
+			$faq_intro,
+			array(
+				'tel:' . $faq_phone_placeholder => 'tel:' . esc_attr( $faq_phone_href ),
+				$faq_phone_placeholder          => esc_html( $faq_phone ),
+			)
+		)
+		: 'Have another question? Schedule a free quote with your local team.';
+}
 ?>
 <section id="service-faq" class="koala-service-faq" aria-labelledby="service-faq-heading">
 	<header class="koala-service-faq__intro">
@@ -41,8 +59,8 @@ $faq_phone    = $faq_location ? (string) get_post_meta( $faq_location->ID, 'loca
 		</h2>
 		<?php if ( '' !== $faq_intro ) : ?>
 			<?php echo wp_kses_post( wpautop( $faq_intro ) ); ?>
-		<?php elseif ( '' !== $faq_phone ) : ?>
-			<p>Get all your questions answered by our local experts. If we didn’t address your question here, give us a call at <a href="tel:<?php echo esc_attr( preg_replace( '/[^+0-9]/', '', $faq_phone ) ); ?>"><?php echo esc_html( $faq_phone ); ?></a> or schedule a free quote today!</p>
+		<?php elseif ( '' !== $faq_phone_digits ) : ?>
+			<p>Get all your questions answered by our local experts. If we didn’t address your question here, give us a call at <a href="tel:<?php echo esc_attr( $faq_phone_href ); ?>"><?php echo esc_html( $faq_phone ); ?></a> or schedule a free quote today!</p>
 		<?php endif; ?>
 	</header>
 	<div class="koala-service-faq__items">
