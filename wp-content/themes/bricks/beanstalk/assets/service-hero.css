@@ -60,9 +60,9 @@
 .koala-service-reviews__national blockquote { margin: 0 0 16px; }
 
 
-/* Darker text on the light service panels. Keep the green accent on navy. */
+/* Match the Bricks service heading palette. */
 .beanstalk-service-hero-preview {
-	--koala-service-heading-green: #55751f;
+	--koala-service-heading-green: #afd56c;
 }
 
 .beanstalk-service-hero-preview .koala-location-hero__reviews {
