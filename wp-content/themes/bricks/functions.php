@@ -40,16 +40,46 @@ function koala_render_bricks_google_review_placeholder($content, $post = null, $
 
     $post_id = $post instanceof WP_Post ? (int) $post->ID : (int) get_queried_object_id();
     $location_id = $post_id && get_post_type($post_id) === 'location' ? $post_id : 0;
-    $widget = koala_render_google_reviews($location_id);
+    global $wp;
+    $route_location = null;
+    if (preg_match('~^([^/]+)/insulation-removal-services?/?$~', $wp->request ?? '', $route)) {
+        $route_location = get_page_by_path($route[1], OBJECT, 'location');
+    }
 
-    if ($widget === '') {
-        return $content;
+    $service_id = (int) get_queried_object_id();
+    $is_removal_service = get_post_type($service_id) === 'location-service'
+        && has_term(['insulation-removal-services', 'insulation-removal-service'], 'service_category', $service_id);
+
+    if ($is_removal_service || $route_location instanceof WP_Post) {
+        $related = (array) get_post_meta($service_id, 'related_location', true);
+        $location_id = $is_removal_service ? (int) reset($related) : (int) $route_location->ID;
+        $shortcode = $location_id && get_post_type($location_id) === 'location'
+            ? trim((string) get_post_meta($location_id, 'google_review_shortcode', true)) : '';
+        $corporate_shortcode = (string) get_option('koala_corporate_google_review_shortcode', '');
+        preg_match('/[0-9]+/', $corporate_shortcode, $corporate);
+        $widget = '';
+        if (preg_match('/^\[grw\s+id=(?:"|\')?([1-9][0-9]*)(?:"|\')?\s*\/?\]$/', $shortcode, $match)
+            && !in_array((int) $match[1], [13780, 13805, (int) ($corporate[0] ?? 0)], true)
+            && get_post_type((int) $match[1]) === 'grw_feed'
+            && get_post_status((int) $match[1]) === 'publish') {
+            $widget = koala_render_google_reviews($location_id);
+        }
+    } else {
+        $widget = koala_render_google_reviews($location_id);
+        if ($widget === '') {
+            return $content;
+        }
     }
 
     $styles = '<style id="koala-google-reviews-visibility">'
         . '#google-review-shortcode-wrapper{display:flex!important;visibility:visible!important}'
-        . '#main-page-widget,#main-page-stories-widget,#local-page-widget,#local-page-stories-widget{display:none!important}'
-        . '</style>';
+        . '#main-page-widget,#main-page-stories-widget,#local-page-widget,#local-page-stories-widget{display:none!important}';
+    if ($is_removal_service || $route_location instanceof WP_Post) {
+        $styles .= '#google-review-shortcode-wrapper > .koala-google-reviews,'
+            . '#google-review-shortcode-wrapper > .koala-google-reviews > .wp-gr[data-layout="slider"]'
+            . '{width:100%;min-width:0}';
+    }
+    $styles .= '</style>';
 
     if ($has_google_placeholder) {
         return preg_replace(
